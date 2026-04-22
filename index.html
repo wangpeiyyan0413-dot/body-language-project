@@ -3,119 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Core - AI Emotion Recognition</title>
+    <title>CORE - AI Kinetic Emotion Engine</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap');
+
         :root {
-            --primary: #6366f1; /* 靛蓝 */
-            --accent: #a855f7;  /* 紫色 */
-            --success: #10b981; /* 绿色 */
-            --bg: #030712;      /* 极黑 */
-            --glass: rgba(255, 255, 255, 0.03);
-            --border: rgba(255, 255, 255, 0.1);
+            --primary: #6366f1;
+            --happy-color: #10b981;
+            --anxious-color: #a855f7;
+            --bg-dark: #020617;
+            /* 动态变量，由 JS 控制 */
+            --current-theme: var(--primary);
+            --glow-opacity: 0.1;
         }
 
         * { box-sizing: border-box; cursor: crosshair; }
+        
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            background-color: var(--bg);
-            color: #fff; font-family: 'Exo 2', 'Orbitron', sans-serif;
+            background-color: var(--bg-dark);
+            color: #fff; font-family: 'Rajdhani', sans-serif;
             overflow: hidden;
         }
 
-        /* 16:9 响应式外壳 */
+        /* 16:9 全屏容器 */
         #viewport {
             width: 100vw; height: 56.25vw;
             max-width: 177.78vh; max-height: 100vh;
             position: relative; overflow: hidden;
-            background: radial-gradient(circle at center, #111827 0%, #030712 100%);
+            background: var(--bg-dark);
             display: flex; justify-content: center; align-items: center;
+            transition: box-shadow 0.5s ease;
         }
 
-        /* 背景粒子 Canvas */
+        /* 核心：全屏情绪反馈层 */
+        #emotion-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 2;
+            background: radial-gradient(circle at center, transparent 30%, var(--current-theme) 150%);
+            opacity: var(--glow-opacity);
+            transition: all 0.8s ease;
+        }
+
+        /* 粒子背景 */
         #particle-canvas {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; opacity: 0.6;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; opacity: 0.4;
         }
 
+        /* 页面基础 */
         .page {
             position: absolute; width: 100%; height: 100%;
-            padding: 60px; display: none; z-index: 10;
-            flex-direction: column; transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 40px 80px; display: none; z-index: 10;
+            flex-direction: column;
         }
+        .page.active { display: flex; animation: pageIn 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
 
-        .page.active { display: flex; animation: pageEnter 0.8s ease-out forwards; }
-
-        @keyframes pageEnter {
-            from { opacity: 0; filter: blur(10px); transform: scale(1.05); }
-            to { opacity: 1; filter: blur(0); transform: scale(1); }
+        @keyframes pageIn {
+            from { opacity: 0; transform: scale(1.1) rotateX(10deg); filter: blur(20px); }
+            to { opacity: 1; transform: scale(1) rotateX(0); filter: blur(0); }
         }
 
         /* --- Landing Page --- */
         #landing-page { justify-content: center; align-items: center; text-align: center; }
-        .hero-title {
-            font-size: 5rem; font-weight: 800; letter-spacing: -2px; margin: 0;
-            background: linear-gradient(to right, #fff, var(--primary), var(--accent));
+        .glitch-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 5.5rem; font-weight: 700; line-height: 1;
+            text-transform: uppercase; letter-spacing: 15px;
+            background: linear-gradient(to bottom, #fff 30%, var(--primary));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.3));
+            margin: 0; position: relative;
         }
-        .scan-line {
-            width: 300px; height: 2px; background: var(--primary);
-            margin: 20px auto; position: relative; overflow: hidden;
-            box-shadow: 0 0 15px var(--primary);
-            animation: scanMove 3s infinite linear;
-        }
-        @keyframes scanMove { 0% { opacity: 0; width: 0; } 50% { opacity: 1; width: 400px; } 100% { opacity: 0; width: 0; } }
-
-        .enter-btn {
-            background: transparent; border: 1px solid var(--border);
-            color: #fff; padding: 20px 50px; font-size: 1.2rem; border-radius: 4px;
-            margin-top: 40px; position: relative; overflow: hidden; transition: 0.3s;
-            text-transform: uppercase; letter-spacing: 4px;
-        }
-        .enter-btn:hover { border-color: var(--primary); box-shadow: 0 0 30px rgba(99, 102, 241, 0.4); }
 
         /* --- Instruction Page --- */
-        .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 50px; }
-        .info-card {
-            background: var(--glass); border: 1px solid var(--border);
-            padding: 30px; border-radius: 20px; backdrop-filter: blur(10px);
-            transition: 0.4s; position: relative;
+        .step-container {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: 60px;
         }
-        .info-card:hover { transform: translateY(-10px); border-color: var(--accent); background: rgba(168, 85, 247, 0.05); }
-        .step-num { font-size: 0.8rem; color: var(--primary); font-family: monospace; }
+        .step-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 2px solid var(--primary);
+            padding: 30px; border-radius: 0 20px 20px 0;
+            backdrop-filter: blur(5px);
+        }
 
-        /* --- Experience Page --- */
-        .main-layout { display: grid; grid-template-columns: 1.4fr 0.6fr; gap: 40px; height: 80%; }
-        #camera-module {
-            background: #000; border-radius: 24px; position: relative;
-            border: 2px solid var(--border); overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        /* --- Experience Page (Core) --- */
+        .interaction-area {
+            display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 50px; height: 100%;
         }
-        canvas#webcam-canvas { width: 100%; height: 100%; object-fit: cover; }
         
-        .ai-panel {
-            display: flex; flex-direction: column; gap: 20px;
+        #camera-frame {
+            position: relative; border-radius: 30px; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: #000; box-shadow: 0 0 50px rgba(0,0,0,0.5);
         }
-        .status-ring-box {
-            height: 200px; background: var(--glass); border-radius: 24px;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            border: 1px solid var(--border); position: relative;
+        #webcam-canvas { width: 100%; height: 100%; object-fit: cover; filter: brightness(1.1) contrast(1.1); }
+        
+        /* 扫描线效果 */
+        .scanner {
+            position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(to right, transparent, var(--current-theme), transparent);
+            box-shadow: 0 0 15px var(--current-theme);
+            animation: scanning 4s infinite ease-in-out;
+            z-index: 5;
         }
-        .ring {
-            width: 100px; height: 100px; border: 4px solid var(--border);
-            border-top-color: var(--primary); border-radius: 50%;
-            animation: rotate 2s infinite linear;
-        }
-        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes scanning { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
 
-        .confidence-bar {
-            background: var(--glass); padding: 15px; border-radius: 12px; border: 1px solid var(--border);
+        .ui-panel { display: flex; flex-direction: column; gap: 20px; }
+        .data-card {
+            background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+            padding: 25px; border-radius: 20px; position: relative; overflow: hidden;
         }
-        .bar-outer { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 8px; overflow: hidden; }
-        .bar-inner { height: 100%; width: 0%; background: var(--primary); transition: 0.3s; }
 
-        /* 状态背景色动画 */
-        .state-happy { box-shadow: inset 0 0 100px rgba(16, 185, 129, 0.2); }
-        .state-anxious { box-shadow: inset 0 0 100px rgba(168, 85, 247, 0.2); animation: shake 0.5s infinite alternate; }
-        @keyframes shake { from { transform: translate(1px, 1px); } to { transform: translate(-1px, -1px); } }
+        /* 情绪条动画 */
+        .progress-wrapper { margin: 15px 0; }
+        .progress-label { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 8px; color: #94a3b8; }
+        .progress-bg { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; }
+        .progress-fill { height: 100%; width: 0%; background: var(--primary); border-radius: 2px; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px var(--primary); }
+
+        /* 特殊状态动画 */
+        .shaking { animation: shake 0.1s infinite; }
+        @keyframes shake { 0% { transform: translate(1px, 1px); } 100% { transform: translate(-1px, -1px); } }
+
+        .breathing { animation: breathe 2s infinite ease-in-out; }
+        @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 0.1; } 50% { transform: scale(1.1); opacity: 0.3; } }
+
+        .btn-sci-fi {
+            background: transparent; border: 1px solid var(--primary); color: #fff;
+            padding: 15px 40px; font-family: 'Orbitron'; letter-spacing: 5px;
+            transition: 0.4s; position: relative; overflow: hidden;
+        }
+        .btn-sci-fi:hover { background: var(--primary); box-shadow: 0 0 30px var(--primary); }
 
     </style>
 </head>
@@ -123,56 +140,55 @@
 
 <div id="viewport">
     <canvas id="particle-canvas"></canvas>
+    <div id="emotion-overlay"></div>
 
     <div id="landing-page" class="page active">
-        <span style="letter-spacing: 8px; font-size: 0.9rem; opacity: 0.6;">BIOMETRIC INTERFACE V2.0</span>
-        <div class="scan-line"></div>
-        <h1 class="hero-title">BODY LANGUAGE</h1>
-        <p style="opacity: 0.5; max-width: 500px; line-height: 1.8;">Neural network-based emotional state recognition through kinematic analysis.</p>
-        <button class="enter-btn" onclick="nav('info-page')">Initialize System</button>
+        <h1 class="glitch-title">A.I. Core</h1>
+        <p style="letter-spacing: 10px; color: var(--primary); margin-bottom: 40px;">KINETIC EMOTION ENGINE</p>
+        <button class="btn-sci-fi" onclick="nav('info-page')">INITIALIZE</button>
     </div>
 
     <div id="info-page" class="page">
-        <h1 style="font-size: 2.5rem;">System Protocol</h1>
-        <div class="info-grid">
-            <div class="info-card">
-                <span class="step-num">/ STEP 01</span>
-                <h3>Environment</h3>
-                <p>Ensure a clean background and optimal lighting for skeleton tracking.</p>
+        <h1 style="font-family: 'Orbitron'; font-size: 2.5rem;">PROTOCOL_OVERVIEW</h1>
+        <div class="step-container">
+            <div class="step-card">
+                <h3 style="color: var(--primary)">[01] TRACKING</h3>
+                <p>System maps 17 skeletal vertices. Avoid complex backgrounds.</p>
             </div>
-            <div class="info-card">
-                <span class="step-num">/ STEP 02</span>
-                <h3>Calibration</h3>
-                <p>Stand 2 meters away. The AI will map 17 key body points in real-time.</p>
+            <div class="step-card">
+                <h3 style="color: var(--primary)">[02] ANALYSIS</h3>
+                <p>Neural network identifies posture patterns for CALM, ANXIOUS, and HAPPY states.</p>
             </div>
-            <div class="info-card">
-                <span class="step-num">/ STEP 03</span>
-                <h3>Interaction</h3>
-                <p>Perform Calm, Anxious, or Happy gestures to trigger neural feedback.</p>
+            <div class="step-card">
+                <h3 style="color: var(--primary)">[03] FEEDBACK</h3>
+                <p>The interface environment will react dynamically to your biometric data.</p>
             </div>
         </div>
-        <div style="margin-top: auto; display: flex; gap: 20px;">
-            <button class="enter-btn" onclick="nav('exp-page'); startAI();">Access Core</button>
-            <button class="enter-btn" style="opacity: 0.5;" onclick="nav('landing-page')">Return</button>
+        <div style="margin-top: auto; display: flex; gap: 30px;">
+            <button class="btn-sci-fi" onclick="nav('exp-page'); startAI();">START_LINK</button>
+            <button class="btn-sci-fi" style="border-color: #475569" onclick="nav('landing-page')">BACK</button>
         </div>
     </div>
 
     <div id="exp-page" class="page">
-        <div class="main-layout">
-            <div id="camera-module">
+        <div class="interaction-area">
+            <div id="camera-frame">
+                <div class="scanner"></div>
                 <canvas id="webcam-canvas"></canvas>
-                <div style="position: absolute; bottom: 20px; left: 20px; color: var(--primary); font-family: monospace;">
-                    <span id="status-text">SYSTEM: STANDBY</span>
-                </div>
             </div>
-            <div class="ai-panel">
-                <div class="status-ring-box" id="feedback-ring">
-                    <div class="ring" id="main-ring"></div>
-                    <h2 id="current-state" style="margin-top: 20px; letter-spacing: 2px;">NEUTRAL</h2>
+            <div class="ui-panel">
+                <div class="data-card" id="status-display">
+                    <span style="font-size: 0.7rem; opacity: 0.5;">CURRENT STATE</span>
+                    <h2 id="main-emotion" style="font-family: 'Orbitron'; font-size: 2.5rem; margin: 10px 0;">IDLE</h2>
+                    <div id="emotion-description" style="font-size: 0.9rem; color: #64748b;">Waiting for data sync...</div>
                 </div>
-                <div id="bar-list">
-                    </div>
-                <button class="enter-btn" style="width: 100%;" onclick="location.reload()">Terminal Reset</button>
+                
+                <div class="data-card" id="metrics-panel">
+                    <span style="font-size: 0.7rem; opacity: 0.5;">PROBABILITY MATRIX</span>
+                    <div id="bar-list"></div>
+                </div>
+
+                <button class="btn-sci-fi" style="width: 100%; margin-top: auto;" onclick="location.reload()">TERMINATE</button>
             </div>
         </div>
     </div>
@@ -182,80 +198,62 @@
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
 
 <script>
-    // --- 页面导航 ---
+    // --- 路由与基础 ---
     function nav(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(id).classList.add('active');
     }
 
-    // --- 粒子背景背景 ---
-    const canvas = document.getElementById('particle-canvas');
-    const ctx = canvas.getContext('2d');
+    // --- 粒子系统 ---
+    const pCanvas = document.getElementById('particle-canvas');
+    const pCtx = pCanvas.getContext('2d');
     let particles = [];
-    function initParticles() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        particles = [];
-        for(let i=0; i<100; i++) {
-            particles.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                vx: (Math.random() - 0.5) * 0.5,
-                vy: (Math.random() - 0.5) * 0.5,
-                size: Math.random() * 2
-            });
-        }
+    function initP() {
+        pCanvas.width = window.innerWidth; pCanvas.height = window.innerHeight;
+        particles = Array(80).fill().map(() => ({
+            x: Math.random() * pCanvas.width, y: Math.random() * pCanvas.height,
+            v: Math.random() * 0.5 + 0.2, sz: Math.random() * 2
+        }));
     }
-    function drawParticles() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#6366f1';
+    function drawP() {
+        pCtx.clearRect(0,0,pCanvas.width, pCanvas.height);
+        pCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--current-theme');
         particles.forEach(p => {
-            p.x += p.vx; p.y += p.vy;
-            if(p.x < 0 || p.x > canvas.width) p.vx *= -1;
-            if(p.y < 0 || p.y > canvas.height) p.vy *= -1;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-            ctx.fill();
+            p.y -= p.v; if(p.y < 0) p.y = pCanvas.height;
+            pCtx.beginPath(); pCtx.arc(p.x, p.y, p.sz, 0, Math.PI*2); pCtx.fill();
         });
-        requestAnimationFrame(drawParticles);
+        requestAnimationFrame(drawP);
     }
-    window.addEventListener('resize', initParticles);
-    initParticles(); drawParticles();
+    initP(); drawP();
 
-    // --- AI 逻辑 ---
+    // --- AI 引擎 ---
     const URL = "https://teachablemachine.withgoogle.com/models/sTBoNGgmv/";
-    let model, webcam, webcamCtx, maxPredictions;
+    let model, webcam, ctx, maxPredictions;
 
     async function startAI() {
-        const modelURL = URL + "model.json";
-        const metadataURL = URL + "metadata.json";
-        model = await tmPose.load(modelURL, metadataURL);
+        model = await tmPose.load(URL + "model.json", URL + "metadata.json");
         maxPredictions = model.getTotalClasses();
 
         const size = 600;
         webcam = new tmPose.Webcam(size, size, true);
-        await webcam.setup();
-        await webcam.play();
+        await webcam.setup(); await webcam.play();
         
-        const c = document.getElementById("webcam-canvas");
-        c.width = size; c.height = size;
-        webcamCtx = c.getContext("2d");
+        const canvas = document.getElementById("webcam-canvas");
+        canvas.width = size; canvas.height = size;
+        ctx = canvas.getContext("2d");
 
         const barList = document.getElementById("bar-list");
-        barList.innerHTML = "";
         for (let i = 0; i < maxPredictions; i++) {
-            const label = model.getClassLabels()[i];
             barList.innerHTML += `
-                <div class="confidence-bar">
-                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; opacity:0.7">
-                        <span>${label.toUpperCase()}</span>
+                <div class="progress-wrapper">
+                    <div class="progress-label">
+                        <span>${model.getClassLabels()[i]}</span>
                         <span id="val-${i}">0%</span>
                     </div>
-                    <div class="bar-outer"><div id="bar-${i}" class="bar-inner"></div></div>
+                    <div class="progress-bg"><div id="fill-${i}" class="progress-fill"></div></div>
                 </div>`;
         }
         window.requestAnimationFrame(loop);
-        document.getElementById("status-text").innerText = "SYSTEM: ACTIVE";
     }
 
     async function loop() {
@@ -275,46 +273,62 @@
             const prob = prediction[i].probability;
             const percent = (prob * 100).toFixed(0);
             document.getElementById(`val-${i}`).innerText = percent + "%";
-            document.getElementById(`bar-${i}`).style.width = percent + "%";
+            const fill = document.getElementById(`fill-${i}`);
+            fill.style.width = percent + "%";
             
-            if(prob > maxProb) {
-                maxProb = prob;
-                topClass = prediction[i].className;
-            }
+            if(prob > maxProb) { maxProb = prob; topClass = prediction[i].className; }
         }
 
-        // 视觉反馈增强
-        const ring = document.getElementById("main-ring");
-        const panel = document.getElementById("viewport");
-        const stateDisplay = document.getElementById("current-state");
-        
-        stateDisplay.innerText = topClass.toUpperCase();
-        
-        // 根据情绪切换样式
-        panel.className = ""; // 重置
-        if(maxProb > 0.7) {
-            if(topClass.toLowerCase().includes("happy")) {
-                panel.classList.add("state-happy");
-                ring.style.borderTopColor = "var(--success)";
-            } else if(topClass.toLowerCase().includes("anxious")) {
-                panel.classList.add("state-anxious");
-                ring.style.borderTopColor = "var(--accent)";
-            } else {
-                ring.style.borderTopColor = "var(--primary)";
-            }
-        }
-
+        updateVisualFeedback(topClass.toLowerCase(), maxProb);
         drawPose(pose);
+    }
+
+    // --- 核心：强化视觉反馈逻辑 ---
+    function updateVisualFeedback(emotion, prob) {
+        const root = document.documentElement;
+        const overlay = document.getElementById('emotion-overlay');
+        const viewport = document.getElementById('viewport');
+        const mainText = document.getElementById('main-emotion');
+        const desc = document.getElementById('emotion-description');
+
+        if (prob < 0.5) return; // 置信度低时不切换
+
+        mainText.innerText = emotion.toUpperCase();
+        
+        // 重置动画状态
+        overlay.classList.remove('breathing', 'shaking');
+        viewport.style.boxShadow = "none";
+
+        if (emotion.includes('happy')) {
+            root.style.setProperty('--current-theme', 'var(--happy-color)');
+            root.style.setProperty('--glow-opacity', '0.4');
+            overlay.classList.add('breathing');
+            desc.innerText = "Sero-tonin spike detected. Euphoric state active.";
+        } 
+        else if (emotion.includes('anxious')) {
+            root.style.setProperty('--current-theme', 'var(--anxious-color)');
+            root.style.setProperty('--glow-opacity', '0.6');
+            overlay.classList.add('shaking');
+            desc.innerText = "Cortisol elevation. System instability imminent.";
+            viewport.style.boxShadow = "inset 0 0 100px rgba(168, 85, 247, 0.4)";
+        } 
+        else {
+            root.style.setProperty('--current-theme', 'var(--primary)');
+            root.style.setProperty('--glow-opacity', '0.1');
+            desc.innerText = "Homeostasis maintained. Scanning biometric flow...";
+        }
     }
 
     function drawPose(pose) {
         if (webcam.canvas) {
-            webcamCtx.drawImage(webcam.canvas, 0, 0);
+            ctx.drawImage(webcam.canvas, 0, 0);
             if (pose) {
                 const min = 0.5;
-                // 使用自定义颜色绘制骨骼
-                tmPose.drawKeypoints(pose.keypoints, min, webcamCtx);
-                tmPose.drawSkeleton(pose.keypoints, min, webcamCtx);
+                // 设置骨骼颜色随情绪变化
+                ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--current-theme');
+                ctx.fillStyle = ctx.strokeStyle;
+                tmPose.drawKeypoints(pose.keypoints, min, ctx);
+                tmPose.drawSkeleton(pose.keypoints, min, ctx);
             }
         }
     }
