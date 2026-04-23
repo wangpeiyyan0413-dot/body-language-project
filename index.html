@@ -3,305 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CORE_OS - Advanced Kinetic Neural Terminal</title>
+    <title>CORE | Kinetic Perception Terminal</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Orbitron:wght@400;900&family=Share+Tech+Mono&display=swap');
 
         :root {
-            /* Dynamic theme variables controlled by JS */
-            --theme: #00f0ff; 
-            --theme-glow: rgba(0, 240, 255, 0.4);
-            --bg-base: #020204;
-            --text-main: #e2e8f0;
-            --nav-bg: rgba(2, 2, 4, 0.9);
-            --card-bg: rgba(255, 255, 255, 0.03);
+            --theme: #00f0ff;
+            --theme-rgb: 0, 240, 255;
+            --bg: #050505;
+            --surface: rgba(255, 255, 255, 0.03);
+            --text: #ffffff;
+            --text-dim: #94a3b8;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; cursor: crosshair; user-select: none; }
-        
-        body, html {
-            width: 100%; height: 100%;
-            background-color: var(--bg-base); color: var(--text-main);
-            font-family: 'Share Tech Mono', monospace; overflow: hidden;
+        * { box-sizing: border-box; margin: 0; padding: 0; cursor: crosshair; }
+        body, html { 
+            width: 100%; height: 100%; background: var(--bg); color: var(--text);
+            font-family: 'Inter', sans-serif; overflow: hidden;
         }
 
-        /* --- Global Layout --- */
-        #app-container {
-            width: 100vw; height: 100vh; position: relative;
-            background: radial-gradient(circle at center, #0a0a15 0%, var(--bg-base) 100%);
-            display: flex; flex-direction: column; transition: all 0.5s ease-out;
-        }
+        /* --- Stochastic Point Cloud Background --- */
+        #bg-canvas { position: absolute; inset: 0; z-index: 1; opacity: 0.5; }
 
-        /* Main Interactive Background Canvas */
-        #bg-canvas { position: absolute; inset: 0; z-index: 1; opacity: 0.6; }
-
-        /* --- Navigation Bar --- */
+        /* --- Navigation --- */
         nav {
-            position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+            position: fixed; top: 0; width: 100%; z-index: 100;
             display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 50px; background: var(--nav-bg); backdrop-filter: blur(15px);
-            border-bottom: 1px solid var(--theme); box-shadow: 0 0 25px var(--theme-glow);
+            padding: 30px 60px; background: linear-gradient(to bottom, var(--bg), transparent);
         }
-        
-        .logo { font-family: 'Orbitron', sans-serif; font-size: 1.6rem; font-weight: 900; color: var(--theme); letter-spacing: 3px; text-shadow: 0 0 15px var(--theme); }
-        
-        .nav-links { display: flex; list-style: none; gap: 35px; }
-        .nav-links li { font-size: 1.1rem; letter-spacing: 1px; transition: all 0.3s; color: #818cf8; text-transform: uppercase; font-family: 'Orbitron', sans-serif;}
-        .nav-links li:hover, .nav-links li.active { color: var(--theme); text-shadow: 0 0 10px var(--theme-glow); transform: translateY(-2px); }
+        .logo { font-family: 'Orbitron'; font-weight: 900; font-size: 1.2rem; letter-spacing: 4px; color: var(--theme); }
+        .nav-links { display: flex; list-style: none; gap: 40px; }
+        .nav-links li { font-size: 0.8rem; letter-spacing: 2px; color: var(--text-dim); transition: 0.3s; }
+        .nav-links li:hover, .nav-links li.active { color: var(--theme); }
 
-        .auth-cluster { display: flex; gap: 15px; align-items: center; }
-
-        /* --- Generic Buttons --- */
-        .btn-cyber {
-            background: transparent; border: 1px solid var(--theme); color: var(--theme);
-            padding: 12px 30px; font-family: 'Orbitron'; font-size: 0.9rem; letter-spacing: 2px;
-            transition: all 0.3s; text-transform: uppercase; position: relative; overflow: hidden;
+        /* --- Layout Components --- */
+        .page {
+            position: absolute; inset: 0; padding: 120px 8% 60px;
+            display: none; z-index: 10; flex-direction: column; opacity: 0;
         }
-        .btn-cyber::before { content:''; position: absolute; top:0; left:-100%; width:100%; height:100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: 0.5s; }
-        .btn-cyber:hover::before { left: 100%; }
-        .btn-cyber:hover { background: var(--theme); color: #000; box-shadow: 0 0 30px var(--theme-glow); font-weight: bold;}
-        .btn-solid { background: var(--theme); color: #000; font-weight: bold; border: none; }
+        .page.active { display: flex; animation: fadeIn 1s forwards; }
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(10px); } }
 
-        /* --- Pages --- */
-        .page-content {
-            position: absolute; top: 80px; left: 0; right: 0; bottom: 0;
-            padding: 40px 6vw; display: none; z-index: 10; flex-direction: column; overflow-y: auto;
+        h1 { font-family: 'Orbitron'; font-size: 3.5rem; line-height: 1; margin-bottom: 2rem; letter-spacing: -2px; }
+        .content-body { max-width: 800px; font-size: 1rem; line-height: 1.8; color: var(--text-dim); font-weight: 300; }
+
+        /* --- Home Page Specifics --- */
+        #home { flex-direction: row; align-items: center; }
+        .hero { flex: 1.2; z-index: 20; }
+        .viz-container { flex: 1; height: 80%; display: flex; justify-content: center; align-items: center; }
+        #sentinel-canvas { width: 100%; height: 100%; }
+
+        /* --- Auth Styling --- */
+        .auth-card {
+            width: 450px; margin: auto; padding: 60px; background: var(--surface);
+            border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px);
         }
-        .page-content.active { display: flex; animation: pageInit 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-
-        @keyframes pageInit {
-            from { opacity: 0; transform: translateY(30px) scale(1.02); filter: blur(10px); }
-            to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        .btn-google {
+            width: 100%; padding: 15px; margin-bottom: 20px; background: #fff; color: #000;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            font-weight: bold; border: none; font-size: 0.9rem;
         }
-
-        h1, h2, h3 { font-family: 'Orbitron', sans-serif; text-transform: uppercase; margin-bottom: 15px; font-weight: 700;}
-        h1 { font-size: 4.5rem; letter-spacing: 3px; line-height: 1.1; color: #fff; text-shadow: 0 0 20px var(--theme-glow); margin-bottom: 25px;}
-        p { font-size: 1.15rem; line-height: 1.7; color: #cbd5e1; margin-bottom: 25px; max-width: 700px; }
-
-        /* --- Specific Page Styling --- */
-        
-        /* HOME PAGE Layout modification for the right-side visualization */
-        #home { flex-direction: row; align-items: center; justify-content: space-between; padding-top: 0; padding-bottom: 0;}
-        #home .hero-text { flex: 1; max-width: 50%; z-index: 15; }
-        
-        /* The Sentinel: Right-side advanced visualization */
-        #sentinel-viz {
-            flex: 1; height: 100%; max-width: 45%;
-            position: relative; display: flex; justify-content: center; align-items: center;
-            z-index: 5;
+        .divider { text-align: center; margin: 20px 0; color: var(--text-dim); font-size: 0.7rem; letter-spacing: 2px; }
+        input {
+            width: 100%; padding: 15px; background: transparent; border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; margin-bottom: 20px; outline: none;
         }
-        #sentinel-canvas { width: 100%; height: 90%; }
-        .viz-label {
-            position: absolute; bottom: 10%; right: 0;
-            font-size: 0.8rem; color: var(--theme); opacity: 0.7;
-            writing-mode: vertical-rl; text-transform: uppercase; letter-spacing: 3px;
+        input:focus { border-color: var(--theme); }
+        .btn-prime {
+            width: 100%; padding: 15px; background: var(--theme); color: #000;
+            border: none; font-weight: bold; font-family: 'Orbitron'; letter-spacing: 2px;
         }
 
-        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 35px; margin-top: 40px; }
-        .tech-card {
-            background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05);
-            border-top: 4px solid var(--theme); padding: 35px; backdrop-filter: blur(10px);
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        /* --- Guide Visuals --- */
+        .guide-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 40px; }
+        .guide-card { background: var(--surface); padding: 40px; text-align: center; border-bottom: 2px solid transparent; }
+        .guide-card:hover { border-color: var(--theme); background: rgba(var(--theme-rgb), 0.05); }
+        .pose-icon { 
+            width: 120px; height: 120px; margin: 0 auto 30px; 
+            border: 1px dashed var(--theme); position: relative;
+            display: flex; align-items: center; justify-content: center;
         }
-        .tech-card:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 15px 35px rgba(0,0,0,0.5), 0 0 15px var(--theme-glow); border-color: var(--theme); }
-        .tech-card h3 { color: #fff; font-size: 1.4rem; }
 
-        /* --- Auth Page --- */
-        #auth { justify-content: center; align-items: center; }
-        .auth-box {
-            width: 450px; padding: 50px; background: rgba(5, 5, 10, 0.9);
-            border: 1px solid var(--theme); box-shadow: 0 0 40px var(--theme-glow);
-            position: relative;
+        /* --- Experience / HUD --- */
+        .hud-layout { display: grid; grid-template-columns: 1fr 380px; gap: 40px; height: 100%; }
+        #video-wrap { position: relative; background: #000; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; }
+        canvas#webcam-canvas { width: 100%; height: 100%; object-fit: cover; }
+        .console {
+            background: rgba(0,0,0,0.5); padding: 30px; font-family: 'Share Tech Mono';
+            font-size: 0.9rem; color: var(--theme); border: 1px solid rgba(var(--theme-rgb), 0.2);
+            overflow-y: auto; flex-grow: 1;
         }
-        .auth-box::after { content:''; position: absolute; inset: -1px; background: linear-gradient(135deg, var(--theme), transparent, var(--theme)); z-index: -1; filter: blur(2px); }
-        
-        .input-group { margin-bottom: 30px; }
-        .input-group label { display: block; font-size: 0.85rem; color: var(--theme); margin-bottom: 10px; letter-spacing: 2px; text-transform: uppercase;}
-        .input-group input {
-            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
-            color: #fff; padding: 15px; font-family: 'Share Tech Mono'; font-size: 1.2rem; outline: none;
-            transition: all 0.3s;
-        }
-        .input-group input:focus { border-color: var(--theme); box-shadow: 0 0 15px var(--theme-glow); background: rgba(0,0,0,0.5); }
+        .bar-container { margin-bottom: 30px; }
+        .bar-label { display: flex; justify-content: space-between; font-size: 0.7rem; letter-spacing: 1px; margin-bottom: 8px; }
+        .bar-bg { height: 2px; background: rgba(255,255,255,0.1); width: 100%; }
+        .bar-fill { height: 100%; background: var(--theme); width: 0%; transition: 0.3s; }
 
-        /* --- Core Experience Page --- */
-        #experience { padding: 30px; }
-        .hud-layout { display: grid; grid-template-columns: 1fr 420px; gap: 30px; height: 100%; align-items: stretch; }
-        
-        #video-core {
-            position: relative; background: #000; border: 2px solid var(--theme);
-            overflow: hidden; box-shadow: 0 0 30px rgba(0,0,0,0.5), inset 0 0 100px rgba(0,0,0,0.9);
-            border-radius: 5px;
+        /* Verification Overlay */
+        #verify-overlay {
+            position: fixed; inset: 0; background: var(--bg); z-index: 1000;
+            display: none; justify-content: center; align-items: center; text-align: center;
         }
-        canvas#webcam-canvas { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.1) brightness(1.1); }
-        
-        .scanner {
-            position: absolute; width: 100%; height: 3px; background: var(--theme);
-            box-shadow: 0 0 20px 4px var(--theme); opacity: 0.8; z-index: 5;
-            animation: scanLoop 3s infinite cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        @keyframes scanLoop { 0% { top: -5%; } 100% { top: 105%; } }
-
-        .data-panel { display: flex; flex-direction: column; gap: 20px; }
-        .hud-box {
-            background: rgba(5, 5, 10, 0.8); border: 1px solid rgba(255,255,255,0.08);
-            border-left: 5px solid var(--theme); padding: 30px; flex-shrink: 0;
-            position: relative;
-        }
-        .hud-box::before { content:''; position: absolute; top:0; right:0; width: 20px; height: 20px; border-top: 2px solid var(--theme); border-right: 2px solid var(--theme); opacity: 0.5;}
-        
-        .bar-wrap { margin-bottom: 20px; }
-        .bar-label { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
-        .bar-bg { width: 100%; height: 5px; background: #1a1a22; overflow: hidden; position: relative;}
-        .bar-fill { height: 100%; width: 0%; background: var(--theme); box-shadow: 0 0 15px var(--theme); transition: width 0.3s cubic-bezier(0.23, 1, 0.32, 1); }
-
-        #ai-console {
-            flex-grow: 1; background: #000; border: 1px solid rgba(255,255,255,0.05); padding: 25px;
-            font-size: 1rem; line-height: 1.8; color: var(--theme); overflow-y: auto;
-            font-family: 'Share Tech Mono', monospace; box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
-        }
-        .blink { animation: textBlink 1s infinite; }
-        @keyframes textBlink { 50% { opacity: 0; } }
-
-        /* === Advanced Dynamic FX (States) === */
-        /* Happy State: Radial Pulse */
-        .fx-pulse #viewport-overlay {
-            position: absolute; inset: 0; pointer-events: none; z-index: 2;
-            background: radial-gradient(circle, transparent 30%, var(--theme-glow) 150%);
-            animation: pulseGlow 2s infinite alternate;
-        }
-        @keyframes pulseGlow { from { opacity: 0.2; } to { opacity: 0.6; } }
-
-        /* Anxious State: HUD Shake & Glitch Contrast */
-        .fx-shake .hud-box, .fx-shake #video-core { animation: shakeFrame 0.1s infinite; }
-        @keyframes shakeFrame { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -1px); } 100% { transform: translate(-1px, 1px); } }
-        .fx-shake canvas#webcam-canvas { filter: contrast(1.5) brightness(1.2) hue-rotate(10deg); }
-
     </style>
 </head>
 <body>
 
-<div id="app-container">
-    <canvas id="bg-canvas"></canvas>
-    <div id="viewport-overlay"></div>
+<canvas id="bg-canvas"></canvas>
 
-    <nav>
-        <div class="logo">CORE_OS</div>
-        <ul class="nav-links">
-            <li class="active" onclick="route('home')">HOME</li>
-            <li onclick="route('about')">ABOUT US</li>
-            <li onclick="route('project')">PROJECT</li>
-            <li onclick="route('guide')">GUIDE</li>
-        </ul>
-        <div class="auth-cluster" id="auth-ui">
-            <button class="btn-cyber" onclick="route('auth')">LOGIN</button>
-            <button class="btn-cyber btn-solid" onclick="route('auth')">SIGN UP</button>
+<nav>
+    <div class="logo">CORE_TERMINAL</div>
+    <ul class="nav-links">
+        <li class="active" onclick="showPage('home')">HOME</li>
+        <li onclick="showPage('about')">ABOUT US</li>
+        <li onclick="showPage('project')">PROJECT</li>
+        <li onclick="showPage('guide')">GUIDE</li>
+    </ul>
+    <div id="auth-nav">
+        <button onclick="showPage('auth')" style="background:none; border:1px solid #fff; color:#fff; padding:8px 20px; font-size:0.7rem; letter-spacing:1px;">LOGIN</button>
+    </div>
+</nav>
+
+<div id="home" class="page active">
+    <div class="hero">
+        <p style="letter-spacing: 8px; font-size: 0.7rem; color: var(--theme); margin-bottom: 20px;">PROJECT V.04 // KINETIC AI</p>
+        <h1>BEYOND<br>RECOGNITION</h1>
+        <div class="content-body">
+            Human emotions interpreted through the geometry of motion. 
+            A study on technology and human perception.
         </div>
-    </nav>
+        <button class="btn-prime" style="width: 300px; margin-top: 40px;" onclick="enterApp()">INITIALIZE SYSTEM</button>
+    </div>
+    <div class="viz-container">
+        <canvas id="sentinel-canvas"></canvas>
+    </div>
+</div>
 
-    <div id="home" class="page-content active">
-        <div class="hero-text">
-            <p style="color: var(--theme); letter-spacing: 10px; margin-bottom: 10px; font-weight: bold;">NEURAL KINETIC TERMINAL</p>
-            <h1>BIOMETRIC<br>EMOTION ENGINE</h1>
-            <p>Advanced real-time skeletal tracking interface interpreting human emotional paradigms through kinematic coordination analysis.</p>
-            <div style="margin-top: 40px;">
-                <button class="btn-cyber btn-solid" style="padding: 18px 50px; font-size: 1.2rem;" onclick="attemptStart()">INITIALIZE CORE</button>
+<div id="about" class="page">
+    <h1>ABOUT US</h1>
+    <div class="content-body" id="about-text">
+        We are creators from a background in visual and digital media, focusing on the relationship between technology and human perception. We attempt to observe and understand emotions not through language, but through bodily movement. This project is based on AI motion recognition, translating human gestures into emotional signals and exploring whether emotions can truly be “recognized.” By training and classifying three fundamental emotional states—Calm, Anxiety, and Happiness—we developed a system where users interact without words, relying solely on physical expression. Using accessible machine learning tools, we transform complex AI processes into an intuitive and perceptible experience. In an era where artificial intelligence increasingly participates in interpretation and decision-making, we hope this project prompts reflection: are emotions truly understood, or merely identified and defined?
+    </div>
+</div>
+
+<div id="project" class="page">
+    <h1>PROJECT</h1>
+    <div class="content-body" id="project-text">
+        In today’s digital environment, artificial intelligence is increasingly involved in analyzing and interpreting human behavior and emotions. However, most emotion recognition systems rely heavily on facial expressions or voice input, which to some extent limits the diversity of emotional expression. Therefore, this project approaches the problem from a different perspective—using body movement as the primary basis for recognition, with facial expression as a secondary reference, to explore a more holistic way of perceiving human emotions.
+        <br><br>
+        This project is developed using Google’s Teachable Machine platform. By collecting and training motion data, we built a model capable of recognizing three fundamental emotional states: Calm, Anxiety, and Happiness. In the interactive experience, users do not need to provide verbal input; instead, they express emotions through specific body movements, which the system recognizes and responds to in real time, creating an intuitive human–computer interaction process.
+    </div>
+</div>
+
+<div id="guide" class="page">
+    <h1>GUIDE</h1>
+    <div class="content-body">Perform the following gestures to interact with the neural model.</div>
+    <div class="guide-grid">
+        <div class="guide-card">
+            <div class="pose-icon">
+                <div style="width: 20px; height: 60px; background: var(--theme); border-radius: 10px;"></div>
             </div>
+            <h3>CALM</h3>
+            <p style="font-size: 0.8rem; margin-top: 15px; color: var(--text-dim);">Stand still. Arms relaxed at sides. Minimal spatial interference.</p>
         </div>
-        
-        <div id="sentinel-viz">
-            <canvas id="sentinel-canvas"></canvas>
-            <div class="viz-label">SENTINEL_PROTOTYPE_v4</div>
+        <div class="guide-card">
+            <div class="pose-icon">
+                <div style="width: 40px; height: 40px; border: 2px solid var(--theme); transform: rotate(45deg);"></div>
+            </div>
+            <h3>ANXIETY</h3>
+            <p style="font-size: 0.8rem; margin-top: 15px; color: var(--text-dim);">Closed posture. Hands near face. Rapid inward movements.</p>
+        </div>
+        <div class="guide-card">
+            <div class="pose-icon">
+                <div style="width: 50px; height: 50px; border: 2px solid var(--theme); border-radius: 50%; box-shadow: 0 0 15px var(--theme);"></div>
+            </div>
+            <h3>HAPPINESS</h3>
+            <p style="font-size: 0.8rem; margin-top: 15px; color: var(--text-dim);">Expansive movements. Arms raised. Open chest posture.</p>
         </div>
     </div>
+</div>
 
-    <div id="about" class="page-content">
-        <h2>ABOUT THE INITIATIVE</h2>
-        <div class="tech-card" style="max-width: 900px; margin-top: 20px;">
-            <h3 style="color: var(--theme); margin-bottom: 20px;">OUR MISSION</h3>
-            <p>We are a specialized collective operating at the intersection of Neural Engineering and Kinetic Design. Project CORE is dedicated to decoding human sentiment purely through body language, moving beyond traditional, privacy-invasive facial recognition systems.</p>
-            <p>Our research focuses on identifying macro and micro-gestures that correlate with internal emotional states, creating a seamless, non-verbal communication bridge between humans and machines in next-generation digital environments.</p>
-        </div>
+<div id="auth" class="page">
+    <div class="auth-card">
+        <h2 style="font-family: 'Orbitron'; margin-bottom: 30px; text-align: center;">AUTHORIZE</h2>
+        <button class="btn-google" onclick="handleGoogleLogin()">
+            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18"> CONTINUE WITH GOOGLE
+        </button>
+        <div class="divider">OR USE OPERATOR EMAIL</div>
+        <input type="email" id="user-email" placeholder="EMAIL ADDRESS">
+        <input type="password" placeholder="PASSWORD">
+        <button class="btn-prime" onclick="sendVerification()">SIGN UP / LOGIN</button>
     </div>
+</div>
 
-    <div id="project" class="page-content">
-        <h2>SYSTEM SPECIFICATIONS</h2>
-        <div class="grid-cards">
-            <div class="tech-card">
-                <h3>POSE_NET ARCHITECTURE</h3>
-                <p>Powered by a customized lightweight PoseNet model running locally via TensorFlow.js. Maps 17 distinct skeletal vertices at up to 60 FPS directly within the browser environment.</p>
-            </div>
-            <div class="tech-card">
-                <h3>KINETIC PARADIGMS</h3>
-                <p>Currently training to identify three foundational emotional paradigms based on spatial coordination: CALM (Baseline Homeostasis), ANXIOUS (Kinetic Overload), and HAPPY (Spatial Expansion).</p>
-            </div>
-            <div class="tech-card">
-                <h3>EDGE COMPUTING</h3>
-                <p>100% Client-Side Processing. No biometric or video data is ever transmitted to external servers, ensuring absolute operator privacy during the neural link session.</p>
-            </div>
-        </div>
+<div id="verify-overlay">
+    <div>
+        <h1 style="font-size: 2rem;">VERIFICATION SENT</h1>
+        <p class="content-body" style="margin: 0 auto 30px;">A secure link has been sent to your email.<br>Please verify to access the CORE terminal.</p>
+        <button class="btn-prime" style="width: 200px;" onclick="closeVerify()">BACK</button>
     </div>
+</div>
 
-    <div id="guide" class="page-content">
-        <h2>CALIBRATION PROTOCOL</h2>
-        <p style="margin-bottom: 40px;">Operators must maintain a distance of 2-3 meters from the sensor. Hold each pose for 2 seconds for neural matrix synchronization.</p>
-        <div class="grid-cards">
-            <div class="tech-card" style="border-top-color: #0088ff">
-                <h3 style="color: #0088ff">[01] CALM (BASELINE)</h3>
-                <p>Neutral, relaxed posture. Arms hang naturally at sides. Static or minimal movement. Mapped as biological homeostasis.</p>
-            </div>
-            <div class="tech-card" style="border-top-color: #ff0055">
-                <h3 style="color: #ff0055">[02] ANXIOUS (STRESS)</h3>
-                <p>Closed posture. Restless inward motions. Hands touching face or head. Leaning forward. Mapped as kinetic overload.</p>
-            </div>
-            <div class="tech-card" style="border-top-color: #00ffcc">
-                <h3 style="color: #00ffcc">[03] HAPPY (EUPHORIA)</h3>
-                <p>Expansive, energetic motions. Arms raised high or dancing. Head tilted upward. Mapped as spatial expansion.</p>
-            </div>
+<div id="experience" class="page">
+    <div class="hud-layout">
+        <div id="video-wrap">
+            <canvas id="webcam-canvas"></canvas>
+            <div style="position:absolute; top:20px; left:20px; font-size:0.6rem; color:var(--theme);">SENSOR_LIVE // 60FPS</div>
         </div>
-    </div>
-
-    <div id="auth" class="page-content">
-        <div class="auth-box">
-            <h2 style="text-align: center; margin-bottom: 40px; color: #fff; letter-spacing: 3px;">AUTHORIZATION</h2>
-            <form onsubmit="handleLogin(event)">
-                <div class="input-group">
-                    <label>OPERATOR_ID (EMAIL)</label>
-                    <input type="email" required placeholder="operator.admin@core.os">
-                </div>
-                <div class="input-group">
-                    <label>ACCESS_CYPHER</label>
-                    <input type="password" required placeholder="••••••••••••">
-                </div>
-                <button type="submit" class="btn-cyber btn-solid" style="width: 100%; margin-top: 15px; font-size: 1.1rem; padding: 18px;">ESTABLISH NEURAL LINK</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="experience" class="page-content">
-        <div class="hud-layout">
-            <div id="video-core">
-                <div class="scanner"></div>
-                <canvas id="webcam-canvas"></canvas>
-                <div style="position: absolute; bottom: 20px; left: 20px; color: var(--theme); font-size: 0.85rem; background: rgba(0,0,0,0.6); padding: 8px 15px; font-family: 'Share Tech Mono'; border: 1px solid rgba(255,255,255,0.1);">
-                    LIVE BIOMETRIC FEED [ACTIVE_LINK]
-                </div>
+        <div style="display:flex; flex-direction:column; gap:20px;">
+            <div class="console" style="height: 200px;">
+                <h3 style="margin-bottom:15px; font-size:0.8rem;">PROBABILITY_MATRIX</h3>
+                <div id="bars-root"></div>
             </div>
-            
-            <div class="data-panel">
-                <div class="hud-box">
-                    <h3 style="font-size: 1.2rem; margin-bottom: 25px; color: #fff;">PROBABILITY MATRIX</h3>
-                    <div id="bars-container"></div>
-                </div>
-
-                <div class="hud-box" style="flex-grow: 1; display: flex; flex-direction: column; padding: 0; border-left: none; background: none;">
-                    <div id="ai-console">
-                        > AWAITING SKELETAL INPUT...<span class="blink">_</span>
-                    </div>
-                </div>
-
-                <button class="btn-cyber" style="border-color: #ef4444; color: #ef4444; width: 100%;" onclick="terminateSystem()">TERMINATE CONNECTION</button>
+            <div class="console" id="ai-log">
+                > INITIALIZING NEURAL LINK...<br>> WAITING FOR KINETIC INPUT...
             </div>
+            <button class="btn-prime" style="background:#ef4444;" onclick="location.reload()">TERMINATE</button>
         </div>
     </div>
 </div>
@@ -310,401 +225,183 @@
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
 
 <script>
-    // --- Global State & Config ---
-    let isAuthenticated = false;
-    let systemRunning = false;
-    const modelURL_TM = "https://teachablemachine.withgoogle.com/models/sTBoNGgmv/";
+    let currentThemeColor = "#00f0ff";
+    let isLogged = false;
 
-    // Mouse Tracking for Interactions
-    const mouse = { x: null, y: null, radius: 150 };
-    window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
-    window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
-
-    // --- 1. Main Interactive Background Particles (Neural Net style) ---
+    // --- Background Point Cloud ---
     const bgCanvas = document.getElementById('bg-canvas');
-    const bgCtx = bgCanvas.getContext('2d');
-    let particlesArray = [];
+    const ctx = bgCanvas.getContext('2d');
+    let particles = [];
+    const mouse = { x: 0, y: 0, radius: 100 };
+
+    window.addEventListener('mousemove', e => { mouse.x = e.x; mouse.y = e.y; });
 
     class Particle {
         constructor() {
             this.x = Math.random() * bgCanvas.width;
             this.y = Math.random() * bgCanvas.height;
-            // Original position for mouse interaction fallback
+            this.size = Math.random() * 1.5;
             this.baseX = this.x; this.baseY = this.y;
-            this.size = Math.random() * 2 + 0.5;
-            // Slow float velocity
-            this.vx = (Math.random() - 0.5) * 0.3;
-            this.vy = (Math.random() - 0.5) * 0.3;
             this.density = (Math.random() * 30) + 1;
         }
         draw() {
-            bgCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
-            bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2); bgCtx.fill();
+            ctx.fillStyle = currentThemeColor;
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
         }
         update() {
-            // Standard float
-            this.baseX += this.vx; this.baseY += this.vy;
-            // Border wrap
-            if(this.baseX > bgCanvas.width) this.baseX = 0; else if(this.baseX < 0) this.baseX = bgCanvas.width;
-            if(this.baseY > bgCanvas.height) this.baseY = 0; else if(this.baseY < 0) this.baseY = bgCanvas.height;
+            let dx = mouse.x - this.x;
+            let dy = mouse.y - this.y;
+            let distance = Math.sqrt(dx*dx + dy*dy);
+            let forceDirectionX = dx / distance;
+            let forceDirectionY = dy / distance;
+            let force = (mouse.radius - distance) / mouse.radius;
+            let directionX = forceDirectionX * force * this.density;
+            let directionY = forceDirectionY * force * this.density;
 
-            // Mouse Interaction (Push force)
-            if (mouse.x != null && mouse.y != null) {
-                let dx = mouse.x - this.x;
-                let dy = mouse.y - this.y;
-                let distance = Math.sqrt(dx*dx + dy*dy);
-                let forceDirectionX = dx / distance;
-                let forceDirectionY = dy / distance;
-                
-                if (distance < mouse.radius) {
-                    // Force gets stronger as mouse gets closer, modulated by density
-                    let force = (mouse.radius - distance) / mouse.radius;
-                    let directionX = forceDirectionX * force * this.density;
-                    let directionY = forceDirectionY * force * this.density;
-                    this.x -= directionX; this.y -= directionY;
-                } else {
-                    // Ease back to floating base position
-                    if (this.x !== this.baseX) {
-                        let dxBack = this.x - this.baseX;
-                        this.x -= dxBack/15;
-                    }
-                    if (this.y !== this.baseY) {
-                        let dyBack = this.y - this.baseY;
-                        this.y -= dyBack/15;
-                    }
-                }
+            if (distance < mouse.radius) {
+                this.x -= directionX; this.y -= directionY;
             } else {
-                // Return to base flow if no mouse
-                if (this.x !== this.baseX) { this.x -= (this.x - this.baseX)/20; }
-                if (this.y !== this.baseY) { this.y -= (this.y - this.baseY)/20; }
+                if (this.x !== this.baseX) { this.x -= (this.x - this.baseX) / 10; }
+                if (this.y !== this.baseY) { this.y -= (this.y - this.baseY) / 10; }
             }
         }
     }
 
-    function connectParticles() {
-        let opacityValue = 1;
-        const themeColor = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
-        const maxDistance = 100;
-
-        for (let a = 0; a < particlesArray.length; a++) {
-            for (let b = a; b < particlesArray.length; b++) {
-                let dx = particlesArray[a].x - particlesArray[b].x;
-                let dy = particlesArray[a].y - particlesArray[b].y;
-                let distance = Math.sqrt(dx*dx + dy*dy);
-
-                if (distance < maxDistance) {
-                    opacityValue = 1 - (distance/maxDistance);
-                    bgCtx.strokeStyle = themeColor.replace('rgb','rgba').replace(')', `, ${opacityValue * 0.2})`);
-                    bgCtx.lineWidth = 0.5;
-                    bgCtx.beginPath();
-                    bgCtx.moveTo(particlesArray[a].x, particlesArray[a].y);
-                    bgCtx.lineTo(particlesArray[b].x, particlesArray[b].y);
-                    bgCtx.stroke();
-                }
-            }
-        }
-    }
-
-    function initBgParticles() {
+    function initParticles() {
         bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
-        particlesArray = [];
-        // Density based on screen size
-        let numberOfParticles = (bgCanvas.width * bgCanvas.height) / 9000;
-        for(let i=0; i < numberOfParticles; i++) { particlesArray.push(new Particle()); }
+        particles = [];
+        for (let i = 0; i < 250; i++) particles.push(new Particle());
     }
-    
-    function animateBg() {
-        bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-        for(let i=0; i < particlesArray.length; i++) {
-            particlesArray[i].update();
-            particlesArray[i].draw();
-        }
-        connectParticles();
-        requestAnimationFrame(animateBg);
+
+    function animate() {
+        ctx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+        particles.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animate);
     }
-    window.addEventListener('resize', initBgParticles);
-    initBgParticles(); animateBg();
+    initParticles(); animate();
 
-
-    // --- 2. The Sentinel: HOME Page Skeleton Viz (Advanced static animation) ---
+    // --- 3D Sentinel Point-Skeleton ---
     const sentCanvas = document.getElementById('sentinel-canvas');
-    const sentCtx = sentCanvas.getContext('2d');
-    let sentinelAngle = 0;
+    const sCtx = sentCanvas.getContext('2d');
+    let angle = 0;
 
-    // Define a 3D pose in normalized space (-1 to 1)
-    const rawPoseModel = [
-        {id: 'nose', x: 0, y: -0.8, z: 0},
-        {id: 'lShoulder', x: -0.4, y: -0.5, z: 0}, {id: 'rShoulder', x: 0.4, y: -0.5, z: 0},
-        {id: 'lElbow', x: -0.6, y: -0.1, z: 0.2}, {id: 'rElbow', x: 0.6, y: -0.1, z: -0.2},
-        {id: 'lWrist', x: -0.5, y: 0.3, z: 0.4}, {id: 'rWrist', x: 0.5, y: 0.3, z: -0.4},
-        {id: 'lHip', x: -0.25, y: 0.1, z: 0}, {id: 'rHip', x: 0.25, y: 0.1, z: 0},
-        {id: 'lKnee', x: -0.3, y: 0.6, z: 0.1}, {id: 'rKnee', x: 0.3, y: 0.6, z: -0.1},
-        {id: 'lAnkle', x: -0.35, y: 0.9, z: 0.2}, {id: 'rAnkle', x: 0.35, y: 0.9, z: -0.2}
-    ];
-
-    const connections = [
-        ['lShoulder', 'rShoulder'], ['lShoulder', 'lElbow'], ['lElbow', 'lWrist'],
-        ['rShoulder', 'rElbow'], ['rElbow', 'rWrist'],
-        ['lShoulder', 'lHip'], ['rShoulder', 'rHip'], ['lHip', 'rHip'],
-        ['lHip', 'lKnee'], ['lKnee', 'lAnkle'], ['rHip', 'rKnee'], ['rKnee', 'rAnkle'],
-        ['nose', 'lShoulder'], ['nose', 'rShoulder']
-    ];
-
-    function project(point, angle, width, height) {
-        // Rotate around Y axis
-        let x_rot = point.x * Math.cos(angle) - point.z * Math.sin(angle);
-        let z_rot = point.x * Math.sin(angle) + point.z * Math.cos(angle);
-        // Perspective divide
-        let perspective = 1 + (z_rot * 0.3);
-        // Scale to canvas, center it
-        return {
-            x: (x_rot / perspective) * (width * 0.3) + (width/2),
-            y: (point.y) * (height * 0.45) + (height/2),
-            z: z_rot // keep for drawing logic
-        };
-    }
-
-    function initSentinel() {
-        const container = document.getElementById('sentinel-viz');
-        sentCanvas.width = container.offsetWidth; sentCanvas.height = container.offsetHeight;
-    }
-
-    function animateSentinel() {
-        if(document.getElementById('home').style.display === 'none') { requestAnimationFrame(animateSentinel); return; }
-
-        sentCtx.clearRect(0, 0, sentCanvas.width, sentCanvas.height);
-        sentinelAngle += 0.005; // slow rotation
-
-        const currentTheme = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
-        const width = sentCanvas.width;
-        const height = sentCanvas.height;
-
-        // Project all points
-        let projectedPoints = {};
-        rawPoseModel.forEach(p => {
-            projectedPoints[p.id] = project(p, sentinelAngle, width, height);
-        });
-
-        // Draw Connections (Bones)
-        sentCtx.lineWidth = 1.5;
-        connections.forEach(([p1_id, p2_id]) => {
-            const p1 = projectedPoints[p1_id];
-            const p2 = projectedPoints[p2_id];
-            // Calc average depth for opacity
-            let avgZ = (p1.z + p2.z) / 2;
-            let opacity = 1 - ((avgZ + 1) / 2); // Map -1..1 to 1..0
-            sentCtx.strokeStyle = currentTheme.replace('rgb','rgba').replace(')', `, ${opacity * 0.4 + 0.1})`);
-            
-            sentCtx.beginPath();
-            sentCtx.moveTo(p1.x, p1.y);
-            sentCtx.lineTo(p2.x, p2.y);
-            sentCtx.stroke();
-        });
-
-        // Draw Points (Joints)
-        rawPoseModel.forEach(p_raw => {
-            const p = projectedPoints[p_raw.id];
-            let opacity = 1 - ((p.z + 1) / 2);
-            sentCtx.fillStyle = currentTheme.replace('rgb','rgba').replace(')', `, ${opacity * 0.7 + 0.2})`);
-            
-            sentCtx.beginPath();
-            sentCtx.arc(p.x, p.y, 3 * (opacity * 0.5 + 0.5), 0, Math.PI * 2);
-            sentCtx.fill();
-            
-            // Subtle glow on joints
-            sentCtx.shadowColor = currentTheme;
-            sentCtx.shadowBlur = 10 * opacity;
-            sentCtx.stroke();
-            sentCtx.shadowBlur = 0; // reset
-        });
-
-        requestAnimationFrame(animateSentinel);
-    }
-    window.addEventListener('resize', initSentinel);
-    initSentinel(); animateSentinel();
-
-
-    // --- 3. Routing & Auth Gate ---
-    function route(pageId) {
-        if(pageId !== 'experience' && systemRunning) terminateSystem(false); 
-
-        document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
+    function drawSentinel() {
+        if(document.getElementById('home').style.display === 'none') { requestAnimationFrame(drawSentinel); return; }
+        sCtx.clearRect(0, 0, sentCanvas.width, sentCanvas.height);
+        angle += 0.01;
+        const center = { x: sentCanvas.width / 2, y: sentCanvas.height / 2 };
         
-        document.getElementById(pageId).classList.add('active');
-        
-        // Update Nav Highlighting
-        document.querySelectorAll('.nav-links li').forEach(item => {
-            if(item.innerText.toLowerCase().includes(pageId) || (pageId==='home' && item.innerText==='HOME')) {
-                item.classList.add('active');
+        // Define a complex bone structure
+        const joints = [
+            {x: 0, y: -100, z: 0}, {x: -40, y: -60, z: 20}, {x: 40, y: -60, z: -20},
+            {x: -60, y: 0, z: 40}, {x: 60, y: 0, z: -40}, {x: -30, y: 80, z: 10}, {x: 30, y: 80, z: -10}
+        ];
+
+        joints.forEach(j => {
+            let x = j.x * Math.cos(angle) - j.z * Math.sin(angle);
+            let z = j.x * Math.sin(angle) + j.z * Math.cos(angle);
+            let size = (z + 100) / 50;
+            
+            sCtx.fillStyle = currentThemeColor;
+            sCtx.shadowBlur = 15; sCtx.shadowColor = currentThemeColor;
+            // Draw joint as a small point cloud cluster
+            for(let i=0; i<5; i++) {
+                sCtx.beginPath();
+                sCtx.arc(center.x + x + Math.random()*10, center.y + j.y + Math.random()*10, size/2, 0, Math.PI*2);
+                sCtx.fill();
             }
         });
-        
-        // Ensure Sentinel redraws if returning home
-        if(pageId === 'home') initSentinel();
+        requestAnimationFrame(drawSentinel);
+    }
+    sentCanvas.width = 500; sentCanvas.height = 500;
+    drawSentinel();
+
+    // --- Logic ---
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
     }
 
-    function attemptStart() {
-        if (!isAuthenticated) route('auth');
-        else { route('experience'); startSystem(); }
+    function enterApp() {
+        if(!isLogged) showPage('auth');
+        else { showPage('experience'); startAI(); }
     }
 
-    function handleLogin(e) {
-        e.preventDefault();
-        isAuthenticated = true;
-        document.getElementById('auth-ui').innerHTML = `
-            <span style="color: var(--theme); font-size: 0.9rem; letter-spacing: 1px; font-weight:bold;">[ OPERATOR_ACTIVE ]</span>
-            <button class="btn-cyber" style="border-color: #475569; color: #94a3b8; padding: 10px 20px; font-size: 0.8rem;" onclick="logout()">LOGOUT</button>
-        `;
-        route('experience');
-        startSystem();
+    function sendVerification() {
+        const email = document.getElementById('user-email').value;
+        if(!email) return alert("Please enter email");
+        document.getElementById('verify-overlay').style.display = 'flex';
     }
 
-    function logout() {
-        isAuthenticated = false;
-        terminateSystem(false);
-        document.getElementById('auth-ui').innerHTML = `
-            <button class="btn-cyber" onclick="route('auth')">LOGIN</button>
-            <button class="btn-cyber btn-solid" onclick="route('auth')">SIGN UP</button>
-        `;
-        route('home');
+    function closeVerify() {
+        document.getElementById('verify-overlay').style.display = 'none';
+        isLogged = true;
+        document.getElementById('auth-nav').innerHTML = '<span style="font-size:0.7rem; color:var(--theme);">[ OPERATOR_VERIFIED ]</span>';
+        enterApp();
     }
 
-    // --- 4. Core AI Kinetic Logic ---
-    let model, webcam, webcamCtx, maxPredictions;
-    let currentState = ""; 
-    let loopFrame;
+    function handleGoogleLogin() {
+        isLogged = true;
+        closeVerify();
+    }
 
-    // AI Interpretation Logs (English Only)
-    const EMOTION_LOGS = {
-        calm: "> SCANNING BIOMETRICS...\n> POSTURE: NOMINAL SYMMETRY.\n> BIOLOGICAL FLOW: STABLE.\n> SYSTEM STATUS: NOMINAL CRUISING.",
-        anxious: "> ALERT: IRREGULAR KINETIC CONTRACTIONS!\n> CORTISOL LEVELS: SURGING (ESTIMATED).\n> POSTURE: INWARD / DEFENSIVE.\n> SYSTEM STATUS: INSTABILITY WARNING.",
-        happy: "> DOPAMINE SURGE DETECTED.\n> ENERGY PATHWAY: HIGH-FREQUENCY EXPANSION.\n> PREDICATED STATE: EUPHORIA.\n> SYSTEM STATUS: POSITIVE FEEDBACK ACTIVE."
-    };
+    // --- AI ---
+    const URL = "https://teachablemachine.withgoogle.com/models/sTBoNGgmv/";
+    let model, webcam;
 
-    async function startSystem() {
-        if (systemRunning) return;
-        systemRunning = true;
-        
-        document.getElementById('ai-console').innerHTML = "> INITIALIZING NEURAL LINK...<span class='blink'>_</span>";
-
-        model = await tmPose.load(modelURL_TM + "model.json", modelURL_TM + "metadata.json");
-        maxPredictions = model.getTotalClasses();
-
-        webcam = new tmPose.Webcam(600, 600, true); // size, size, flip
+    async function startAI() {
+        model = await tmPose.load(URL + "model.json", URL + "metadata.json");
+        webcam = new tmPose.Webcam(600, 600, true);
         await webcam.setup(); await webcam.play();
         
-        const canvas = document.getElementById("webcam-canvas");
-        canvas.width = 600; canvas.height = 600;
-        webcamCtx = canvas.getContext("2d");
-
-        const container = document.getElementById("bars-container");
-        container.innerHTML = "";
-        for (let i = 0; i < maxPredictions; i++) {
-            container.innerHTML += `
-                <div class="bar-wrap">
-                    <div class="bar-label">
-                        <span>${model.getClassLabels()[i]}</span>
-                        <span id="val-${i}">0%</span>
-                    </div>
-                    <div class="bar-bg"><div id="fill-${i}" class="bar-fill"></div></div>
-                </div>`;
-        }
-        loopFrame = window.requestAnimationFrame(expLoop);
+        const root = document.getElementById('bars-root');
+        root.innerHTML = "";
+        model.getClassLabels().forEach((l, i) => {
+            root.innerHTML += `<div class="bar-container">
+                <div class="bar-label"><span>${l.toUpperCase()}</span><span id="val-${i}">0%</span></div>
+                <div class="bar-bg"><div id="fill-${i}" class="bar-fill"></div></div>
+            </div>`;
+        });
+        loop();
     }
 
-    async function expLoop() {
-        if(!systemRunning) return;
+    async function loop() {
         webcam.update();
-        await predict();
-        loopFrame = window.requestAnimationFrame(expLoop);
-    }
-
-    async function predict() {
         const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
         const prediction = await model.predict(posenetOutput);
 
-        let topIndex = 0;
-        for (let i = 0; i < maxPredictions; i++) {
-            const prob = prediction[i].probability;
-            document.getElementById(`val-${i}`).innerText = (prob * 100).toFixed(0) + "%";
-            document.getElementById(`fill-${i}`).style.width = (prob * 100).toFixed(0) + "%";
-            if (prob > prediction[topIndex].probability) topIndex = i;
-        }
+        prediction.forEach((p, i) => {
+            const prob = (p.probability * 100).toFixed(0);
+            document.getElementById(`val-${i}`).innerText = prob + "%";
+            document.getElementById(`fill-${i}`).style.width = prob + "%";
+        });
 
-        const topProb = prediction[topIndex].probability;
-        const topLabel = prediction[topIndex].className.toLowerCase();
-
-        // Threshold to apply visuals
-        if (topProb > 0.65) {
-            updateDynamicFX(topIndex, topLabel);
-        }
-
-        drawWebcamPose(pose);
-    }
-
-    // --- 5. Advanced Dynamic FX (Thematic State Changes) ---
-    function updateDynamicFX(index, label) {
-        let themeColor, themeGlow, fxClass, logText;
-
-        // Determine profile based on Label Keywords or failing that, Index
-        if (label.includes("anx") || label.includes("sad") || label.includes("stress") || index === 1) {
-            // ANXIOUS (Red/Purple)
-            themeColor = "#ff0055"; themeGlow = "rgba(255, 0, 85, 0.5)"; fxClass = "fx-shake"; logText = EMOTION_LOGS.anxious;
-        } 
-        else if (label.includes("hap") || label.includes("joy") || label.includes("dance") || index === 2) {
-            // HAPPY (Cyan/Teal)
-            themeColor = "#00ffcc"; themeGlow = "rgba(0, 255, 204, 0.5)"; fxClass = "fx-pulse"; logText = EMOTION_LOGS.happy;
-        } 
-        else {
-            // CALM (Fallback / Index 0)
-            themeColor = "#00f0ff"; themeGlow = "rgba(0, 240, 255, 0.4)"; fxClass = ""; logText = EMOTION_LOGS.calm;
-        }
-
-        // Apply if state changed to prevent flicker
-        if (currentState !== label) {
-            currentState = label;
-
-            // Update Root CSS Variables (Instant Global sync)
-            document.documentElement.style.setProperty('--theme', themeColor);
-            document.documentElement.style.setProperty('--theme-glow', themeGlow);
-
-            // Apply Fullscreen/HUD FX Class
-            document.getElementById('app-container').className = fxClass; 
-
-            // Update AI Console with typing effect emulation
-            document.getElementById('ai-console').innerHTML = logText.replace(/\n/g, '<br><br>') + '<br><br><span class="blink">_</span>';
-        }
-    }
-
-    function drawWebcamPose(pose) {
-        if (webcam.canvas) {
-            webcamCtx.drawImage(webcam.canvas, 0, 0);
-            if (pose) {
-                const min = 0.5;
-                // Sync skeletal color with dynamic theme
-                const color = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
-                webcamCtx.strokeStyle = color;
-                webcamCtx.fillStyle = color;
-                webcamCtx.lineWidth = 5; // Thicker bones for HUD
-                tmPose.drawKeypoints(pose.keypoints, min, webcamCtx);
-                tmPose.drawSkeleton(pose.keypoints, min, webcamCtx);
+        // Dynamic Theme Change
+        const top = prediction.sort((a,b) => b.probability - a.probability)[0];
+        if(top.probability > 0.7) {
+            if(top.className.toLowerCase().includes('anx')) {
+                currentThemeColor = "#ff0055";
+                document.getElementById('ai-log').innerHTML = "> ALERT: KINETIC INSTABILITY DETECTED<br>> HEART RATE ESTIMATE: ELEVATED";
+            } else if(top.className.toLowerCase().includes('hap')) {
+                currentThemeColor = "#00ffcc";
+                document.getElementById('ai-log').innerHTML = "> POSITIVE ENERGY EXPANSION<br>> DOPAMINE FEEDBACK: OPTIMAL";
+            } else {
+                currentThemeColor = "#00f0ff";
+                document.getElementById('ai-log').innerHTML = "> BASELINE SCANNING...<br>> SYSTEM NOMINAL";
             }
+            document.documentElement.style.setProperty('--theme', currentThemeColor);
         }
-    }
 
-    function terminateSystem(goHome = true) {
-        systemRunning = false;
-        if(webcam) webcam.stop();
-        if(loopFrame) window.cancelAnimationFrame(loopFrame);
-        
-        // Reset Visuals to Baseline
-        document.documentElement.style.setProperty('--theme', '#00f0ff');
-        document.documentElement.style.setProperty('--theme-glow', 'rgba(0, 240, 255, 0.4)');
-        document.getElementById('app-container').className = "";
-        currentState = "";
-        
-        if(goHome) route('home');
+        const canvas = document.getElementById('webcam-canvas');
+        const ctxW = canvas.getContext('2d');
+        canvas.width = 600; canvas.height = 600;
+        ctxW.drawImage(webcam.canvas, 0, 0);
+        if(pose) {
+            ctxW.strokeStyle = currentThemeColor; ctxW.lineWidth = 2;
+            tmPose.drawSkeleton(pose.keypoints, 0.5, ctxW);
+        }
+        requestAnimationFrame(loop);
     }
 </script>
 </body>
