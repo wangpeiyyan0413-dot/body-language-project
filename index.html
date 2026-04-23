@@ -3,90 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CORE_OS - Kinetic Emotion Analysis</title>
+    <title>CORE_OS - Kinetic Neural Terminal</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
 
         :root {
             --theme: #00f0ff; 
-            --theme-glow: rgba(0, 240, 255, 0.3);
-            --bg-base: #050508;
-            --nav-bg: rgba(5, 5, 8, 0.95);
-            --text-dim: #94a3b8;
+            --theme-glow: rgba(0, 240, 255, 0.4);
+            --bg-base: #020204;
+            --text-main: #e2e8f0;
+            --nav-bg: rgba(2, 2, 4, 0.95);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; cursor: crosshair; }
+        * { box-sizing: border-box; margin: 0; padding: 0; cursor: crosshair; user-select: none; }
         
         body, html {
             width: 100%; height: 100%;
-            background-color: var(--bg-base); color: #e2e8f0;
+            background-color: var(--bg-base); color: var(--text-main);
             font-family: 'Share Tech Mono', monospace; overflow: hidden;
         }
 
-        /* --- Point Cloud Canvas --- */
-        #bg-canvas { position: absolute; inset: 0; z-index: 1; }
+        #bg-canvas { position: absolute; inset: 0; z-index: 1; opacity: 0.7; }
 
         /* --- Navigation --- */
         nav {
-            position: fixed; top: 0; width: 100%; z-index: 100;
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
             display: flex; justify-content: space-between; align-items: center;
-            padding: 20px 60px; background: var(--nav-bg);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            backdrop-filter: blur(20px);
+            padding: 15px 50px; background: var(--nav-bg); backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 240, 255, 0.2);
         }
         
-        .logo { font-family: 'Orbitron'; font-size: 1.5rem; font-weight: 900; color: var(--theme); letter-spacing: 4px; }
-        .nav-links { display: flex; list-style: none; gap: 40px; }
-        .nav-links li { font-size: 0.9rem; letter-spacing: 2px; color: var(--text-dim); transition: 0.3s; }
+        .logo { font-family: 'Orbitron'; font-size: 1.6rem; font-weight: 900; color: var(--theme); letter-spacing: 3px; text-shadow: 0 0 15px var(--theme); }
+        .nav-links { display: flex; list-style: none; gap: 35px; }
+        .nav-links li { font-size: 1rem; letter-spacing: 1px; color: #818cf8; text-transform: uppercase; transition: 0.3s; }
         .nav-links li:hover, .nav-links li.active { color: var(--theme); text-shadow: 0 0 10px var(--theme); }
 
-        /* --- Page Structure --- */
-        .page {
-            position: absolute; inset: 0; top: 80px; padding: 40px 10%;
-            display: none; z-index: 10; flex-direction: column; overflow-y: auto;
+        /* --- Pages --- */
+        .page-content {
+            position: absolute; top: 80px; left: 0; right: 0; bottom: 0;
+            padding: 40px 8vw; display: none; z-index: 10; flex-direction: column; overflow-y: auto;
         }
-        .page.active { display: flex; animation: fadeIn 0.8s ease forwards; }
-        @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+        .page-content.active { display: flex; animation: pageInit 0.6s ease-out forwards; }
+        @keyframes pageInit { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        h1 { font-family: 'Orbitron'; font-size: 3.5rem; margin-bottom: 20px; line-height: 1.1; }
-        h2 { font-family: 'Orbitron'; color: var(--theme); margin-bottom: 30px; letter-spacing: 3px; }
-        p { line-height: 1.8; color: #cbd5e1; margin-bottom: 20px; font-size: 1.05rem; text-align: justify; }
+        h1, h2 { font-family: 'Orbitron'; text-transform: uppercase; margin-bottom: 25px; }
+        h1 { font-size: 4rem; line-height: 1.1; }
+        p { font-size: 1.1rem; line-height: 1.8; color: #cbd5e1; margin-bottom: 20px; text-align: justify; }
 
-        /* --- Sentinel Viz (Home) --- */
-        #home { flex-direction: row; align-items: center; gap: 50px; }
-        .hero-content { flex: 1.2; }
-        #sentinel-container { flex: 0.8; height: 500px; position: relative; }
+        /* --- Sentinel Viz (Enhanced) --- */
+        #home { flex-direction: row; align-items: center; justify-content: space-between; }
+        #sentinel-viz { flex: 1; height: 80%; max-width: 45%; position: relative; display: flex; justify-content: center; align-items: center; }
+        #sentinel-canvas { width: 100%; height: 100%; }
+        .scan-ring {
+            position: absolute; border: 1px solid var(--theme); border-radius: 50%;
+            opacity: 0.1; animation: ringPulse 4s infinite linear;
+        }
 
-        /* --- Buttons --- */
+        @keyframes ringPulse { from { transform: scale(0.5) rotateX(70deg); opacity: 0.4; } to { transform: scale(1.5) rotateX(70deg); opacity: 0; } }
+
+        /* --- Auth Section --- */
+        .auth-card {
+            width: 450px; margin: 40px auto; padding: 40px;
+            background: rgba(255,255,255,0.03); border: 1px solid var(--theme);
+            box-shadow: 0 0 30px var(--theme-glow);
+        }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 0.8rem; color: var(--theme); margin-bottom: 8px; }
+        .input-group input {
+            width: 100%; background: #000; border: 1px solid #334155;
+            color: #fff; padding: 12px; font-family: 'Share Tech Mono'; outline: none;
+        }
+        .input-group input:focus { border-color: var(--theme); }
+        
         .btn-cyber {
-            background: transparent; border: 1px solid var(--theme); color: var(--theme);
-            padding: 15px 40px; font-family: 'Orbitron'; font-size: 1rem; letter-spacing: 2px;
-            transition: 0.3s; text-transform: uppercase; margin-top: 20px;
+            width: 100%; padding: 15px; background: transparent; border: 1px solid var(--theme);
+            color: var(--theme); font-family: 'Orbitron'; font-weight: bold; transition: 0.3s;
         }
         .btn-cyber:hover { background: var(--theme); color: #000; box-shadow: 0 0 20px var(--theme); }
+        
+        .google-login {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            background: #fff; color: #000; margin-top: 15px; border: none; font-weight: bold;
+        }
 
-        /* --- Auth --- */
-        .auth-container { width: 450px; margin: auto; background: rgba(255,255,255,0.03); padding: 40px; border: 1px solid rgba(255,255,255,0.1); }
-        .input-group { margin-bottom: 20px; }
-        .input-group label { display: block; font-size: 0.7rem; color: var(--theme); margin-bottom: 10px; }
-        .input-group input { width: 100%; background: #000; border: 1px solid #334155; color: #fff; padding: 12px; font-family: 'Share Tech Mono'; outline: none; }
-        .input-group input:focus { border-color: var(--theme); }
-        .google-btn { width: 100%; padding: 12px; margin-top: 15px; background: #fff; color: #000; border: none; font-weight: bold; font-family: 'Share Tech Mono'; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        /* --- Guide Visuals --- */
+        .guide-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 30px; }
+        .guide-item { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); padding: 20px; }
+        .guide-image-placeholder {
+            width: 100%; height: 250px; background: #111; position: relative;
+            margin-bottom: 20px; border: 1px solid rgba(0, 240, 255, 0.3);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .guide-image-placeholder img { width: 90%; height: 90%; object-fit: contain; }
+        .tag { font-size: 0.7rem; color: var(--theme); border: 1px solid var(--theme); padding: 2px 8px; margin-bottom: 10px; }
 
-        /* --- Guide Section --- */
-        .guide-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 20px; }
-        .guide-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); padding: 20px; text-align: center; }
-        .guide-img { width: 100%; height: 220px; background: #111; margin-bottom: 15px; border: 1px solid var(--theme); overflow: hidden; }
-        .guide-img img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
-
-        /* --- Experience --- */
+        /* --- Experience HUD --- */
+        #experience { padding: 20px; }
         .hud-layout { display: grid; grid-template-columns: 1fr 400px; gap: 20px; height: 100%; }
-        #webcam-box { position: relative; background: #000; border: 1px solid var(--theme); }
-        #ai-console { background: #000; padding: 20px; font-size: 0.9rem; color: var(--theme); border-left: 3px solid var(--theme); flex-grow: 1; overflow-y: auto; }
-        .bar-fill { height: 4px; background: var(--theme); transition: width 0.3s; box-shadow: 0 0 10px var(--theme); }
-
-        .fx-shake { animation: shake 0.1s infinite; }
-        @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -1px); } 100% { transform: translate(1px, -1px); } }
+        #video-core { border: 2px solid var(--theme); position: relative; background: #000; }
+        #ai-console { background: #000; border: 1px solid #111; padding: 20px; color: var(--theme); font-size: 0.9rem; overflow-y: auto; flex-grow: 1; }
     </style>
 </head>
 <body>
@@ -101,96 +116,113 @@
         <li onclick="route('project')">PROJECT</li>
         <li onclick="route('guide')">GUIDE</li>
     </ul>
-    <div id="auth-nav">
-        <button class="btn-cyber" style="padding: 8px 20px; font-size: 0.7rem;" onclick="route('login')">OPERATOR LOGIN</button>
-    </div>
+    <button class="btn-cyber" style="width: auto; padding: 8px 20px;" onclick="route('auth')">LINK_SYSTEM</button>
 </nav>
 
-<div id="home" class="page active">
-    <div class="hero-content">
-        <p style="color: var(--theme); letter-spacing: 8px;">KINETIC PERCEPTION INTERFACE</p>
-        <h1>NEURAL<br>EMOTION ENGINE</h1>
-        <p>A research-driven terminal exploring the intersection of body language and artificial intelligence. Decode your physical expression into emotional data streams.</p>
-        <button class="btn-cyber" onclick="route('experience')">INITIALIZE LINK</button>
+<div id="home" class="page-content active">
+    <div style="max-width: 50%;">
+        <p style="color: var(--theme); letter-spacing: 8px; font-weight: bold;">NEURAL KINETIC TERMINAL</p>
+        <h1>BIOMETRIC<br>EMOTION ENGINE</h1>
+        <p>A specialized digital interface decoding human sentiment through kinematic coordination and real-time skeletal analysis.</p>
+        <button class="btn-cyber" style="width: 250px;" onclick="route('experience')">INITIALIZE LINK</button>
     </div>
-    <div id="sentinel-container">
+    <div id="sentinel-viz">
+        <div class="scan-ring" style="width: 300px; height: 300px;"></div>
+        <div class="scan-ring" style="width: 450px; height: 450px; animation-delay: -2s;"></div>
         <canvas id="sentinel-canvas"></canvas>
     </div>
 </div>
 
-<div id="about" class="page">
+<div id="about" class="page-content">
     <h2>ABOUT US</h2>
-    <p>We are creators from a background in visual and digital media, focusing on the relationship between technology and human perception. We attempt to observe and understand emotions not through language, but through bodily movement. This project is based on AI motion recognition, translating human gestures into emotional signals and exploring whether emotions can truly be “recognized.”</p>
-    <p>By training and classifying three fundamental emotional states—Calm, Anxiety, and Happiness—we developed a system where users interact without words, relying solely on physical expression. Using accessible machine learning tools, we transform complex AI processes into an intuitive and perceptible experience. In an era where artificial intelligence increasingly participates in interpretation and decision-making, we hope this project prompts reflection: are emotions truly understood, or merely identified and defined?</p>
+    <div style="max-width: 900px;">
+        <p>We are creators from a background in visual and digital media, focusing on the relationship between technology and human perception. We attempt to observe and understand emotions not through language, but through bodily movement. This project is based on AI motion recognition, translating human gestures into emotional signals and exploring whether emotions can truly be “recognized.”</p>
+        <p>By training and classifying three fundamental emotional states—Calm, Anxiety, and Happiness—we developed a system where users interact without words, relying solely on physical expression. Using accessible machine learning tools, we transform complex AI processes into an intuitive and perceptible experience. In an era where artificial intelligence increasingly participates in interpretation and decision-making, we hope this project prompts reflection: are emotions truly understood, or merely identified and defined?</p>
+    </div>
 </div>
 
-<div id="project" class="page">
+<div id="project" class="page-content">
     <h2>PROJECT</h2>
-    <p>In today’s digital environment, artificial intelligence is increasingly involved in analyzing and interpreting human behavior and emotions. However, most emotion recognition systems rely heavily on facial expressions or voice input, which to some extent limits the diversity of emotional expression. Therefore, this project approaches the problem from a different perspective—using body movement as the primary basis for recognition, with facial expression as a secondary reference, to explore a more holistic way of perceiving human emotions.</p>
-    <p>This project is developed using Google’s Teachable Machine platform. By collecting and training motion data, we built a model capable of recognizing three fundamental emotional states: Calm, Anxiety, and Happiness. In the interactive experience, users do not need to provide verbal input; instead, they express emotions through specific body movements, which the system recognizes and responds to in real time, creating an intuitive human–computer interaction process.</p>
-    <p>Through this approach, we aim to move beyond traditional face-centered emotion recognition and shift attention toward the expressive potential of the human body. At the same time, by leveraging accessible machine learning tools, we transform complex technical processes into participatory and experiential interactions, allowing users to understand the technology through engagement and reconsider how emotions are perceived and defined.</p>
+    <div style="max-width: 900px;">
+        <p>In today’s digital environment, artificial intelligence is increasingly involved in analyzing and interpreting human behavior and emotions. However, most emotion recognition systems rely heavily on facial expressions or voice input, which to some extent limits the diversity of emotional expression. Therefore, this project approaches the problem from a different perspective—using body movement as the primary basis for recognition, with facial expression as a secondary reference, to explore a more holistic way of perceiving human emotions.</p>
+        <p>This project is developed using Google’s Teachable Machine platform. By collecting and training motion data, we built a model capable of recognizing three fundamental emotional states: Calm, Anxiety, and Happiness. In the interactive experience, users do not need to provide verbal input; instead, they express emotions through specific body movements, which the system recognizes and responds to in real time, creating an intuitive human–computer interaction process.</p>
+        <p>Through this approach, we aim to move beyond traditional face-centered emotion recognition and shift attention toward the expressive potential of the human body. At the same time, by leveraging accessible machine learning tools, we transform complex technical processes into participatory and experiential interactions, allowing users to understand the technology through engagement and reconsider how emotions are perceived and defined.</p>
+    </div>
 </div>
 
-<div id="guide" class="page">
+<div id="guide" class="page-content">
     <h2>CALIBRATION GUIDE</h2>
+    <p>Follow the specific kinetic postures below to synchronize with the neural matrix.</p>
     <div class="guide-grid">
-        <div class="guide-card">
-            <div class="guide-img">
-                
+        <div class="guide-item">
+            <div class="guide-image-placeholder">
+                <div class="tag">POSTURE_01</div>
+                <span style="font-size: 0.8rem; color: #555; text-align: center; padding: 20px;">[ Image: A person standing centered, arms relaxed at sides, neutral spine. ]</span>
             </div>
-            <h3 style="color:#00f0ff">CALM</h3>
-            <p style="font-size: 0.9rem; margin-top:10px;">Maintain biological homeostasis. Neutral spine, hands relaxed at sides or on lap. Minimal kinetic output.</p>
+            <h3 style="color: var(--theme)">CALM</h3>
+            <p style="font-size: 0.9rem;">Maintain baseline homeostasis. Stand still with arms hanging naturally. Minimal skeletal jitter.</p>
         </div>
-        <div class="guide-card">
-            <div class="guide-img">
-                
+        <div class="guide-item">
+            <div class="guide-image-placeholder">
+                <div class="tag">POSTURE_02</div>
+                <span style="font-size: 0.8rem; color: #555; text-align: center; padding: 20px;">[ Image: A person with shoulders hunched, hands touching face or head, protective posture. ]</span>
             </div>
-            <h3 style="color:#ff0055">ANXIETY</h3>
-            <p style="font-size: 0.9rem; margin-top:10px;">Kinetic overload. Bring hands towards face, hunch shoulders, or execute small, restless repetitive movements.</p>
+            <h3 style="color: #ff0055">ANXIETY</h3>
+            <p style="font-size: 0.9rem;">Kinetic overload. Bring hands towards head or chest. Create a closed, restless physical loop.</p>
         </div>
-        <div class="guide-card">
-            <div class="guide-img">
-                
+        <div class="guide-item">
+            <div class="guide-image-placeholder">
+                <div class="tag">POSTURE_03</div>
+                <span style="font-size: 0.8rem; color: #555; text-align: center; padding: 20px;">[ Image: A person with arms raised wide, chest open, energetic dancing movement. ]</span>
             </div>
-            <h3 style="color:#00ffcc">HAPPINESS</h3>
-            <p style="font-size: 0.9rem; margin-top:10px;">Spatial expansion. Raise arms high, expand chest, or perform open, energetic gestures. High energy output.</p>
+            <h3 style="color: #00ffcc">HAPPINESS</h3>
+            <p style="font-size: 0.9rem;">Spatial expansion. Raise arms above shoulders or wave energetically. Maximize skeletal range.</p>
         </div>
     </div>
 </div>
 
-<div id="login" class="page">
-    <div class="auth-container">
-        <h2 style="text-align: center; font-size: 1.2rem;">OPERATOR AUTH</h2>
-        <div class="input-group">
-            <label>EMAIL ADDRESS</label>
-            <input type="email" placeholder="operator@core_os.io">
+<div id="auth" class="page-content">
+    <div class="auth-card">
+        <h2 style="text-align: center; font-size: 1.2rem;">OPERATOR AUTHORIZATION</h2>
+        
+        <div id="register-ui">
+            <div class="input-group">
+                <label>PERSONAL EMAIL</label>
+                <input type="email" placeholder="name@domain.com">
+            </div>
+            <div class="input-group">
+                <label>VERIFICATION CODE</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" placeholder="6-digit code" style="flex:1">
+                    <button class="btn-cyber" style="width: auto; padding: 0 10px; font-size: 0.7rem;">SEND</button>
+                </div>
+            </div>
+            <button class="btn-cyber" onclick="handleAuth()">REGISTER & LINK</button>
         </div>
-        <div class="input-group">
-            <label>VERIFICATION CODE</label>
-            <input type="text" placeholder="Check your inbox">
+
+        <div style="margin: 20px 0; border-bottom: 1px solid #222; position: relative;">
+            <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #080808; padding: 0 10px; font-size: 0.7rem; color: #555;">OR</span>
         </div>
-        <button class="btn-cyber" style="width: 100%; margin-top: 0;" onclick="handleAuth()">ESTABLISH LINK</button>
-        <button class="google-btn" onclick="handleAuth()">
+
+        <button class="btn-cyber google-login" onclick="handleAuth()">
             <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.49h4.84c-.21 1.12-.84 2.07-1.79 2.7l2.91 2.26c1.7-1.57 2.68-3.88 2.68-6.61z" fill="#4285F4"/><path d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.91-2.26c-.81.54-1.85.86-3.05.86-2.34 0-4.32-1.58-5.03-3.71L.95 13.51C2.43 16.46 5.48 18 9 18z" fill="#34A853"/><path d="M3.97 10.71c-.18-.54-.28-1.11-.28-1.71s.1-1.17.28-1.71L.95 4.99C.34 6.19 0 7.56 0 9s.34 2.81.95 4.01l3.02-2.3z" fill="#FBBC05"/><path d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.59C13.47.86 11.43 0 9 0 5.48 0 2.43 1.54.95 4.49L3.97 6.8c.71-2.13 2.69-3.71 5.03-3.71z" fill="#EA4335"/></svg>
             Sign in with Google
         </button>
     </div>
 </div>
 
-<div id="experience" class="page">
+<div id="experience" class="page-content">
     <div class="hud-layout">
-        <div id="webcam-box">
-            <canvas id="webcam-canvas" style="width:100%; height:100%; object-fit: cover;"></canvas>
+        <div id="video-core">
+            <canvas id="webcam-canvas"></canvas>
         </div>
         <div style="display: flex; flex-direction: column; gap: 20px;">
-            <div style="background: rgba(255,255,255,0.03); padding: 20px;">
+            <div style="background: rgba(255,255,255,0.03); padding: 20px; border-left: 4px solid var(--theme);">
                 <h3 style="font-size: 0.8rem; margin-bottom: 15px;">PROBABILITY MATRIX</h3>
                 <div id="bars-container"></div>
             </div>
-            <div id="ai-console">
-                > AWAITING SKELETAL INPUT...
-            </div>
-            <button class="btn-cyber" onclick="terminate()">TERMINATE</button>
+            <div id="ai-console">> INITIALIZING...</div>
+            <button class="btn-cyber" style="border-color: #ff0055; color: #ff0055;" onclick="terminate()">TERMINATE</button>
         </div>
     </div>
 </div>
@@ -199,132 +231,163 @@
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
 
 <script>
-    // --- 1. Point Cloud Logic ---
+    // --- 1. Point Cloud Background (Replacing Neurons) ---
     const bgCanvas = document.getElementById('bg-canvas');
     const bgCtx = bgCanvas.getContext('2d');
-    let points = [];
-    const mouse = { x: undefined, y: undefined };
+    let particles = [];
+    const mouse = { x: null, y: null };
 
-    function initPoints() {
-        bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
-        points = [];
-        for(let i=0; i<150; i++) {
-            points.push({
-                x: Math.random() * bgCanvas.width,
-                y: Math.random() * bgCanvas.height,
-                originX: Math.random() * bgCanvas.width,
-                originY: Math.random() * bgCanvas.height,
-                size: Math.random() * 2,
-                vx: (Math.random() - 0.5) * 0.5,
-                vy: (Math.random() - 0.5) * 0.5
-            });
+    class Particle {
+        constructor() {
+            this.x = Math.random() * bgCanvas.width;
+            this.y = Math.random() * bgCanvas.height;
+            this.vx = (Math.random() - 0.5) * 0.5;
+            this.vy = (Math.random() - 0.5) * 0.5;
+            this.size = Math.random() * 1.5;
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            if(this.x < 0 || this.x > bgCanvas.width) this.vx *= -1;
+            if(this.y < 0 || this.y > bgCanvas.height) this.vy *= -1;
+
+            if(mouse.x) {
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                if(dist < 100) {
+                    this.x -= dx/20; this.y -= dy/20;
+                }
+            }
+        }
+        draw() {
+            bgCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--theme');
+            bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.size, 0, Math.PI*2); bgCtx.fill();
         }
     }
 
-    function animatePoints() {
-        bgCtx.clearRect(0,0, bgCanvas.width, bgCanvas.height);
-        const themeColor = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
-        bgCtx.fillStyle = themeColor;
-
-        points.forEach(p => {
-            p.x += p.vx; p.y += p.vy;
-            if(p.x < 0 || p.x > bgCanvas.width) p.vx *= -1;
-            if(p.y < 0 || p.y > bgCanvas.height) p.vy *= -1;
-
-            if(mouse.x) {
-                let dx = mouse.x - p.x;
-                let dy = mouse.y - p.y;
-                let dist = Math.sqrt(dx*dx + dy*dy);
-                if(dist < 100) {
-                    p.x -= dx/20; p.y -= dy/20;
-                }
-            }
-            bgCtx.beginPath(); bgCtx.arc(p.x, p.y, p.size, 0, Math.PI*2); bgCtx.fill();
-        });
-        requestAnimationFrame(animatePoints);
+    function initBg() {
+        bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
+        particles = Array.from({length: 150}, () => new Particle());
+    }
+    function animateBg() {
+        bgCtx.clearRect(0,0,bgCanvas.width, bgCanvas.height);
+        particles.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animateBg);
     }
     window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
-    initPoints(); animatePoints();
+    window.addEventListener('resize', initBg);
+    initBg(); animateBg();
 
-    // --- 2. Auth & Route ---
-    let isAuth = false;
+    // --- 2. Enhanced Sentinel Skeleton (More Rich) ---
+    const sentCanvas = document.getElementById('sentinel-canvas');
+    const sentCtx = sentCanvas.getContext('2d');
+    let angle = 0;
+
+    const poseModel = [
+        {x: 0, y: -0.8}, {x: -0.4, y: -0.5}, {x: 0.4, y: -0.5},
+        {x: -0.6, y: -0.1}, {x: 0.6, y: -0.1}, {x: -0.5, y: 0.4}, {x: 0.5, y: 0.4},
+        {x: -0.2, y: 0.2}, {x: 0.2, y: 0.2}, {x: -0.3, y: 0.7}, {x: 0.3, y: 0.7}
+    ];
+
+    function drawSentinel() {
+        sentCanvas.width = sentCanvas.parentElement.offsetWidth;
+        sentCanvas.height = sentCanvas.parentElement.offsetHeight;
+        sentCtx.clearRect(0,0, sentCanvas.width, sentCanvas.height);
+        angle += 0.01;
+
+        const w = sentCanvas.width; const h = sentCanvas.height;
+        const color = getComputedStyle(document.documentElement).getPropertyValue('--theme');
+
+        sentCtx.save();
+        sentCtx.translate(w/2, h/2);
+        
+        // Draw auxiliary grid/lines for "richness"
+        sentCtx.strokeStyle = color; sentCtx.globalAlpha = 0.1;
+        for(let i=-2; i<=2; i++) {
+            sentCtx.beginPath(); sentCtx.moveTo(-100, i*50); sentCtx.lineTo(100, i*50); sentCtx.stroke();
+        }
+
+        // Project and Draw Skeleton
+        sentCtx.globalAlpha = 1;
+        poseModel.forEach(p => {
+            let rx = p.x * Math.cos(angle) * 150;
+            let ry = p.y * 150 + Math.sin(angle * 2) * 10;
+            
+            sentCtx.shadowBlur = 15; sentCtx.shadowColor = color;
+            sentCtx.fillStyle = color;
+            sentCtx.beginPath(); sentCtx.arc(rx, ry, 4, 0, Math.PI*2); sentCtx.fill();
+            
+            // Add technical data labels near joints
+            sentCtx.shadowBlur = 0; sentCtx.globalAlpha = 0.3;
+            sentCtx.font = "8px Share Tech Mono";
+            sentCtx.fillText(`[${rx.toFixed(0)},${ry.toFixed(0)}]`, rx+10, ry);
+        });
+
+        sentCtx.restore();
+        requestAnimationFrame(drawSentinel);
+    }
+    drawSentinel();
+
+    // --- 3. Functional Logic ---
+    let model, webcam, isRunning = false;
+
     function route(id) {
-        if(id === 'experience' && !isAuth) { route('login'); return; }
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        if(id === 'experience') startExperience();
+        if(id === 'experience') initAI();
     }
 
     function handleAuth() {
-        isAuth = true;
-        document.getElementById('auth-nav').innerHTML = '<span style="color:var(--theme); font-size:0.8rem;">[LINK_ACTIVE]</span>';
+        alert("Authorization Successful. Establishing Neural Link...");
         route('experience');
     }
 
-    // --- 3. AI Experience ---
-    const URL = "https://teachablemachine.withgoogle.com/models/sTBoNGgmv/";
-    let model, webcam, ctx, systemOn = false;
-
-    async function startExperience() {
-        if(systemOn) return;
-        systemOn = true;
+    async function initAI() {
+        if(isRunning) return;
+        isRunning = true;
+        const URL = "https://teachablemachine.withgoogle.com/models/sTBoNGgmv/";
         model = await tmPose.load(URL + "model.json", URL + "metadata.json");
-        webcam = new tmPose.Webcam(500, 500, true);
+        webcam = new tmPose.Webcam(400, 400, true);
         await webcam.setup(); await webcam.play();
-        window.requestAnimationFrame(loop);
-
+        
         const canvas = document.getElementById("webcam-canvas");
-        canvas.width = 500; canvas.height = 500;
-        ctx = canvas.getContext("2d");
+        canvas.width = 400; canvas.height = 400;
+        const ctx = canvas.getContext("2d");
 
-        const container = document.getElementById('bars-container');
-        container.innerHTML = '';
-        for(let i=0; i<model.getTotalClasses(); i++) {
-            container.innerHTML += `<div style="margin-bottom:10px;"><div style="display:flex; justify-content:space-between; font-size:0.7rem; margin-bottom:5px;"><span>${model.getClassLabels()[i]}</span><span id="val-${i}">0%</span></div><div style="width:100%; height:4px; background:#111;"><div id="fill-${i}" class="bar-fill" style="width:0%"></div></div></div>`;
-        }
-    }
+        const update = async () => {
+            if(!isRunning) return;
+            webcam.update();
+            const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+            const prediction = await model.predict(posenetOutput);
 
-    async function loop() {
-        if(!systemOn) return;
-        webcam.update(); await predict();
-        window.requestAnimationFrame(loop);
-    }
+            ctx.drawImage(webcam.canvas, 0, 0);
+            if(pose) {
+                tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
+                tmPose.drawSkeleton(pose.keypoints, 0.5, ctx);
+            }
 
-    async function predict() {
-        const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
-        const prediction = await model.predict(posenetOutput);
-        let top = 0;
-        for (let i = 0; i < model.getTotalClasses(); i++) {
-            const prob = prediction[i].probability;
-            document.getElementById(`val-${i}`).innerText = (prob * 100).toFixed(0) + "%";
-            document.getElementById(`fill-${i}`).style.width = (prob * 100).toFixed(0) + "%";
-            if(prob > prediction[top].probability) top = i;
-        }
-        updateHUD(top, prediction[top].probability, pose);
-    }
+            // Update Bars
+            const container = document.getElementById("bars-container");
+            container.innerHTML = prediction.map(p => `
+                <div style="margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.7rem;">
+                        <span>${p.className}</span><span>${(p.probability*100).toFixed(0)}%</span>
+                    </div>
+                    <div style="height:4px; background:#111; margin-top:4px;">
+                        <div style="width:${p.probability*100}%; height:100%; background:var(--theme); box-shadow:0 0 10px var(--theme);"></div>
+                    </div>
+                </div>
+            `).join('');
 
-    function updateHUD(idx, prob, pose) {
-        const labels = ["CALM", "ANXIOUS", "HAPPY"];
-        const colors = ["#00f0ff", "#ff0055", "#00ffcc"];
-        const current = labels[idx];
-
-        if(prob > 0.7) {
-            document.documentElement.style.setProperty('--theme', colors[idx]);
-            document.body.className = idx === 1 ? 'fx-shake' : '';
-            document.getElementById('ai-console').innerHTML = `> EMOTION_DETECTION: ${current}<br>> CONFIDENCE: ${(prob*100).toFixed(2)}%<br>> ANALYZING KINETIC SIGNATURE...`;
-        }
-
-        ctx.drawImage(webcam.canvas, 0, 0);
-        if(pose) {
-            ctx.strokeStyle = colors[idx]; ctx.lineWidth = 4;
-            tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
-            tmPose.drawSkeleton(pose.keypoints, 0.5, ctx);
-        }
+            requestAnimationFrame(update);
+        };
+        update();
     }
 
     function terminate() {
-        systemOn = false; if(webcam) webcam.stop();
+        isRunning = false;
+        if(webcam) webcam.stop();
         route('home');
     }
 </script>
