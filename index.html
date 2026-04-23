@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Motion Emotion System</title>
+    <title>Motion Emotion System - Neural Terminal</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
 
@@ -43,7 +43,6 @@
             border-bottom: 1px solid var(--theme); box-shadow: 0 0 25px var(--theme-glow);
         }
         
-        /* 更新后的左上角 Logo 样式 */
         .logo { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: 900; color: var(--theme); letter-spacing: 2px; text-shadow: 0 0 15px var(--theme); }
         
         .nav-links { display: flex; list-style: none; gap: 35px; }
@@ -77,11 +76,10 @@
         }
 
         h1, h2, h3 { font-family: 'Orbitron', sans-serif; text-transform: uppercase; margin-bottom: 15px; font-weight: 700;}
-        h1 { font-size: 4rem; letter-spacing: 2px; line-height: 1.2; color: #fff; text-shadow: 0 0 20px var(--theme-glow); margin-bottom: 25px;}
+        h1 { font-size: 4.5rem; letter-spacing: 3px; line-height: 1.1; color: #fff; text-shadow: 0 0 20px var(--theme-glow); margin-bottom: 25px;}
         p { font-size: 1.15rem; line-height: 1.7; color: #cbd5e1; margin-bottom: 25px; max-width: 900px; }
 
         /* --- Specific Page Styling --- */
-        
         #home { flex-direction: row; align-items: center; justify-content: space-between; padding-top: 0; padding-bottom: 0;}
         #home .hero-text { flex: 1; max-width: 55%; z-index: 15; }
         
@@ -97,17 +95,46 @@
             writing-mode: vertical-rl; text-transform: uppercase; letter-spacing: 3px;
         }
 
-        /* --- Experience/HUD Styling --- */
-        #experience { padding: 30px; }
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 35px; margin-top: 40px; }
+        .tech-card {
+            background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05);
+            border-top: 4px solid var(--theme); padding: 35px; backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .tech-card:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 15px 35px rgba(0,0,0,0.5), 0 0 15px var(--theme-glow); border-color: var(--theme); }
+
+        /* --- HUD for Experience --- */
         .hud-layout { display: grid; grid-template-columns: 1fr 420px; gap: 30px; height: 100%; align-items: stretch; }
-        #video-core { position: relative; background: #000; border: 2px solid var(--theme); overflow: hidden; border-radius: 5px; }
+        #video-core {
+            position: relative; background: #000; border: 2px solid var(--theme);
+            overflow: hidden; box-shadow: 0 0 30px rgba(0,0,0,0.5), inset 0 0 100px rgba(0,0,0,0.9);
+            border-radius: 5px;
+        }
         canvas#webcam-canvas { width: 100%; height: 100%; object-fit: cover; }
-        .scanner { position: absolute; width: 100%; height: 3px; background: var(--theme); box-shadow: 0 0 20px 4px var(--theme); z-index: 5; animation: scanLoop 3s infinite; }
+        .scanner {
+            position: absolute; width: 100%; height: 3px; background: var(--theme);
+            box-shadow: 0 0 20px 4px var(--theme); opacity: 0.8; z-index: 5;
+            animation: scanLoop 3s infinite cubic-bezier(0.4, 0, 0.2, 1);
+        }
         @keyframes scanLoop { 0% { top: -5%; } 100% { top: 105%; } }
-        .hud-box { background: rgba(5, 5, 10, 0.8); border: 1px solid rgba(255,255,255,0.08); border-left: 5px solid var(--theme); padding: 30px; }
-        #ai-console { flex-grow: 1; background: #000; padding: 25px; color: var(--theme); overflow-y: auto; font-family: 'Share Tech Mono'; }
+
+        #ai-console {
+            flex-grow: 1; background: #000; border: 1px solid rgba(255,255,255,0.05); padding: 25px;
+            font-size: 1rem; line-height: 1.8; color: var(--theme); overflow-y: auto;
+            font-family: 'Share Tech Mono', monospace; box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+        }
         .blink { animation: textBlink 1s infinite; }
         @keyframes textBlink { 50% { opacity: 0; } }
+
+        /* FX States */
+        .fx-pulse #viewport-overlay {
+            position: absolute; inset: 0; pointer-events: none; z-index: 2;
+            background: radial-gradient(circle, transparent 30%, var(--theme-glow) 150%);
+            animation: pulseGlow 2s infinite alternate;
+        }
+        @keyframes pulseGlow { from { opacity: 0.2; } to { opacity: 0.6; } }
+        .fx-shake #video-core { animation: shakeFrame 0.1s infinite; }
+        @keyframes shakeFrame { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -1px); } 100% { transform: translate(-1px, 1px); } }
 
     </style>
 </head>
@@ -133,12 +160,18 @@
 
     <div id="home" class="page-content active">
         <div class="hero-text">
-            <p style="color: var(--theme); letter-spacing: 4px; margin-bottom: 10px; font-weight: bold; text-transform: uppercase;">A motion-based emotion recognition interface</p>
+            <p style="color: var(--theme); letter-spacing: 5px; margin-bottom: 10px; font-weight: bold; text-transform: uppercase;">
+                A motion-based emotion recognition interface
+            </p>
+            <h1>Emotion Recognition<br>System</h1>
             
-            <h1>Emotion Recognition System</h1>
-            
-            <p style="font-size: 1.5rem; color: #fff; letter-spacing: 2px; margin-bottom: 5px;">Calm · Anxiety · Happiness</p>
-            <p style="opacity: 0.8;">Determined by your body</p>
+            <div style="display: flex; gap: 20px; margin-bottom: 30px;">
+                <span style="color: #0088ff; border: 1px solid #0088ff; padding: 5px 15px; font-size: 0.9rem;">Calm</span>
+                <span style="color: #ff0055; border: 1px solid #ff0055; padding: 5px 15px; font-size: 0.9rem;">Anxiety</span>
+                <span style="color: #00ffcc; border: 1px solid #00ffcc; padding: 5px 15px; font-size: 0.9rem;">Happiness</span>
+            </div>
+
+            <p style="font-size: 1.4rem; color: #fff; font-family: 'Orbitron';">Determined by your body</p>
             
             <div style="margin-top: 40px;">
                 <button class="btn-cyber btn-solid" style="padding: 18px 50px; font-size: 1.2rem;" onclick="attemptStart()">Start Experience</button>
@@ -147,21 +180,46 @@
         
         <div id="sentinel-viz">
             <canvas id="sentinel-canvas"></canvas>
-            <div class="viz-label">MOTION_SENTINEL_v4</div>
+            <div class="viz-label">KINETIC_FLOW_ANALYSIS_V2</div>
         </div>
     </div>
 
     <div id="about" class="page-content">
         <h2>ABOUT US</h2>
-        <div class="hud-box" style="max-width: 1000px; margin-top: 20px; border-left: 5px solid var(--theme);">
+        <div class="tech-card" style="max-width: 1000px; margin-top: 20px;">
             <p>We are creators from a background in visual and digital media, focusing on the relationship between technology and human perception. We attempt to observe and understand emotions not through language, but through bodily movement.</p>
         </div>
     </div>
 
+    <div id="project" class="page-content">
+        <h2>PROJECT DETAILS</h2>
+        <div class="tech-card" style="max-width: 1000px; margin-top: 20px;">
+            <p>This project approaches emotion recognition from a different perspective—using body movement as the primary basis for recognition, with facial expression as a secondary reference.</p>
+        </div>
+    </div>
+
+    <div id="guide" class="page-content">
+        <h2>CALIBRATION PROTOCOL</h2>
+        <div class="grid-cards">
+            <div class="tech-card" style="border-top-color: #0088ff;">
+                <h3>[01] CALM</h3>
+                <p>Neutral, relaxed posture. Arms hang naturally at sides.</p>
+            </div>
+            <div class="tech-card" style="border-top-color: #ff0055;">
+                <h3>[02] ANXIETY</h3>
+                <p>Closed posture. Restless inward motions. Hands touching face.</p>
+            </div>
+            <div class="tech-card" style="border-top-color: #00ffcc;">
+                <h3>[03] HAPPINESS</h3>
+                <p>Expansive, energetic motions. Arms raised high or dancing.</p>
+            </div>
+        </div>
+    </div>
+
     <div id="auth" class="page-content">
-        <div style="width: 400px; margin: 100px auto; padding: 40px; background: rgba(0,0,0,0.8); border: 1px solid var(--theme);">
-            <h2 style="text-align: center; margin-bottom: 20px;">AUTHORIZATION</h2>
-            <button class="btn-cyber btn-solid" style="width: 100%;" onclick="loginSuccess()">GUEST LOGIN</button>
+        <div style="max-width: 400px; margin: 100px auto; background: rgba(0,0,0,0.8); padding: 40px; border: 1px solid var(--theme);">
+            <h2 style="text-align: center;">AUTHORIZATION</h2>
+            <button class="btn-cyber btn-solid" style="width: 100%; margin-top: 20px;" onclick="loginSuccess()">ESTABLISH LINK</button>
         </div>
     </div>
 
@@ -171,12 +229,11 @@
                 <div class="scanner"></div>
                 <canvas id="webcam-canvas"></canvas>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 20px;">
-                <div class="hud-box">
-                    <h3 style="font-size: 1.2rem; margin-bottom: 20px;">PROBABILITY MATRIX</h3>
-                    <div id="bars-container"></div>
+            <div class="data-panel" style="display: flex; flex-direction: column; gap: 20px;">
+                <div id="bars-container" style="background: rgba(255,255,255,0.05); padding: 20px;"></div>
+                <div id="ai-console">
+                    > AWAITING SKELETAL INPUT...<span class="blink">_</span>
                 </div>
-                <div id="ai-console">> AWAITING SKELETAL INPUT...<span class="blink">_</span></div>
                 <button class="btn-cyber" style="border-color: #ef4444; color: #ef4444;" onclick="terminateSystem()">TERMINATE</button>
             </div>
         </div>
@@ -191,21 +248,83 @@
     let systemRunning = false;
     const modelURL_TM = "https://teachablemachine.withgoogle.com/models/sTBoNGgmv/";
 
-    // 基础粒子背景
+    // --- Background Particles ---
     const bgCanvas = document.getElementById('bg-canvas');
     const bgCtx = bgCanvas.getContext('2d');
-    function initBg() {
-        bgCanvas.width = window.innerWidth;
-        bgCanvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', initBg);
-    initBg();
+    let particlesArray = [];
 
+    class Particle {
+        constructor() {
+            this.x = Math.random() * bgCanvas.width;
+            this.y = Math.random() * bgCanvas.height;
+            this.size = Math.random() * 2 + 0.5;
+            this.vy = (Math.random() * 0.5) + 0.2;
+        }
+        draw() {
+            bgCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+            bgCtx.globalAlpha = 0.4;
+            bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2); bgCtx.fill();
+        }
+        update() {
+            this.y -= this.vy;
+            if(this.y < 0) this.y = bgCanvas.height;
+        }
+    }
+
+    function initBg() {
+        bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
+        particlesArray = [];
+        for(let i=0; i < 150; i++) particlesArray.push(new Particle());
+    }
+    
+    function animateBg() {
+        bgCtx.clearRect(0,0,bgCanvas.width, bgCanvas.height);
+        particlesArray.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animateBg);
+    }
+    initBg(); animateBg();
+
+    // --- Sentinel Static Skeleton ---
+    const sentCanvas = document.getElementById('sentinel-canvas');
+    const sentCtx = sentCanvas.getContext('2d');
+    let angle = 0;
+
+    function drawSentinel() {
+        if(document.getElementById('home').style.display === 'none') { requestAnimationFrame(drawSentinel); return; }
+        sentCanvas.width = sentCanvas.parentElement.offsetWidth;
+        sentCanvas.height = sentCanvas.parentElement.offsetHeight;
+        sentCtx.clearRect(0,0,sentCanvas.width, sentCanvas.height);
+        
+        const cx = sentCanvas.width/2; const cy = sentCanvas.height/2;
+        const color = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+        
+        angle += 0.01;
+        const xOffset = Math.sin(angle) * 20;
+
+        sentCtx.strokeStyle = color;
+        sentCtx.lineWidth = 2;
+        sentCtx.shadowBlur = 15; sentCtx.shadowColor = color;
+
+        // Simple humanoid stick figure animation
+        sentCtx.beginPath();
+        sentCtx.arc(cx + xOffset, cy - 100, 20, 0, Math.PI*2); // Head
+        sentCtx.moveTo(cx + xOffset, cy - 80); sentCtx.lineTo(cx - xOffset*0.5, cy + 50); // Spine
+        sentCtx.moveTo(cx + xOffset, cy - 60); sentCtx.lineTo(cx - 60, cy - 20 + xOffset); // Left Arm
+        sentCtx.moveTo(cx + xOffset, cy - 60); sentCtx.lineTo(cx + 60, cy - 20 - xOffset); // Right Arm
+        sentCtx.moveTo(cx - xOffset*0.5, cy + 50); sentCtx.lineTo(cx - 40, cy + 130); // Left Leg
+        sentCtx.moveTo(cx - xOffset*0.5, cy + 50); sentCtx.lineTo(cx + 40, cy + 130); // Right Leg
+        sentCtx.stroke();
+
+        requestAnimationFrame(drawSentinel);
+    }
+    drawSentinel();
+
+    // --- Core Logic ---
     function route(pageId) {
-        if(pageId !== 'experience' && systemRunning) terminateSystem(false); 
         document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
         document.getElementById(pageId).classList.add('active');
+        if(pageId === 'home') drawSentinel();
     }
 
     function attemptStart() {
@@ -215,7 +334,7 @@
 
     function loginSuccess() {
         isAuthenticated = true;
-        document.getElementById('auth-ui').innerHTML = `<span style="color:var(--theme)">[ OPERATOR_ACTIVE ]</span>`;
+        document.getElementById('auth-ui').innerHTML = `<span style="color:var(--theme)">[ SYSTEM_LINK_ACTIVE ]</span>`;
         route('experience');
         startSystem();
     }
@@ -223,26 +342,62 @@
     async function startSystem() {
         if (systemRunning) return;
         systemRunning = true;
-        document.getElementById('ai-console').innerHTML = "> INITIALIZING NEURAL LINK...";
-        // 此处省略具体的 TFJS 加载逻辑以保持简洁，代码中已包含完整逻辑
+        
+        model = await tmPose.load(modelURL_TM + "model.json", modelURL_TM + "metadata.json");
+        const maxPredictions = model.getTotalClasses();
+
+        const webcam = new tmPose.Webcam(600, 600, true); 
+        await webcam.setup(); await webcam.play();
+        
+        const canvas = document.getElementById("webcam-canvas");
+        canvas.width = 600; canvas.height = 600;
+        const ctx = canvas.getContext("2d");
+
+        const container = document.getElementById("bars-container");
+        container.innerHTML = "";
+        
+        async function loop() {
+            if(!systemRunning) { webcam.stop(); return; }
+            webcam.update();
+            const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+            const prediction = await model.predict(posenetOutput);
+
+            let html = "";
+            let topIdx = 0;
+            for (let i = 0; i < maxPredictions; i++) {
+                const prob = (prediction[i].probability * 100).toFixed(0);
+                html += `<div style="margin-bottom:10px">${prediction[i].className}: ${prob}%<div style="height:4px; background:var(--theme); width:${prob}%"></div></div>`;
+                if(prediction[i].probability > prediction[topIdx].probability) topIdx = i;
+            }
+            container.innerHTML = html;
+
+            // Dynamic theme switching
+            const label = prediction[topIdx].className.toLowerCase();
+            if(label.includes('anx')) {
+                document.documentElement.style.setProperty('--theme', '#ff0055');
+                document.getElementById('app-container').className = "fx-shake";
+            } else if(label.includes('hap')) {
+                document.documentElement.style.setProperty('--theme', '#00ffcc');
+                document.getElementById('app-container').className = "fx-pulse";
+            } else {
+                document.documentElement.style.setProperty('--theme', '#00f0ff');
+                document.getElementById('app-container').className = "";
+            }
+
+            ctx.drawImage(webcam.canvas, 0, 0);
+            if (pose) {
+                tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
+                tmPose.drawSkeleton(pose.keypoints, 0.5, ctx);
+            }
+            requestAnimationFrame(loop);
+        }
+        loop();
     }
 
-    function terminateSystem(goHome = true) {
+    function terminateSystem() {
         systemRunning = false;
-        if(goHome) route('home');
+        location.reload(); // Simple reset
     }
-    
-    // Sentinel 动画逻辑保持
-    const sentCanvas = document.getElementById('sentinel-canvas');
-    const sentCtx = sentCanvas.getContext('2d');
-    function animate() {
-        if(document.getElementById('home').classList.contains('active')) {
-            sentCtx.clearRect(0,0,sentCanvas.width, sentCanvas.height);
-            // 绘制逻辑...
-        }
-        requestAnimationFrame(animate);
-    }
-    animate();
 </script>
 </body>
 </html>
