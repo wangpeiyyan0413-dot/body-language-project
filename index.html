@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Motion Emotion System - Kinetic Interface</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
 
@@ -21,11 +24,11 @@
         body, html {
             width: 100%; height: 100%;
             background-color: var(--bg-base); color: var(--text-main);
-            font-family: 'Rajdhani', sans-serif;
+            font-family: 'Rajdhani', sans-serif; 
             overflow: hidden;
         }
 
-        /* --- 升级版多层点云开场动画 --- */
+        /* --- 开场动画系统 --- */
         #intro-screen {
             position: fixed; inset: 0; z-index: 9999;
             background: #020204;
@@ -33,7 +36,19 @@
             transition: opacity 1.5s cubic-bezier(0.165, 0.84, 0.44, 1), visibility 1.5s;
         }
         #intro-canvas { position: absolute; inset: 0; z-index: 1; pointer-events: none;}
-        .intro-content { position: relative; z-index: 2; text-align: center; }
+        .intro-content { 
+            position: relative; z-index: 2; text-align: center;
+            opacity: 0; transform: scale(0.9);
+            transition: all 2s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .intro-content.show { opacity: 1; transform: scale(1); }
+        
+        #boot-text {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-family: 'Share Tech Mono', monospace; color: var(--theme); letter-spacing: 4px;
+            font-size: 1.2rem; z-index: 3; transition: opacity 0.5s;
+        }
+
         .intro-title {
             font-family: 'Orbitron', sans-serif; font-size: 3.5rem; font-weight: 900;
             color: #fff; letter-spacing: 12px; margin-bottom: 10px;
@@ -55,54 +70,20 @@
             transform: scale(1.05);
         }
 
-        /* --- 新增：平面风格化切角系统转场 --- */
-        #system-transition {
-            position: fixed; inset: 0; z-index: 10000; pointer-events: none;
-            display: flex; justify-content: center; align-items: center;
-        }
-        .transition-bg {
-            position: absolute; inset: 0; background: var(--bg-base); border-top: 5px solid var(--theme); border-bottom: 5px solid var(--theme);
-            transform: scaleY(0); transform-origin: top; transition: transform 0.6s cubic-bezier(0.77, 0, 0.175, 1);
-            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15vh), calc(100% - 15vh) 100%, 0 100%);
-            box-shadow: inset 0 0 100px rgba(0,240,255,0.2);
-        }
-        #system-transition.active .transition-bg { transform: scaleY(1); transform-origin: bottom; }
-        #system-transition.ending .transition-bg { transform: scaleY(0); transform-origin: top; }
-        
-        .transition-content {
-            position: relative; z-index: 10001; opacity: 0; transition: opacity 0.3s;
-            text-align: center;
-        }
-        #system-transition.active .transition-content { opacity: 1; transition-delay: 0.4s;}
-        #system-transition.ending .transition-content { opacity: 0; transition-delay: 0s;}
-        
-        .transition-text {
-            font-family: 'Orbitron', sans-serif; font-size: 2.5rem; color: #fff; font-weight: 900;
-            letter-spacing: 12px; text-shadow: 0 0 30px var(--theme-glow); margin-bottom: 20px;
-        }
-        .transition-bar {
-            width: 400px; height: 3px; background: rgba(255,255,255,0.1); margin: 0 auto 15px auto;
-            position: relative; overflow: hidden;
-        }
-        .transition-fill {
-            width: 0%; height: 100%; background: var(--theme); box-shadow: 0 0 15px var(--theme);
-            transition: width 0.8s 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
-        }
-        #system-transition.active .transition-fill { width: 100%; }
-        .transition-glitch {
-            font-family: 'Share Tech Mono', monospace; color: var(--theme); font-size: 1.1rem;
-            letter-spacing: 6px; animation: blinkText 0.1s infinite;
-        }
-        @keyframes blinkText { 50% { opacity: 0.8; transform: translateX(2px); } }
-
         #app-container {
             width: 100vw; height: 100vh; position: relative;
             background: radial-gradient(circle at center, #0a0a15 0%, var(--bg-base) 100%);
             display: flex; flex-direction: column; transition: all 0.5s ease-out;
-            opacity: 0;
+            opacity: 0; 
         }
 
         #bg-canvas { position: absolute; inset: 0; z-index: 1; opacity: 0.8; }
+        
+        /* 跃迁特效层 */
+        #warp-canvas { 
+            position: absolute; inset: 0; z-index: 9000; 
+            pointer-events: none; opacity: 0; transition: opacity 0.3s;
+        }
 
         nav {
             position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
@@ -110,20 +91,15 @@
             padding: 15px 50px; background: var(--nav-bg); backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(0, 240, 255, 0.2); box-shadow: 0 4px 30px rgba(0,0,0,0.5);
         }
-        
         .logo { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: 900; color: var(--theme); letter-spacing: 2px; text-shadow: 0 0 15px var(--theme-glow); text-transform: uppercase;}
-        
         .nav-links { display: flex; list-style: none; gap: 40px; }
-        .nav-links li { font-size: 1rem; letter-spacing: 2px; transition: all 0.3s; color: #64748b; text-transform: uppercase; font-family: 'Orbitron', sans-serif; font-weight: 700;}
+        .nav-links li { font-size: 1rem; letter-spacing: 2px; transition: all 0.3s; color: #64748b; font-family: 'Orbitron', sans-serif; font-weight: 700;}
         .nav-links li:hover, .nav-links li.active { color: var(--theme); text-shadow: 0 0 10px var(--theme-glow); transform: translateY(-2px); }
-
-        .auth-cluster { display: flex; gap: 15px; align-items: center; }
 
         .btn-cyber {
             background: rgba(0, 0, 0, 0.5); border: 1px solid var(--theme); color: var(--theme);
             padding: 12px 30px; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; letter-spacing: 2px;
             transition: all 0.3s; text-transform: uppercase; position: relative;
-            display: flex; justify-content: center; align-items: center; gap: 10px;
             clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
             backdrop-filter: blur(4px);
         }
@@ -141,9 +117,8 @@
             to { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
 
-        h1, h2, h3 { font-family: 'Orbitron', sans-serif; text-transform: uppercase; margin-bottom: 15px; font-weight: 900;}
-        h1 { font-size: 4.5rem; letter-spacing: 2px; line-height: 1.1; color: #fff; text-shadow: 0 0 30px var(--theme-glow); margin-bottom: 20px;}
-        h2 { font-size: 2.5rem; letter-spacing: 4px; color: var(--theme); text-shadow: 0 0 15px var(--theme-glow); border-bottom: 1px solid rgba(0, 240, 255, 0.2); padding-bottom: 10px; display: inline-block;}
+        h1 { font-family: 'Orbitron', sans-serif; font-size: 4.5rem; letter-spacing: 2px; line-height: 1.1; color: #fff; text-shadow: 0 0 30px var(--theme-glow); margin-bottom: 20px; font-weight: 900;}
+        h2 { font-family: 'Orbitron', sans-serif; font-size: 2.5rem; letter-spacing: 4px; color: var(--theme); text-shadow: 0 0 15px var(--theme-glow); border-bottom: 1px solid rgba(0, 240, 255, 0.2); padding-bottom: 10px; display: inline-block; font-weight: 900;}
         p { font-size: 1.2rem; line-height: 1.8; color: #94a3b8; margin-bottom: 25px; max-width: 900px; font-weight: 500;}
 
         #home { flex-direction: row; align-items: center; justify-content: space-between; padding-top: 0; padding-bottom: 0;}
@@ -151,8 +126,7 @@
         
         #sentinel-viz {
             flex: 1; height: 100%; max-width: 45%;
-            position: relative; display: flex; justify-content: center; align-items: center;
-            z-index: 5;
+            position: relative; display: flex; justify-content: center; align-items: center; z-index: 5;
         }
         #sentinel-canvas { width: 100%; height: 90%; }
         .viz-label {
@@ -161,61 +135,7 @@
             writing-mode: vertical-rl; text-transform: uppercase; letter-spacing: 4px;
         }
 
-        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px; margin-top: 40px; }
-        
-        .tech-card {
-            background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05);
-            border-top: 4px solid var(--theme); padding: 40px; backdrop-filter: blur(15px);
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-            clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
-            position: relative;
-        }
-        .tech-card::before { content:''; position: absolute; bottom: 0; right: 0; width: 30px; height: 30px; border-bottom: 2px solid rgba(255,255,255,0.2); border-right: 2px solid rgba(255,255,255,0.2); }
-        .tech-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.6); border-color: rgba(0, 240, 255, 0.4); background: rgba(15, 20, 40, 0.8);}
-        .tech-card h3 { color: #fff; font-size: 1.5rem; letter-spacing: 2px;}
-
-        #auth { justify-content: center; align-items: center; }
-        .auth-box {
-            width: 480px; padding: 50px; background: rgba(5, 5, 12, 0.85);
-            border: 1px solid rgba(0, 240, 255, 0.3); box-shadow: 0 0 50px rgba(0, 240, 255, 0.1);
-            position: relative; transition: height 0.3s ease; backdrop-filter: blur(20px);
-            clip-path: polygon(30px 0, 100% 0, 100% calc(100% - 30px), calc(100% - 30px) 100%, 0 100%, 0 30px);
-        }
-        .auth-box::before { content:''; position: absolute; top:0; left:0; width: 100%; height: 4px; background: var(--theme); box-shadow: 0 0 15px var(--theme); }
-        
-        .auth-view { display: none; flex-direction: column; animation: fadeIn 0.4s ease forwards;}
-        .auth-view.active { display: flex; }
-        
-        @keyframes fadeIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
-
-        .input-group { margin-bottom: 30px; }
-        .input-group label { display: block; font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; color: var(--theme); margin-bottom: 10px; letter-spacing: 2px;}
-        .input-group input {
-            width: 100%; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
-            color: #fff; padding: 15px; font-family: 'Share Tech Mono', monospace; font-size: 1.2rem; outline: none;
-            transition: all 0.3s; border-left: 3px solid transparent;
-        }
-        .input-group input:focus { border-color: rgba(255,255,255,0.3); border-left-color: var(--theme); box-shadow: inset 0 0 15px rgba(0,240,255,0.1); background: rgba(0,0,0,0.8); }
-        
-        .verification-warning {
-            color: #ef4444; font-size: 0.85rem; text-align: center; 
-            margin-top: -10px; margin-bottom: 25px; font-weight: 700; letter-spacing: 1px; font-family: 'Share Tech Mono', monospace;
-        }
-
-        .auth-switch-link {
-            text-align: center; margin-top: 30px; font-size: 0.9rem; color: #64748b; 
-            letter-spacing: 1px; transition: color 0.3s; font-family: 'Share Tech Mono', monospace;
-        }
-        .auth-switch-link:hover { color: var(--theme); text-shadow: 0 0 10px var(--theme-glow); }
-
-        .google-loader { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 250px; text-align: center; }
-        .spinner {
-            width: 60px; height: 60px; border: 3px solid rgba(255,255,255,0.05);
-            border-top-color: var(--theme); border-radius: 50%;
-            animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; margin-bottom: 30px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
+        /* 体验区样式 */
         #experience { padding: 30px 5vw; }
         .hud-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; height: 100%; align-items: stretch; }
         
@@ -223,9 +143,10 @@
             position: relative; background: #000; border: 1px solid rgba(255,255,255,0.1);
             overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.8);
             clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+            display: flex; justify-content: center; align-items: center;
         }
         #video-core::before { content:''; position: absolute; inset:0; border: 2px solid var(--theme); pointer-events: none; z-index: 10; clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);}
-        canvas#webcam-canvas { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.1) brightness(1.1); }
+        canvas#webcam-canvas { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.1) brightness(1.1); transform: scaleX(-1); }
         
         .scanner {
             position: absolute; width: 100%; height: 4px; background: var(--theme);
@@ -245,7 +166,7 @@
         .bar-wrap { margin-bottom: 25px; }
         .bar-label { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 1rem; font-family: 'Share Tech Mono', monospace; color: #cbd5e1; letter-spacing: 2px;}
         .bar-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.05); position: relative; border-radius: 4px; overflow: hidden;}
-        .bar-fill { height: 100%; width: 0%; background: var(--theme); box-shadow: 0 0 20px var(--theme); transition: width 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); }
+        .bar-fill { height: 100%; width: 0%; background: var(--theme); box-shadow: 0 0 20px var(--theme); transition: width 0.2s linear; }
 
         #ai-console {
             flex-grow: 1; background: rgba(0,0,0,0.8); border: 1px solid rgba(0, 240, 255, 0.2); padding: 30px;
@@ -256,55 +177,31 @@
         .blink { animation: textBlink 1s infinite; }
         @keyframes textBlink { 50% { opacity: 0; } }
 
-        .fx-pulse #viewport-overlay {
-            position: absolute; inset: 0; pointer-events: none; z-index: 2;
-            background: radial-gradient(circle, transparent 30%, var(--theme-glow) 150%);
-            animation: pulseGlow 2s infinite alternate;
-        }
-        @keyframes pulseGlow { from { opacity: 0.1; } to { opacity: 0.4; } }
-
-        .fx-shake .hud-box, .fx-shake #video-core { animation: shakeFrame 0.2s infinite; }
-        @keyframes shakeFrame { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -1px); } 100% { transform: translate(-1px, 1px); } }
-        .fx-shake canvas#webcam-canvas { filter: contrast(1.4) brightness(1.1) saturate(1.5) hue-rotate(-10deg); }
-
     </style>
 </head>
 <body>
 
-<div id="system-transition">
-    <div class="transition-bg"></div>
-    <div class="transition-content">
-        <div class="transition-text">ESTABLISHING KINETIC LINK</div>
-        <div class="transition-bar"><div class="transition-fill"></div></div>
-        <div class="transition-glitch">SYNCING BIOMETRICS... <span style="animation: textBlink 0.5s infinite">_</span></div>
-    </div>
-</div>
-
 <div id="intro-screen">
+    <div id="boot-text">INITIALIZING BIOMETRIC SENSORS...</div>
     <canvas id="intro-canvas"></canvas>
-    <div class="intro-content">
+    <div class="intro-content" id="intro-main">
         <div class="intro-title">MOTION EMOTION</div>
-        <div class="intro-sub">MOTION-BASED EMOTION RECOGNITION V1.0</div>
+        <div class="intro-sub">Motion-Based Emotion Recognition v1.0</div>
         <button class="btn-enter" onclick="startApp()">INITIALIZE SYSTEM</button>
     </div>
 </div>
 
 <div id="app-container">
     <canvas id="bg-canvas"></canvas>
+    <canvas id="warp-canvas"></canvas>
     <div id="viewport-overlay"></div>
 
     <nav>
         <div class="logo">Motion Emotion System</div>
         <ul class="nav-links">
             <li class="active" onclick="route('home')">HOME</li>
-            <li onclick="route('about')">ABOUT US</li>
-            <li onclick="route('project')">PROJECT</li>
-            <li onclick="route('guide')">GUIDE</li>
+            <li onclick="route('experience')">EXPERIENCE</li>
         </ul>
-        <div class="auth-cluster" id="auth-ui">
-            <button class="btn-cyber" onclick="openAuth('login')" style="text-transform: none;">Log in</button>
-            <button class="btn-cyber btn-solid" onclick="openAuth('signup')" style="text-transform: none;">Sign up</button>
-        </div>
     </nav>
 
     <div id="home" class="page-content active">
@@ -324,622 +221,314 @@
         </div>
     </div>
 
-    <div id="about" class="page-content">
-        <h2>ABOUT US</h2>
-        <div class="tech-card" style="max-width: 1100px; margin-top: 30px;">
-            <p>We are creators from a background in visual and digital media, focusing on the relationship between technology and human perception. We attempt to observe and understand emotions not through language, but through bodily movement. This project is based on AI motion recognition, translating human gestures into emotional signals and exploring whether emotions can truly be "recognized."</p>
-            <p>By training and classifying three fundamental emotional states—Calm, Anxiety, and Happiness—we developed a system where users interact without words, relying solely on physical expression. Using accessible machine learning tools, we transform complex AI processes into an intuitive and perceptible experience.</p>
-            <p>In an era where artificial intelligence increasingly participates in interpretation and decision-making, we hope this project prompts reflection: are emotions truly understood, or merely identified and defined?</p>
-        </div>
-    </div>
-
-    <div id="project" class="page-content">
-        <h2>PROJECT DETAILS</h2>
-        <div class="tech-card" style="max-width: 1100px; margin-top: 30px;">
-            <p>In today's digital environment, artificial intelligence is increasingly involved in analyzing and interpreting human behavior and emotions. However, most emotion recognition systems rely heavily on facial expressions or voice input, which to some extent limits the diversity of emotional expression. Therefore, this project approaches the problem from a different perspective—using body movement as the primary basis for recognition, with facial expression as a secondary reference, to explore a more holistic way of perceiving human emotions.</p>
-            <p>This project is developed using Google's Teachable Machine platform. By collecting and training motion data, we built a model capable of recognizing three fundamental emotional states: Calm, Anxiety, and Happiness. In the interactive experience, users do not need to provide verbal input; instead, they express emotions through specific body movements, which the system recognizes and responds to in real time, creating an intuitive human–computer interaction process.</p>
-            <p>Through this approach, we aim to move beyond traditional face-centered emotion recognition and shift attention toward the expressive potential of the human body. At the same time, by leveraging accessible machine learning tools, we transform complex technical processes into participatory and experiential interactions, allowing users to understand the technology through engagement and reconsider how emotions are perceived and defined.</p>
-        </div>
-    </div>
-
-    <div id="guide" class="page-content">
-        <h2>CALIBRATION PROTOCOL</h2>
-        <p style="margin-bottom: 40px; font-family: 'Share Tech Mono', monospace;">> OPERATORS MUST MAINTAIN A DISTANCE OF 2-3 METERS FROM SENSOR. MATCH KINETIC REFERENCES BELOW.</p>
-        <div class="grid-cards">
-            <div class="tech-card" style="border-top-color: #0088ff; text-align: center;">
-                <svg viewBox="0 0 100 100" width="100" height="100" stroke="#0088ff" stroke-width="4" stroke-linecap="round" fill="none" style="margin-bottom: 25px; filter: drop-shadow(0 0 15px rgba(0,136,255,0.6));">
-                    <circle cx="50" cy="20" r="10"/>
-                    <path d="M50 30 v35 M50 35 l-15 25 M50 35 l15 25 M50 65 l-12 30 M50 65 l12 30"/>
-                </svg>
-                <h3 style="color: #0088ff">[01] CALM (BASELINE)</h3>
-                <p style="text-align: left; font-size: 1.1rem; color: #94a3b8;">Neutral, relaxed posture. Arms hang naturally at sides. Static or minimal movement. Mapped as biological homeostasis.</p>
-            </div>
-            <div class="tech-card" style="border-top-color: #ff0055; text-align: center;">
-                <svg viewBox="0 0 100 100" width="100" height="100" stroke="#ff0055" stroke-width="4" stroke-linecap="round" fill="none" style="margin-bottom: 25px; filter: drop-shadow(0 0 15px rgba(255,0,85,0.6));">
-                    <circle cx="50" cy="25" r="10"/>
-                    <path d="M50 35 v30 M50 40 l-18 -15 l 10 -15 M50 40 l18 -15 l -10 -15 M50 65 l-15 20 l 0 10 M50 65 l15 20 l 0 10"/>
-                </svg>
-                <h3 style="color: #ff0055">[02] ANXIOUS (STRESS)</h3>
-                <p style="text-align: left; font-size: 1.1rem; color: #94a3b8;">Closed posture. Restless inward motions. Hands touching face or head. Leaning forward. Mapped as kinetic overload.</p>
-            </div>
-            <div class="tech-card" style="border-top-color: #00ffcc; text-align: center;">
-                <svg viewBox="0 0 100 100" width="100" height="100" stroke="#00ffcc" stroke-width="4" stroke-linecap="round" fill="none" style="margin-bottom: 25px; filter: drop-shadow(0 0 15px rgba(0,255,204,0.6));">
-                    <circle cx="50" cy="18" r="10"/>
-                    <path d="M50 28 v32 M50 35 l-25 -20 M50 35 l25 -20 M50 60 l-20 35 M50 60 l20 35"/>
-                </svg>
-                <h3 style="color: #00ffcc">[03] HAPPY (EUPHORIA)</h3>
-                <p style="text-align: left; font-size: 1.1rem; color: #94a3b8;">Expansive, energetic motions. Arms raised high or dancing. Head tilted upward. Mapped as spatial expansion.</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="auth" class="page-content">
-        <div class="auth-box">
-            
-            <div id="auth-view-login" class="auth-view active">
-                <h2 style="text-align: center; margin-bottom: 35px; color: #fff; letter-spacing: 5px; font-size: 2rem;">SYSTEM LOGIN</h2>
-                <button type="button" class="btn-cyber" style="width: 100%; margin-bottom: 30px; border-color: rgba(255,255,255,0.2); color: #fff; background: rgba(255,255,255,0.02);" onclick="initiateGoogleAuth()">
-                    <svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                    </svg>
-                    LOGIN WITH GOOGLE
-                </button>
-                <div style="text-align: center; color: var(--theme); margin-bottom: 30px; font-size: 0.9rem; letter-spacing: 3px; font-family: 'Share Tech Mono', monospace; opacity: 0.7;">--- OR LOCAL AUTH ---</div>
-                <form onsubmit="handleLogin(event)">
-                    <div class="input-group">
-                        <label>OPERATOR_ID (EMAIL)</label>
-                        <input type="email" required placeholder="operator@core.os">
-                    </div>
-                    <div class="input-group">
-                        <label>ACCESS_CYPHER</label>
-                        <input type="password" required placeholder="••••••••••••">
-                    </div>
-                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.2rem; padding: 18px; text-transform: none;">Log in</button>
-                </form>
-                <div class="auth-switch-link" onclick="switchAuthView('signup')">> NO ACCOUNT? INITIALIZE REGISTRATION <</div>
-            </div>
-
-            <div id="auth-view-signup" class="auth-view">
-                <h2 style="text-align: center; margin-bottom: 35px; color: #fff; letter-spacing: 5px; font-size: 2rem;">REGISTRATION</h2>
-                <form onsubmit="handleSignUp(event)">
-                    <div class="input-group" style="margin-bottom: 25px;">
-                        <label>NEW OPERATOR_ID (EMAIL)</label>
-                        <input type="email" required placeholder="operator@core.os">
-                    </div>
-                    <div class="input-group" style="margin-bottom: 25px;">
-                        <label>SET ACCESS_CYPHER</label>
-                        <input type="password" required placeholder="••••••••••••">
-                    </div>
-                    <div class="verification-warning">⚠️ IDENTITY VERIFICATION REQUIRED</div>
-                    <button type="submit" class="btn-cyber" style="width: 100%; font-size: 1.2rem; padding: 18px; font-weight: bold; color: #fff; text-transform: none; background: rgba(0,240,255,0.1);">Sign up</button>
-                </form>
-                <div class="auth-switch-link" onclick="switchAuthView('login')">> ALREADY VERIFIED? PROCEED TO LOGIN <</div>
-            </div>
-
-            <div id="auth-view-verify" class="auth-view">
-                <h2 style="text-align: center; margin-bottom: 15px; color: var(--theme); letter-spacing: 4px; font-size: 1.8rem;">AWAITING VERIFICATION</h2>
-                <p style="text-align: center; font-size: 1rem; margin-bottom: 35px; color: #94a3b8; font-family: 'Share Tech Mono', monospace;">A secure cypher has been transmitted to your email.</p>
-                <form onsubmit="handleVerification(event)">
-                    <div class="input-group">
-                        <label>6-DIGIT CYPHER CODE</label>
-                        <input type="text" required placeholder="0 0 0 0 0 0" style="text-align: center; letter-spacing: 12px; font-size: 1.8rem;" maxlength="6">
-                    </div>
-                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.2rem; padding: 18px;">VERIFY & ESTABLISH LINK</button>
-                </form>
-                <div class="auth-switch-link" onclick="switchAuthView('signup')">< CANCEL OPERATION</div>
-            </div>
-
-            <div id="auth-view-google" class="auth-view">
-                <div class="google-loader">
-                    <div class="spinner"></div>
-                    <h3 style="color: #fff; letter-spacing: 3px; font-size: 1.2rem; font-family: 'Share Tech Mono', monospace;" id="google-status-text">REDIRECTING TO GOOGLE<span class="blink">...</span></h3>
-                    <p style="font-size: 0.95rem; color: #94a3b8; margin-top: 20px; font-family: 'Share Tech Mono', monospace;">Awaiting external OAuth protocol.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div id="experience" class="page-content">
         <div class="hud-layout">
             <div id="video-core">
-                <div class="scanner"></div>
                 <canvas id="webcam-canvas"></canvas>
-                <div style="position: absolute; bottom: 20px; left: 20px; color: var(--theme); font-size: 0.9rem; background: rgba(0,0,0,0.8); padding: 10px 20px; font-family: 'Share Tech Mono', monospace; border: 1px solid rgba(0,240,255,0.3); backdrop-filter: blur(5px);">
-                    > LIVE BIOMETRIC FEED [ACTIVE_LINK]
-                </div>
+                <div class="scanner"></div>
             </div>
             <div class="data-panel">
                 <div class="hud-box">
-                    <h3 style="font-size: 1.3rem; margin-bottom: 30px; color: #fff; letter-spacing: 3px;">PROBABILITY MATRIX</h3>
-                    <div id="bars-container"></div>
-                </div>
-                <div class="hud-box" style="flex-grow: 1; display: flex; flex-direction: column; padding: 0; background: none; clip-path: none;">
-                    <div id="ai-console">
-                        > AWAITING SKELETAL INPUT...<span class="blink">_</span>
+                    <div class="bar-wrap">
+                        <div class="bar-label"><span>CALM</span><span id="score-calm">0%</span></div>
+                        <div class="bar-bg"><div class="bar-fill" id="bar-calm"></div></div>
+                    </div>
+                    <div class="bar-wrap">
+                        <div class="bar-label"><span>ANXIOUS</span><span id="score-anxious">0%</span></div>
+                        <div class="bar-bg"><div class="bar-fill" id="bar-anxious"></div></div>
+                    </div>
+                    <div class="bar-wrap">
+                        <div class="bar-label"><span>HAPPY</span><span id="score-happy">0%</span></div>
+                        <div class="bar-bg"><div class="bar-fill" id="bar-happy"></div></div>
                     </div>
                 </div>
-                <button class="btn-cyber" style="border-color: #ef4444; color: #ef4444; width: 100%; font-size: 1.1rem; padding: 18px; background: rgba(239, 68, 68, 0.05);" onclick="terminateSystem()">TERMINATE CONNECTION</button>
+                <div id="ai-console">
+                    AWAITING KINETIC INPUT...<br><br><span class="blink">_</span>
+                </div>
+                <button class="btn-cyber btn-solid" style="padding: 20px;" onclick="terminateSystem()">TERMINATE CONNECTION</button>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
-
 <script>
-    // --- 0. 升级版开场动画：多层嵌套全息点云 ---
-    const iCanvas = document.getElementById('intro-canvas');
-    const iCtx = iCanvas.getContext('2d');
-    let introPoints = [];
-    let introAngleX = 0;
-    let introAngleY = 0;
-    let introActive = true;
-    let explosionPhase = false;
+    // --- 开场动画逻辑 (增加层次与加载感) ---
+    const introCanvas = document.getElementById('intro-canvas');
+    const introCtx = introCanvas.getContext('2d');
+    let introParticles = [];
+    let introPhase = 0; // 0: 散乱加载, 1: 汇聚成球
 
     function initIntroCanvas() {
-        iCanvas.width = window.innerWidth;
-        iCanvas.height = window.innerHeight;
-        introPoints = [];
-        
-        // 1. 数据内核 (Inner Core)
+        introCanvas.width = window.innerWidth;
+        introCanvas.height = window.innerHeight;
         for(let i=0; i<150; i++) {
-            const phi = Math.acos(-1 + (2 * i) / 150);
-            const theta = Math.sqrt(150 * Math.PI) * phi;
-            const r = 80 + Math.random() * 15;
-            introPoints.push({
-                x: r * Math.cos(theta) * Math.sin(phi), y: r * Math.sin(theta) * Math.sin(phi), z: r * Math.cos(phi),
-                type: 'core', vx: 0, vy: 0, vz: 0 
-            });
-        }
-        
-        // 2. 主扫描壳 (Outer Shell)
-        const numPoints = 500;
-        for (let i = 0; i < numPoints; i++) {
-            const phi = Math.acos(-1 + (2 * i) / numPoints);
-            const theta = Math.sqrt(numPoints * Math.PI) * phi;
-            const r = 220 + Math.random() * 30; 
-            introPoints.push({
-                x: r * Math.cos(theta) * Math.sin(phi), y: r * Math.sin(theta) * Math.sin(phi), z: r * Math.cos(phi),
-                type: 'shell', vx: 0, vy: 0, vz: 0 
-            });
-        }
-
-        // 3. 星环系统 (Orbital Rings)
-        for(let i=0; i<250; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const r = 380 + Math.random() * 40;
-            introPoints.push({
-                x: r * Math.cos(angle), y: (Math.random() - 0.5) * 20, z: r * Math.sin(angle),
-                type: 'ring', vx: 0, vy: 0, vz: 0
+            introParticles.push({
+                x: Math.random() * introCanvas.width,
+                y: Math.random() * introCanvas.height,
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2,
+                targetX: 0, targetY: 0
             });
         }
     }
 
     function drawIntro() {
-        if (!introActive) return;
-        iCtx.clearRect(0, 0, iCanvas.width, iCanvas.height);
+        if(document.getElementById('intro-screen').style.display === 'none') return;
+        introCtx.fillStyle = 'rgba(2, 2, 4, 0.2)';
+        introCtx.fillRect(0, 0, introCanvas.width, introCanvas.height);
         
-        const cx = iCanvas.width / 2;
-        const cy = iCanvas.height / 2;
-        introAngleX += 0.002; introAngleY += 0.003;
-        
-        const cosX = Math.cos(introAngleX), sinX = Math.sin(introAngleX);
-        const cosY = Math.cos(introAngleY), sinY = Math.sin(introAngleY);
+        const cx = introCanvas.width / 2;
+        const cy = introCanvas.height / 2;
+        const time = Date.now() * 0.001;
 
-        introPoints.forEach(p => {
-            if (explosionPhase) { p.x += p.vx; p.y += p.vy; p.z += p.vz; }
-
-            let x2, y1, z2;
-            // 星环采用独立旋转轴产生错落感
-            if(p.type === 'ring') {
-               let ry = p.y * Math.cos(introAngleX * 2) - p.z * Math.sin(introAngleX * 2);
-               let rz = p.y * Math.sin(introAngleX * 2) + p.z * Math.cos(introAngleX * 2);
-               x2 = p.x * Math.cos(introAngleY * -1.5) + rz * Math.sin(introAngleY * -1.5);
-               z2 = -p.x * Math.sin(introAngleY * -1.5) + rz * Math.cos(introAngleY * -1.5);
-               y1 = ry;
+        introCtx.fillStyle = '#00f0ff';
+        introParticles.forEach((p, i) => {
+            if (introPhase === 0) {
+                p.x += p.vx; p.y += p.vy;
+                if(p.x < 0 || p.x > introCanvas.width) p.vx *= -1;
+                if(p.y < 0 || p.y > introCanvas.height) p.vy *= -1;
             } else {
-               y1 = p.y * cosX - p.z * sinX;
-               let z1 = p.y * sinX + p.z * cosX;
-               x2 = p.x * cosY + z1 * sinY;
-               z2 = -p.x * sinY + z1 * cosY;
+                // 汇聚成球体
+                let radius = 200;
+                let angle1 = i * 0.1 + time;
+                let angle2 = i * 0.2;
+                p.targetX = cx + Math.cos(angle1) * Math.sin(angle2) * radius;
+                p.targetY = cy + Math.sin(angle1) * Math.sin(angle2) * radius;
+                p.x += (p.targetX - p.x) * 0.05;
+                p.y += (p.targetY - p.y) * 0.05;
             }
-
-            const perspective = 700;
-            const zDepth = perspective / (perspective - z2);
-            if (zDepth < 0) return; // 剔除视角背后的极点
-            const px = cx + x2 * zDepth;
-            const py = cy + y1 * zDepth;
-            
-            const alpha = Math.max(0.1, Math.min(1, (z2 + 300) / 600));
-            
-            if(p.type === 'core') iCtx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.9})`;
-            else if(p.type === 'ring') iCtx.fillStyle = `rgba(0, 255, 204, ${alpha * 0.7})`;
-            else iCtx.fillStyle = `rgba(0, 240, 255, ${alpha * 0.5})`;
-
-            iCtx.beginPath();
-            iCtx.arc(px, py, Math.max(0.5, (p.type==='core'?2.5:1.5) * zDepth), 0, Math.PI * 2);
-            iCtx.fill();
+            introCtx.beginPath();
+            introCtx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
+            introCtx.fill();
         });
-
         requestAnimationFrame(drawIntro);
     }
 
-    function startApp() {
-        explosionPhase = true;
-        introPoints.forEach(p => {
-            const speed = (p.type === 'core' ? 20 : 10) + Math.random() * 15;
-            const dist = Math.sqrt(p.x*p.x + p.y*p.y + p.z*p.z) || 1;
-            p.vx = (p.x / dist) * speed; p.vy = (p.y / dist) * speed; p.vz = (p.z / dist) * speed;
-        });
-
-        const introScreen = document.getElementById('intro-screen');
-        const appContainer = document.getElementById('app-container');
-        introScreen.style.opacity = '0';
-        appContainer.style.opacity = '1';
-
+    // 页面加载完成后，模拟系统启动层
+    window.onload = () => {
+        initIntroCanvas();
+        drawIntro();
         setTimeout(() => {
-            introActive = false;
-            introScreen.style.visibility = 'hidden';
-            initSentinel();
-        }, 1500);
-    }
-
-    window.addEventListener('resize', () => {
-        if(introActive) initIntroCanvas();
-        initBgParticles();
-        initSentinel();
-    });
-
-    initIntroCanvas();
-    drawIntro();
-
-
-    // --- 1. Background Particles ---
-    const bgCanvas = document.getElementById('bg-canvas');
-    const bgCtx = bgCanvas.getContext('2d');
-    let particlesArray = [];
-    const mouse = { x: null, y: null, radius: 150 };
-    window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
-    window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
-
-    class Particle {
-        constructor() {
-            this.x = Math.random() * window.innerWidth;
-            this.y = Math.random() * window.innerHeight;
-            this.size = Math.random() * 2 + 0.5;
-            this.vy = (Math.random() * 0.5) + 0.2;
-            this.waveSpeed = Math.random() * 0.02 + 0.01;
-            this.waveOffset = Math.random() * Math.PI * 2;
-            this.density = (Math.random() * 30) + 1;
-        }
-        draw() {
-            bgCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
-            bgCtx.globalAlpha = 0.6;
-            bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2); bgCtx.fill();
-            bgCtx.globalAlpha = 1.0;
-        }
-        update() {
-            this.y -= this.vy;
-            this.x += Math.sin(this.y * this.waveSpeed + this.waveOffset) * 0.5;
-            if(this.y < 0) { this.y = bgCanvas.height; this.x = Math.random() * bgCanvas.width; }
-            if(this.x > bgCanvas.width) this.x = 0;
-            if(this.x < 0) this.x = bgCanvas.width;
-
-            if (mouse.x != null && mouse.y != null) {
-                let dx = mouse.x - this.x; let dy = mouse.y - this.y;
-                let distance = Math.sqrt(dx*dx + dy*dy);
-                if (distance < mouse.radius) {
-                    let force = (mouse.radius - distance) / mouse.radius;
-                    this.x -= (dx / distance) * force * this.density; 
-                    this.y -= (dy / distance) * force * this.density;
-                }
-            }
-        }
-    }
-
-    function initBgParticles() {
-        bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
-        particlesArray = [];
-        let numberOfParticles = (bgCanvas.width * bgCanvas.height) / 7000;
-        for(let i=0; i < numberOfParticles; i++) particlesArray.push(new Particle());
-    }
-    
-    function animateBg() {
-        bgCtx.fillStyle = 'rgba(2, 2, 4, 0.2)'; 
-        bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
-        for(let i=0; i < particlesArray.length; i++) { particlesArray[i].update(); particlesArray[i].draw(); }
-        requestAnimationFrame(animateBg);
-    }
-    initBgParticles(); animateBg();
-
-
-    // --- 2. Sentinel Viz (修复版骨骼投影) ---
-    const sentCanvas = document.getElementById('sentinel-canvas');
-    const sentCtx = sentCanvas.getContext('2d');
-    let sentinelAngle = 0;
-
-    const rawPoseModel = [
-        {id: 'nose', x: 0, y: -0.8, z: 0}, {id: 'lShoulder', x: -0.4, y: -0.5, z: 0}, {id: 'rShoulder', x: 0.4, y: -0.5, z: 0},
-        {id: 'lElbow', x: -0.6, y: -0.1, z: 0.2}, {id: 'rElbow', x: 0.6, y: -0.1, z: -0.2},
-        {id: 'lWrist', x: -0.5, y: 0.3, z: 0.4}, {id: 'rWrist', x: 0.5, y: 0.3, z: -0.4},
-        {id: 'lHip', x: -0.25, y: 0.1, z: 0}, {id: 'rHip', x: 0.25, y: 0.1, z: 0},
-        {id: 'lKnee', x: -0.3, y: 0.6, z: 0.1}, {id: 'rKnee', x: 0.3, y: 0.6, z: -0.1},
-        {id: 'lAnkle', x: -0.35, y: 0.9, z: 0.2}, {id: 'rAnkle', x: 0.35, y: 0.9, z: -0.2}
-    ];
-
-    const connections = [
-        ['lShoulder', 'rShoulder'], ['lShoulder', 'lElbow'], ['lElbow', 'lWrist'], ['rShoulder', 'rElbow'], ['rElbow', 'rWrist'],
-        ['lShoulder', 'lHip'], ['rShoulder', 'rHip'], ['lHip', 'rHip'], ['lHip', 'lKnee'], ['lKnee', 'lAnkle'], ['rHip', 'rKnee'], ['rKnee', 'rAnkle'],
-        ['nose', 'lShoulder'], ['nose', 'rShoulder']
-    ];
-
-    // 修复点：使用统一缩放比例，防止根据宽高拉伸导致人物变形
-    function project(point, angle, width, height) {
-        let x_rot = point.x * Math.cos(angle) - point.z * Math.sin(angle);
-        let z_rot = point.x * Math.sin(angle) + point.z * Math.cos(angle);
-        let perspective = 1 + (z_rot * 0.3);
-        let uniformScale = Math.min(width, height) * 0.45; 
-        
-        return { 
-            x: (x_rot / perspective) * uniformScale + (width/2), 
-            y: (point.y) * uniformScale + (height/2), 
-            z: z_rot 
-        };
-    }
-
-    function initSentinel() {
-        const container = document.getElementById('sentinel-viz');
-        if (container && container.offsetWidth > 0) {
-            sentCanvas.width = container.offsetWidth; 
-            sentCanvas.height = container.offsetHeight;
-        }
-    }
-
-    function animateSentinel() {
-        if(document.getElementById('home').style.display === 'none') { requestAnimationFrame(animateSentinel); return; }
-        sentCtx.clearRect(0, 0, sentCanvas.width, sentCanvas.height);
-        sentinelAngle += 0.005; 
-        const currentTheme = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
-
-        let projectedPoints = {};
-        rawPoseModel.forEach(p => { projectedPoints[p.id] = project(p, sentinelAngle, sentCanvas.width, sentCanvas.height); });
-
-        sentCtx.lineWidth = 2;
-        connections.forEach(([p1_id, p2_id]) => {
-            const p1 = projectedPoints[p1_id]; const p2 = projectedPoints[p2_id];
-            let opacity = 1 - (((p1.z + p2.z) / 2 + 1) / 2); 
-            sentCtx.strokeStyle = currentTheme.replace('rgb','rgba').replace(')', `, ${opacity * 0.5 + 0.1})`);
-            sentCtx.beginPath(); sentCtx.moveTo(p1.x, p1.y); sentCtx.lineTo(p2.x, p2.y); sentCtx.stroke();
-        });
-
-        rawPoseModel.forEach(p_raw => {
-            const p = projectedPoints[p_raw.id];
-            let opacity = 1 - ((p.z + 1) / 2);
-            sentCtx.fillStyle = currentTheme.replace('rgb','rgba').replace(')', `, ${opacity * 0.8 + 0.2})`);
-            sentCtx.beginPath(); sentCtx.arc(p.x, p.y, 4 * (opacity * 0.5 + 0.5), 0, Math.PI * 2); sentCtx.fill();
-        });
-        requestAnimationFrame(animateSentinel);
-    }
-    animateSentinel();
-
-
-    // --- 3. 页面路由与高级转场逻辑 ---
-    let isAuthenticated = false;
-    let systemRunning = false;
-    let expectedVerificationCode = ""; 
-
-    function route(pageId) {
-        if(pageId !== 'experience' && systemRunning) terminateSystem(false); 
-        document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
-        document.getElementById(pageId).classList.add('active');
-        document.querySelectorAll('.nav-links li').forEach(item => {
-            if(item.innerText.toLowerCase().includes(pageId) || (pageId==='home' && item.innerText==='HOME')) item.classList.add('active');
-        });
-        if(pageId === 'home') initSentinel();
-    }
-
-    // 触发系统进入体验模块时的酷炫遮罩
-    function triggerExperienceTransition() {
-        const trans = document.getElementById('system-transition');
-        trans.classList.remove('ending');
-        trans.classList.add('active');
-        
-        // 当遮罩完全遮挡屏幕时进行底层路由跳转
-        setTimeout(() => {
-            route('experience');
-            startSystem();
-        }, 800); 
-
-        // 动画完成后撤除遮罩
-        setTimeout(() => {
-            trans.classList.remove('active');
-            trans.classList.add('ending');
-        }, 2200); 
-    }
-
-    function switchAuthView(viewName) {
-        document.querySelectorAll('.auth-view').forEach(v => v.classList.remove('active'));
-        document.getElementById('auth-view-' + viewName).classList.add('active');
-    }
-
-    function openAuth(viewName) { route('auth'); switchAuthView(viewName); }
-
-    function attemptStart() {
-        if (!isAuthenticated) openAuth('login');
-        else triggerExperienceTransition();
-    }
-
-    function handleLogin(e) { e.preventDefault(); loginSuccess(); }
-    
-    function handleSignUp(e) {
-        e.preventDefault();
-        expectedVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-        alert("[SYSTEM NOTIFICATION] A verification cypher has been transmitted to your email.\n\n(Simulation mode: direct cypher reveal)\nYour 6-digit access cypher is: " + expectedVerificationCode);
-        switchAuthView('verify');
-    }
-
-    function handleVerification(e) {
-        e.preventDefault();
-        const inputCode = e.target.querySelector('input').value;
-        if (inputCode === expectedVerificationCode) {
-            alert("[SUCCESS] Identity verified. Registration complete.");
-            loginSuccess();
-        } else alert("[ERROR] Invalid access cypher. Please enter the correct 6-digit code.");
-    }
-    
-    function initiateGoogleAuth() {
-        switchAuthView('google');
-        const textElem = document.getElementById('google-status-text');
-        textElem.innerHTML = `CONNECTING TO GOOGLE SECURE HANDSHAKE<span class="blink">...</span>`;
-        setTimeout(() => {
-            textElem.innerHTML = `AWAITING PERSONAL IDENTITY VERIFICATION<span class="blink">...</span>`;
-            document.documentElement.style.setProperty('--theme', '#4285F4');
-            document.documentElement.style.setProperty('--theme-glow', 'rgba(66, 133, 244, 0.4)');
+            document.getElementById('boot-text').style.opacity = '0';
+            introPhase = 1; // 粒子开始汇聚
             setTimeout(() => {
-                textElem.innerHTML = `VERIFICATION SUCCESS. ESTABLISHING LINK<span class="blink">...</span>`;
-                document.documentElement.style.setProperty('--theme', '#34A853'); 
-                setTimeout(() => {
-                    document.documentElement.style.setProperty('--theme', '#00f0ff');
-                    document.documentElement.style.setProperty('--theme-glow', 'rgba(0, 240, 255, 0.4)');
-                    loginSuccess();
-                }, 1000);
-            }, 2000);
-        }, 1500);
-    }
-
-    function loginSuccess() {
-        isAuthenticated = true;
-        document.getElementById('auth-ui').innerHTML = `
-            <span style="color: var(--theme); font-size: 0.95rem; letter-spacing: 2px; font-weight:bold; font-family: 'Share Tech Mono', monospace;">[ OPERATOR_ACTIVE ]</span>
-            <button class="btn-cyber" style="border-color: rgba(255,255,255,0.2); color: #94a3b8; padding: 10px 20px; font-size: 0.8rem;" onclick="logout()">LOGOUT</button>
-        `;
-        switchAuthView('login');
-        triggerExperienceTransition();
-    }
-
-    function logout() {
-        isAuthenticated = false;
-        terminateSystem(false);
-        document.getElementById('auth-ui').innerHTML = `
-            <button class="btn-cyber" onclick="openAuth('login')" style="text-transform: none;">Log in</button>
-            <button class="btn-cyber btn-solid" onclick="openAuth('signup')" style="text-transform: none;">Sign up</button>
-        `;
-        route('home');
-    }
-
-    // --- 4. Core AI Kinetic Logic ---
-    const modelURL_TM = "https://teachablemachine.withgoogle.com/models/sTBoNGgmv/";
-    let model, webcam, webcamCtx, maxPredictions;
-    let currentState = ""; 
-    let loopFrame;
-
-    const EMOTION_LOGS = {
-        calm: "> SCANNING BIOMETRICS...\n> POSTURE: NOMINAL SYMMETRY.\n> BIOLOGICAL FLOW: STABLE.\n> SYSTEM STATUS: NOMINAL CRUISING.",
-        anxious: "> ALERT: IRREGULAR KINETIC CONTRACTIONS!\n> CORTISOL LEVELS: SURGING (ESTIMATED).\n> POSTURE: INWARD / DEFENSIVE.\n> SYSTEM STATUS: INSTABILITY WARNING.",
-        happy: "> DOPAMINE SURGE DETECTED.\n> ENERGY PATHWAY: HIGH-FREQUENCY EXPANSION.\n> PREDICATED STATE: EUPHORIA.\n> SYSTEM STATUS: POSITIVE FEEDBACK ACTIVE."
+                document.getElementById('intro-main').classList.add('show');
+            }, 800);
+        }, 2000);
     };
 
-    async function startSystem() {
-        if (systemRunning) return;
-        systemRunning = true;
-        document.getElementById('ai-console').innerHTML = "> INITIALIZING NEURAL LINK...<span class='blink'>_</span>";
-
-        model = await tmPose.load(modelURL_TM + "model.json", modelURL_TM + "metadata.json");
-        maxPredictions = model.getTotalClasses();
-
-        webcam = new tmPose.Webcam(600, 600, true); 
-        await webcam.setup(); await webcam.play();
-        
-        const canvas = document.getElementById("webcam-canvas");
-        canvas.width = 600; canvas.height = 600;
-        webcamCtx = canvas.getContext("2d");
-
-        const container = document.getElementById("bars-container");
-        container.innerHTML = "";
-        for (let i = 0; i < maxPredictions; i++) {
-            container.innerHTML += `
-                <div class="bar-wrap">
-                    <div class="bar-label"><span>${model.getClassLabels()[i]}</span><span id="val-${i}">0%</span></div>
-                    <div class="bar-bg"><div id="fill-${i}" class="bar-fill"></div></div>
-                </div>`;
-        }
-        loopFrame = window.requestAnimationFrame(expLoop);
+    function startApp() {
+        document.getElementById('intro-screen').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('intro-screen').style.display = 'none';
+            document.getElementById('app-container').style.opacity = '1';
+            initSentinelCanvas();
+        }, 1500);
     }
 
-    async function expLoop() {
+    // --- 路由系统 ---
+    function route(pageId) {
+        document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    }
+
+    // --- 骨骼节点动画 (修复初始放大放光问题) ---
+    const senCanvas = document.getElementById('sentinel-canvas');
+    const senCtx = senCanvas.getContext('2d');
+    let senNodes = [];
+
+    function initSentinelCanvas() {
+        senCanvas.width = senCanvas.clientWidth;
+        senCanvas.height = senCanvas.clientHeight;
+        senNodes = [];
+        // 固定生成初始点，避免随机半径导致的放大缩小闪烁
+        for(let i=0; i<20; i++) {
+            senNodes.push({
+                x: Math.random() * senCanvas.width,
+                y: Math.random() * senCanvas.height,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5,
+                radius: 2 // 固定极小半径，移除闪烁光晕
+            });
+        }
+        drawSentinel();
+    }
+
+    function drawSentinel() {
+        if(document.getElementById('home').classList.contains('active') === false) return;
+        senCtx.clearRect(0, 0, senCanvas.width, senCanvas.height);
+        
+        senCtx.strokeStyle = 'rgba(0, 240, 255, 0.15)';
+        senCtx.lineWidth = 1;
+
+        senNodes.forEach((n, i) => {
+            n.x += n.vx; n.y += n.vy;
+            if(n.x < 0 || n.x > senCanvas.width) n.vx *= -1;
+            if(n.y < 0 || n.y > senCanvas.height) n.vy *= -1;
+
+            senCtx.fillStyle = '#00f0ff';
+            senCtx.beginPath();
+            senCtx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+            senCtx.fill();
+
+            for(let j=i+1; j<senNodes.length; j++) {
+                let dx = senNodes[j].x - n.x;
+                let dy = senNodes[j].y - n.y;
+                if(Math.sqrt(dx*dx + dy*dy) < 120) {
+                    senCtx.beginPath();
+                    senCtx.moveTo(n.x, n.y);
+                    senCtx.lineTo(senNodes[j].x, senNodes[j].y);
+                    senCtx.stroke();
+                }
+            }
+        });
+        requestAnimationFrame(drawSentinel);
+    }
+
+    // --- 进场酷炫粒子动画 (Warp Speed) ---
+    function attemptStart() {
+        const warpCanvas = document.getElementById('warp-canvas');
+        const wCtx = warpCanvas.getContext('2d');
+        warpCanvas.width = window.innerWidth;
+        warpCanvas.height = window.innerHeight;
+        warpCanvas.style.opacity = '1';
+        
+        let stars = [];
+        for(let i=0; i<300; i++) {
+            stars.push({
+                x: Math.random() * warpCanvas.width - warpCanvas.width/2,
+                y: Math.random() * warpCanvas.height - warpCanvas.height/2,
+                z: Math.random() * 1000
+            });
+        }
+        
+        let warpAnim;
+        function drawWarp() {
+            wCtx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            wCtx.fillRect(0, 0, warpCanvas.width, warpCanvas.height);
+            
+            const cx = warpCanvas.width/2;
+            const cy = warpCanvas.height/2;
+            
+            wCtx.fillStyle = '#00f0ff';
+            stars.forEach(s => {
+                s.z -= 25; // 加速冲刺
+                if(s.z <= 0) { s.z = 1000; s.x = Math.random() * warpCanvas.width - cx; s.y = Math.random() * warpCanvas.height - cy; }
+                
+                let px = (s.x / s.z) * 500 + cx;
+                let py = (s.y / s.z) * 500 + cy;
+                let size = (1 - s.z / 1000) * 4;
+                
+                wCtx.beginPath();
+                wCtx.arc(px, py, size, 0, Math.PI*2);
+                wCtx.fill();
+            });
+            warpAnim = requestAnimationFrame(drawWarp);
+        }
+        
+        drawWarp();
+
+        // 动画持续2秒后进入体验系统
+        setTimeout(() => {
+            cancelAnimationFrame(warpAnim);
+            warpCanvas.style.opacity = '0';
+            document.getElementById('home').classList.remove('active');
+            document.getElementById('experience').classList.add('active');
+            
+            // 启动AI模型 (请将 URL 替换为您自己的 Teachable Machine 模型链接)
+            initTM("https://teachablemachine.withgoogle.com/models/YOUR_MODEL_ID/"); 
+        }, 2000);
+    }
+
+    // --- Teachable Machine 核心逻辑 ---
+    let model, webcam, ctx, maxPredictions;
+    let systemRunning = false;
+
+    async function initTM(URL) {
+        if(systemRunning) return;
+        systemRunning = true;
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+
+        document.getElementById('ai-console').innerHTML = "LOADING NEURAL NETWORK...<br>ESTABLISHING WEBCAM CONNECTION...<br><span class='blink'>_</span>";
+
+        try {
+            model = await tmPose.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
+            const size = 400;
+            const flip = true;
+            webcam = new tmPose.Webcam(size, size, flip);
+            await webcam.setup();
+            await webcam.play();
+            
+            window.requestAnimationFrame(loop);
+
+            const canvas = document.getElementById("webcam-canvas");
+            canvas.width = size; canvas.height = size;
+            ctx = canvas.getContext("2d");
+
+            document.getElementById('ai-console').innerHTML = "CONNECTION ESTABLISHED.<br>ANALYZING KINETIC DATA...<br><span class='blink'>_</span>";
+        } catch (e) {
+            document.getElementById('ai-console').innerHTML = "ERROR: FAILED TO LOAD MODEL OR WEBCAM.<br>PLEASE CHECK PERMISSIONS OR URL.<br><span class='blink'>_</span>";
+        }
+    }
+
+    async function loop(timestamp) {
         if(!systemRunning) return;
-        webcam.update(); await predict();
-        loopFrame = window.requestAnimationFrame(expLoop);
+        webcam.update();
+        await predict();
+        window.requestAnimationFrame(loop);
     }
 
     async function predict() {
         const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
         const prediction = await model.predict(posenetOutput);
 
-        let topIndex = 0;
+        let logText = "";
         for (let i = 0; i < maxPredictions; i++) {
-            const prob = prediction[i].probability;
-            document.getElementById(`val-${i}`).innerText = (prob * 100).toFixed(0) + "%";
-            document.getElementById(`fill-${i}`).style.width = (prob * 100).toFixed(0) + "%";
-            if (prob > prediction[topIndex].probability) topIndex = i;
+            const classProb = prediction[i].probability.toFixed(2);
+            const probPercent = Math.round(classProb * 100) + '%';
+            
+            // 更新进度条
+            const name = prediction[i].className.toLowerCase();
+            if(document.getElementById('bar-' + name)) {
+                document.getElementById('bar-' + name).style.width = probPercent;
+                document.getElementById('score-' + name).innerText = probPercent;
+            }
+            logText += `> ${prediction[i].className}: ${probPercent}<br>`;
+        }
+        
+        // 简单日志更新机制
+        if(Math.random() < 0.1) {
+            document.getElementById('ai-console').innerHTML = "STREAMING KINETIC DATA...<br>" + logText + "<br><span class='blink'>_</span>";
         }
 
-        const topProb = prediction[topIndex].probability;
-        const topLabel = prediction[topIndex].className.toLowerCase();
-
-        if (topProb > 0.65) updateDynamicFX(topIndex, topLabel);
-        drawWebcamPose(pose);
+        drawPose(pose);
     }
 
-    function updateDynamicFX(index, label) {
-        let themeColor, themeGlow, fxClass, logText;
-
-        if (label.includes("anx") || label.includes("sad") || label.includes("stress") || index === 1) {
-            themeColor = "#ff0055"; themeGlow = "rgba(255, 0, 85, 0.5)"; fxClass = "fx-shake"; logText = EMOTION_LOGS.anxious;
-        } else if (label.includes("hap") || label.includes("joy") || label.includes("dance") || index === 2) {
-            themeColor = "#00ffcc"; themeGlow = "rgba(0, 255, 204, 0.5)"; fxClass = "fx-pulse"; logText = EMOTION_LOGS.happy;
-        } else {
-            themeColor = "#00f0ff"; themeGlow = "rgba(0, 240, 255, 0.4)"; fxClass = ""; logText = EMOTION_LOGS.calm;
-        }
-
-        if (currentState !== label) {
-            currentState = label;
-            document.documentElement.style.setProperty('--theme', themeColor);
-            document.documentElement.style.setProperty('--theme-glow', themeGlow);
-            document.getElementById('app-container').className = fxClass; 
-            document.getElementById('ai-console').innerHTML = logText.replace(/\n/g, '<br><br>') + '<br><br><span class="blink">_</span>';
-        }
-    }
-
-    function drawWebcamPose(pose) {
+    function drawPose(pose) {
         if (webcam.canvas) {
-            webcamCtx.drawImage(webcam.canvas, 0, 0);
+            ctx.drawImage(webcam.canvas, 0, 0);
             if (pose) {
-                const min = 0.5;
-                const color = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
-                webcamCtx.strokeStyle = color; webcamCtx.fillStyle = color; webcamCtx.lineWidth = 5; 
-                tmPose.drawKeypoints(pose.keypoints, min, webcamCtx);
-                tmPose.drawSkeleton(pose.keypoints, min, webcamCtx);
+                const minPartConfidence = 0.5;
+                ctx.strokeStyle = '#00f0ff';
+                ctx.fillStyle = '#00f0ff';
+                ctx.lineWidth = 4;
+                tmPose.drawKeypoints(pose.keypoints, minPartConfidence, ctx);
+                tmPose.drawSkeleton(pose.keypoints, minPartConfidence, ctx);
             }
         }
     }
 
-    function terminateSystem(goHome = true) {
+    function terminateSystem() {
         systemRunning = false;
         if(webcam) webcam.stop();
-        if(loopFrame) window.cancelAnimationFrame(loopFrame);
-        
-        document.documentElement.style.setProperty('--theme', '#00f0ff');
-        document.documentElement.style.setProperty('--theme-glow', 'rgba(0, 240, 255, 0.4)');
-        document.getElementById('app-container').className = "";
-        currentState = "";
-        
-        if(goHome) route('home');
+        document.getElementById('experience').classList.remove('active');
+        document.getElementById('home').classList.add('active');
+        initSentinelCanvas(); // 返回首页时重新启动骨骼动画
     }
 </script>
 </body>
