@@ -400,6 +400,8 @@
     // --- Global State & Config ---
     let isAuthenticated = false;
     let systemRunning = false;
+    let expectedVerificationCode = ""; // 新增：用于存储真实的验证码
+
     const modelURL_TM = "https://teachablemachine.withgoogle.com/models/sTBoNGgmv/";
 
     const mouse = { x: null, y: null, radius: 150 };
@@ -561,15 +563,30 @@
     
     function handleSignUp(e) {
         e.preventDefault();
-        alert("验证码已发送至您的邮箱！(Verification code sent to your email!)");
-        // Go to Email Verification step instead of direct login
+        
+        // 随机生成一个真实的6位验证码
+        expectedVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // 由于没有真实后端，此处使用弹窗模拟您收到了邮件
+        alert("【系统提示】验证码已发送至您的邮箱！\n\n(受限于纯前端环境，请直接查看此模拟邮件内容：)\n您的真实验证码是：" + expectedVerificationCode);
+        
+        // Go to Email Verification step
         switchAuthView('verify');
     }
 
     function handleVerification(e) {
         e.preventDefault();
-        // Verification success
-        loginSuccess();
+        
+        // 获取用户在输入框内填写的验证码
+        const inputCode = e.target.querySelector('input').value;
+        
+        // 校验逻辑：必须输入一模一样的验证码才行
+        if (inputCode === expectedVerificationCode) {
+            alert("验证成功！注册完毕。");
+            loginSuccess();
+        } else {
+            alert("验证码错误，请重新输入真实的验证码！");
+        }
     }
     
     function initiateGoogleAuth() {
