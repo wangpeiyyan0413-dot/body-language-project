@@ -567,8 +567,8 @@
         // 随机生成一个真实的6位验证码
         expectedVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
         
-        // 由于没有真实后端，此处使用弹窗模拟您收到了邮件
-        alert("【系统提示】验证码已发送至您的邮箱！\n\n(受限于纯前端环境，请直接查看此模拟邮件内容：)\n您的真实验证码是：" + expectedVerificationCode);
+        // 由于没有真实后端，此处使用弹窗模拟您收到了邮件 (已替换为纯英文)
+        alert("[SYSTEM NOTIFICATION] A verification cypher has been transmitted to your email.\n\n(Simulation mode: direct cypher reveal)\nYour 6-digit access cypher is: " + expectedVerificationCode);
         
         // Go to Email Verification step
         switchAuthView('verify');
@@ -580,12 +580,12 @@
         // 获取用户在输入框内填写的验证码
         const inputCode = e.target.querySelector('input').value;
         
-        // 校验逻辑：必须输入一模一样的验证码才行
+        // 校验逻辑：必须输入一模一样的验证码才行 (已替换为纯英文)
         if (inputCode === expectedVerificationCode) {
-            alert("验证成功！注册完毕。");
+            alert("[SUCCESS] Identity verified. Registration complete.");
             loginSuccess();
         } else {
-            alert("验证码错误，请重新输入真实的验证码！");
+            alert("[ERROR] Invalid access cypher. Please enter the correct 6-digit code.");
         }
     }
     
