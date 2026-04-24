@@ -3,7 +3,902 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motion Emotion System - Kinetic Interface</title><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Motion Emotion System - Kinetic Interface</title>
+    <style>
+        /* 引入了 Rajdhani 提升正文科技感与排版高级感 */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --theme: #00f0ff; 
+            --theme-glow: rgba(0, 240, 255, 0.4);
+            --bg-base: #020204;
+            --text-main: #e2e8f0;
+            --nav-bg: rgba(2, 2, 4, 0.85);
+            --card-bg: rgba(10, 15, 30, 0.65); /* 更深邃的玻璃卡片底色 */
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; cursor: crosshair; user-select: none; }
+        
+        body, html {
+            width: 100%; height: 100%;
+            background-color: var(--bg-base); color: var(--text-main);
+            font-family: 'Rajdhani', sans-serif; /* 优化正文字体 */
+            overflow: hidden;
+        }
+
+        /* --- 新增：点云粒子开场动画系统 --- */
+        #intro-screen {
+            position: fixed; inset: 0; z-index: 9999;
+            background: #020204;
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+            transition: opacity 1.5s cubic-bezier(0.165, 0.84, 0.44, 1), visibility 1.5s;
+        }
+        #intro-canvas { position: absolute; inset: 0; z-index: 1; pointer-events: none;}
+        .intro-content { position: relative; z-index: 2; text-align: center; }
+        .intro-title {
+            font-family: 'Orbitron', sans-serif; font-size: 3.5rem; font-weight: 900;
+            color: #fff; letter-spacing: 12px; margin-bottom: 10px;
+            text-shadow: 0 0 30px var(--theme-glow), 2px 2px 0px rgba(255,0,85,0.5), -2px -2px 0px rgba(0,255,204,0.5);
+            text-transform: uppercase;
+        }
+        .intro-sub {
+            font-family: 'Share Tech Mono', monospace; font-size: 1.2rem; color: var(--theme);
+            letter-spacing: 8px; margin-bottom: 50px; opacity: 0.8;
+        }
+        .btn-enter {
+            background: rgba(0, 240, 255, 0.1); border: 1px solid var(--theme); color: var(--theme);
+            padding: 15px 50px; font-family: 'Orbitron', sans-serif; font-size: 1.2rem; letter-spacing: 4px;
+            text-transform: uppercase; transition: all 0.4s; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+            position: relative; overflow: hidden; backdrop-filter: blur(5px);
+        }
+        .btn-enter:hover {
+            background: var(--theme); color: #000; box-shadow: 0 0 40px var(--theme-glow);
+            transform: scale(1.05);
+        }
+
+        #app-container {
+            width: 100vw; height: 100vh; position: relative;
+            background: radial-gradient(circle at center, #0a0a15 0%, var(--bg-base) 100%);
+            display: flex; flex-direction: column; transition: all 0.5s ease-out;
+            opacity: 0; /* 初始隐藏，等开场结束显示 */
+        }
+
+        #bg-canvas { position: absolute; inset: 0; z-index: 1; opacity: 0.8; }
+
+        nav {
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 50px; background: var(--nav-bg); backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 240, 255, 0.2); box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+        }
+        
+        .logo { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: 900; color: var(--theme); letter-spacing: 2px; text-shadow: 0 0 15px var(--theme-glow); text-transform: uppercase;}
+        
+        .nav-links { display: flex; list-style: none; gap: 40px; }
+        .nav-links li { font-size: 1rem; letter-spacing: 2px; transition: all 0.3s; color: #64748b; text-transform: uppercase; font-family: 'Orbitron', sans-serif; font-weight: 700;}
+        .nav-links li:hover, .nav-links li.active { color: var(--theme); text-shadow: 0 0 10px var(--theme-glow); transform: translateY(-2px); }
+
+        .auth-cluster { display: flex; gap: 15px; align-items: center; }
+
+        /* 风格化几何切角按钮 */
+        .btn-cyber {
+            background: rgba(0, 0, 0, 0.5); border: 1px solid var(--theme); color: var(--theme);
+            padding: 12px 30px; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; letter-spacing: 2px;
+            transition: all 0.3s; text-transform: uppercase; position: relative;
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            backdrop-filter: blur(4px);
+        }
+        .btn-cyber:hover { background: var(--theme); color: #000; box-shadow: 0 0 20px var(--theme-glow); font-weight: bold;}
+        .btn-solid { background: var(--theme); color: #000; font-weight: bold; border: none; }
+
+        .page-content {
+            position: absolute; top: 70px; left: 0; right: 0; bottom: 0;
+            padding: 40px 8vw; display: none; z-index: 10; flex-direction: column; overflow-y: auto;
+        }
+        .page-content.active { display: flex; animation: pageInit 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+        @keyframes pageInit {
+            from { opacity: 0; transform: translateY(20px); filter: blur(5px); }
+            to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+
+        h1, h2, h3 { font-family: 'Orbitron', sans-serif; text-transform: uppercase; margin-bottom: 15px; font-weight: 900;}
+        h1 { font-size: 4.5rem; letter-spacing: 2px; line-height: 1.1; color: #fff; text-shadow: 0 0 30px var(--theme-glow); margin-bottom: 20px;}
+        h2 { font-size: 2.5rem; letter-spacing: 4px; color: var(--theme); text-shadow: 0 0 15px var(--theme-glow); border-bottom: 1px solid rgba(0, 240, 255, 0.2); padding-bottom: 10px; display: inline-block;}
+        p { font-size: 1.2rem; line-height: 1.8; color: #94a3b8; margin-bottom: 25px; max-width: 900px; font-weight: 500;}
+
+        #home { flex-direction: row; align-items: center; justify-content: space-between; padding-top: 0; padding-bottom: 0;}
+        #home .hero-text { flex: 1; max-width: 55%; z-index: 15; }
+        
+        #sentinel-viz {
+            flex: 1; height: 100%; max-width: 45%;
+            position: relative; display: flex; justify-content: center; align-items: center;
+            z-index: 5;
+        }
+        #sentinel-canvas { width: 100%; height: 90%; }
+        .viz-label {
+            position: absolute; bottom: 10%; right: 0;
+            font-size: 0.8rem; color: var(--theme); opacity: 0.7; font-family: 'Share Tech Mono', monospace;
+            writing-mode: vertical-rl; text-transform: uppercase; letter-spacing: 4px;
+        }
+
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px; margin-top: 40px; }
+        
+        /* 风格化信息卡片 */
+        .tech-card {
+            background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05);
+            border-top: 4px solid var(--theme); padding: 40px; backdrop-filter: blur(15px);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+            position: relative;
+        }
+        .tech-card::before { content:''; position: absolute; bottom: 0; right: 0; width: 30px; height: 30px; border-bottom: 2px solid rgba(255,255,255,0.2); border-right: 2px solid rgba(255,255,255,0.2); }
+        .tech-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.6); border-color: rgba(0, 240, 255, 0.4); background: rgba(15, 20, 40, 0.8);}
+        .tech-card h3 { color: #fff; font-size: 1.5rem; letter-spacing: 2px;}
+
+        /* --- Updated Auth Page Styling --- */
+        #auth { justify-content: center; align-items: center; }
+        .auth-box {
+            width: 480px; padding: 50px; background: rgba(5, 5, 12, 0.85);
+            border: 1px solid rgba(0, 240, 255, 0.3); box-shadow: 0 0 50px rgba(0, 240, 255, 0.1);
+            position: relative; transition: height 0.3s ease; backdrop-filter: blur(20px);
+            clip-path: polygon(30px 0, 100% 0, 100% calc(100% - 30px), calc(100% - 30px) 100%, 0 100%, 0 30px);
+        }
+        .auth-box::before { content:''; position: absolute; top:0; left:0; width: 100%; height: 4px; background: var(--theme); box-shadow: 0 0 15px var(--theme); }
+        
+        .auth-view { display: none; flex-direction: column; animation: fadeIn 0.4s ease forwards;}
+        .auth-view.active { display: flex; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+
+        .input-group { margin-bottom: 30px; }
+        .input-group label { display: block; font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; color: var(--theme); margin-bottom: 10px; letter-spacing: 2px;}
+        .input-group input {
+            width: 100%; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; padding: 15px; font-family: 'Share Tech Mono', monospace; font-size: 1.2rem; outline: none;
+            transition: all 0.3s; border-left: 3px solid transparent;
+        }
+        .input-group input:focus { border-color: rgba(255,255,255,0.3); border-left-color: var(--theme); box-shadow: inset 0 0 15px rgba(0,240,255,0.1); background: rgba(0,0,0,0.8); }
+        
+        .verification-warning {
+            color: #ef4444; font-size: 0.85rem; text-align: center; 
+            margin-top: -10px; margin-bottom: 25px; font-weight: 700; letter-spacing: 1px; font-family: 'Share Tech Mono', monospace;
+        }
+
+        .auth-switch-link {
+            text-align: center; margin-top: 30px; font-size: 0.9rem; color: #64748b; 
+            letter-spacing: 1px; transition: color 0.3s; font-family: 'Share Tech Mono', monospace;
+        }
+        .auth-switch-link:hover { color: var(--theme); text-shadow: 0 0 10px var(--theme-glow); }
+
+        .google-loader { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 250px; text-align: center; }
+        .spinner {
+            width: 60px; height: 60px; border: 3px solid rgba(255,255,255,0.05);
+            border-top-color: var(--theme); border-radius: 50%;
+            animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; margin-bottom: 30px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- Core Experience Page --- */
+        #experience { padding: 30px 5vw; }
+        .hud-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; height: 100%; align-items: stretch; }
+        
+        #video-core {
+            position: relative; background: #000; border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+        }
+        #video-core::before { content:''; position: absolute; inset:0; border: 2px solid var(--theme); pointer-events: none; z-index: 10; clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);}
+        canvas#webcam-canvas { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.1) brightness(1.1); }
+        
+        .scanner {
+            position: absolute; width: 100%; height: 4px; background: var(--theme);
+            box-shadow: 0 0 30px 8px var(--theme-glow); opacity: 0.6; z-index: 5;
+            animation: scanLoop 4s infinite linear;
+        }
+        @keyframes scanLoop { 0% { top: -10%; } 100% { top: 110%; } }
+
+        .data-panel { display: flex; flex-direction: column; gap: 25px; }
+        .hud-box {
+            background: rgba(5, 5, 12, 0.7); border: 1px solid rgba(255,255,255,0.05);
+            padding: 35px; flex-shrink: 0; position: relative; backdrop-filter: blur(10px);
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+        }
+        .hud-box::before { content:''; position: absolute; top:0; left:0; width: 5px; height: 100%; background: var(--theme); box-shadow: 0 0 10px var(--theme-glow);}
+        
+        .bar-wrap { margin-bottom: 25px; }
+        .bar-label { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 1rem; font-family: 'Share Tech Mono', monospace; color: #cbd5e1; letter-spacing: 2px;}
+        .bar-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.05); position: relative; border-radius: 4px; overflow: hidden;}
+        .bar-fill { height: 100%; width: 0%; background: var(--theme); box-shadow: 0 0 20px var(--theme); transition: width 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); }
+
+        #ai-console {
+            flex-grow: 1; background: rgba(0,0,0,0.8); border: 1px solid rgba(0, 240, 255, 0.2); padding: 30px;
+            font-size: 1.1rem; line-height: 1.8; color: var(--theme); overflow-y: auto;
+            font-family: 'Share Tech Mono', monospace; box-shadow: inset 0 0 40px rgba(0,0,0,0.9);
+            clip-path: polygon(20px 0, 100% 0, 100% 100%, 0 100%, 0 20px);
+        }
+        .blink { animation: textBlink 1s infinite; }
+        @keyframes textBlink { 50% { opacity: 0; } }
+
+        /* === Advanced Dynamic FX (States) === */
+        .fx-pulse #viewport-overlay {
+            position: absolute; inset: 0; pointer-events: none; z-index: 2;
+            background: radial-gradient(circle, transparent 30%, var(--theme-glow) 150%);
+            animation: pulseGlow 2s infinite alternate;
+        }
+        @keyframes pulseGlow { from { opacity: 0.1; } to { opacity: 0.4; } }
+
+        .fx-shake .hud-box, .fx-shake #video-core { animation: shakeFrame 0.2s infinite; }
+        @keyframes shakeFrame { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -1px); } 100% { transform: translate(-1px, 1px); } }
+        .fx-shake canvas#webcam-canvas { filter: contrast(1.4) brightness(1.1) saturate(1.5) hue-rotate(-10deg); }
+
+    </style>
+</head>
+<body>
+
+<div id="intro-screen">
+    <canvas id="intro-canvas"></canvas>
+    <div class="intro-content">
+        <div class="intro-title">MOTION EMOTION</div>
+        <div class="intro-sub">NEURAL KINETIC RECOGNITION V4.0</div>
+        <button class="btn-enter" onclick="startApp()">INITIALIZE SYSTEM</button>
+    </div>
+</div>
+
+<div id="app-container">
+    <canvas id="bg-canvas"></canvas>
+    <div id="viewport-overlay"></div>
+
+    <nav>
+        <div class="logo">Motion Emotion System</div>
+        <ul class="nav-links">
+            <li class="active" onclick="route('home')">HOME</li>
+            <li onclick="route('about')">ABOUT US</li>
+            <li onclick="route('project')">PROJECT</li>
+            <li onclick="route('guide')">GUIDE</li>
+        </ul>
+        <div class="auth-cluster" id="auth-ui">
+            <button class="btn-cyber" onclick="openAuth('login')" style="text-transform: none;">Log in</button>
+            <button class="btn-cyber btn-solid" onclick="openAuth('signup')" style="text-transform: none;">Sign up</button>
+        </div>
+    </nav>
+
+    <div id="home" class="page-content active">
+        <div class="hero-text">
+            <p style="color: var(--theme); letter-spacing: 6px; margin-bottom: 20px; font-weight: 700; font-family: 'Share Tech Mono', monospace;">[ CALM · ANXIETY · HAPPINESS ]</p>
+            <h1>Emotion Recognition System</h1>
+            <p style="font-size: 1.6rem; color: #fff; margin-bottom: 10px; font-family: 'Rajdhani', sans-serif; font-weight: 600;">A motion-based emotion recognition interface.</p>
+            <p style="letter-spacing: 3px; color: var(--theme); opacity: 0.8; font-family: 'Share Tech Mono', monospace;">DETERMINED BY YOUR BODY</p>
+            <div style="margin-top: 50px;">
+                <button class="btn-cyber btn-solid" style="padding: 22px 65px; font-size: 1.3rem;" onclick="attemptStart()">START EXPERIENCE</button>
+            </div>
+        </div>
+        
+        <div id="sentinel-viz">
+            <canvas id="sentinel-canvas"></canvas>
+            <div class="viz-label">SENTINEL_PROTOTYPE_v4 // BIOMETRIC_LINK_AWAITING</div>
+        </div>
+    </div>
+
+    <div id="about" class="page-content">
+        <h2>ABOUT US</h2>
+        <div class="tech-card" style="max-width: 1100px; margin-top: 30px;">
+            <p>We are creators from a background in visual and digital media, focusing on the relationship between technology and human perception. We attempt to observe and understand emotions not through language, but through bodily movement. This project is based on AI motion recognition, translating human gestures into emotional signals and exploring whether emotions can truly be "recognized."</p>
+            <p>By training and classifying three fundamental emotional states—Calm, Anxiety, and Happiness—we developed a system where users interact without words, relying solely on physical expression. Using accessible machine learning tools, we transform complex AI processes into an intuitive and perceptible experience.</p>
+            <p>In an era where artificial intelligence increasingly participates in interpretation and decision-making, we hope this project prompts reflection: are emotions truly understood, or merely identified and defined?</p>
+        </div>
+    </div>
+
+    <div id="project" class="page-content">
+        <h2>PROJECT DETAILS</h2>
+        <div class="tech-card" style="max-width: 1100px; margin-top: 30px;">
+            <p>In today's digital environment, artificial intelligence is increasingly involved in analyzing and interpreting human behavior and emotions. However, most emotion recognition systems rely heavily on facial expressions or voice input, which to some extent limits the diversity of emotional expression. Therefore, this project approaches the problem from a different perspective—using body movement as the primary basis for recognition, with facial expression as a secondary reference, to explore a more holistic way of perceiving human emotions.</p>
+            <p>This project is developed using Google's Teachable Machine platform. By collecting and training motion data, we built a model capable of recognizing three fundamental emotional states: Calm, Anxiety, and Happiness. In the interactive experience, users do not need to provide verbal input; instead, they express emotions through specific body movements, which the system recognizes and responds to in real time, creating an intuitive human–computer interaction process.</p>
+            <p>Through this approach, we aim to move beyond traditional face-centered emotion recognition and shift attention toward the expressive potential of the human body. At the same time, by leveraging accessible machine learning tools, we transform complex technical processes into participatory and experiential interactions, allowing users to understand the technology through engagement and reconsider how emotions are perceived and defined.</p>
+        </div>
+    </div>
+
+    <div id="guide" class="page-content">
+        <h2>CALIBRATION PROTOCOL</h2>
+        <p style="margin-bottom: 40px; font-family: 'Share Tech Mono', monospace;">> OPERATORS MUST MAINTAIN A DISTANCE OF 2-3 METERS FROM SENSOR. MATCH KINETIC REFERENCES BELOW.</p>
+        <div class="grid-cards">
+            <div class="tech-card" style="border-top-color: #0088ff; text-align: center;">
+                <svg viewBox="0 0 100 100" width="100" height="100" stroke="#0088ff" stroke-width="4" stroke-linecap="round" fill="none" style="margin-bottom: 25px; filter: drop-shadow(0 0 15px rgba(0,136,255,0.6));">
+                    <circle cx="50" cy="20" r="10"/>
+                    <path d="M50 30 v35 M50 35 l-15 25 M50 35 l15 25 M50 65 l-12 30 M50 65 l12 30"/>
+                </svg>
+                <h3 style="color: #0088ff">[01] CALM (BASELINE)</h3>
+                <p style="text-align: left; font-size: 1.1rem; color: #94a3b8;">Neutral, relaxed posture. Arms hang naturally at sides. Static or minimal movement. Mapped as biological homeostasis.</p>
+            </div>
+            <div class="tech-card" style="border-top-color: #ff0055; text-align: center;">
+                <svg viewBox="0 0 100 100" width="100" height="100" stroke="#ff0055" stroke-width="4" stroke-linecap="round" fill="none" style="margin-bottom: 25px; filter: drop-shadow(0 0 15px rgba(255,0,85,0.6));">
+                    <circle cx="50" cy="25" r="10"/>
+                    <path d="M50 35 v30 M50 40 l-18 -15 l 10 -15 M50 40 l18 -15 l -10 -15 M50 65 l-15 20 l 0 10 M50 65 l15 20 l 0 10"/>
+                </svg>
+                <h3 style="color: #ff0055">[02] ANXIOUS (STRESS)</h3>
+                <p style="text-align: left; font-size: 1.1rem; color: #94a3b8;">Closed posture. Restless inward motions. Hands touching face or head. Leaning forward. Mapped as kinetic overload.</p>
+            </div>
+            <div class="tech-card" style="border-top-color: #00ffcc; text-align: center;">
+                <svg viewBox="0 0 100 100" width="100" height="100" stroke="#00ffcc" stroke-width="4" stroke-linecap="round" fill="none" style="margin-bottom: 25px; filter: drop-shadow(0 0 15px rgba(0,255,204,0.6));">
+                    <circle cx="50" cy="18" r="10"/>
+                    <path d="M50 28 v32 M50 35 l-25 -20 M50 35 l25 -20 M50 60 l-20 35 M50 60 l20 35"/>
+                </svg>
+                <h3 style="color: #00ffcc">[03] HAPPY (EUPHORIA)</h3>
+                <p style="text-align: left; font-size: 1.1rem; color: #94a3b8;">Expansive, energetic motions. Arms raised high or dancing. Head tilted upward. Mapped as spatial expansion.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="auth" class="page-content">
+        <div class="auth-box">
+            
+            <div id="auth-view-login" class="auth-view active">
+                <h2 style="text-align: center; margin-bottom: 35px; color: #fff; letter-spacing: 5px; font-size: 2rem;">SYSTEM LOGIN</h2>
+                
+                <button type="button" class="btn-cyber" style="width: 100%; margin-bottom: 30px; border-color: rgba(255,255,255,0.2); color: #fff; background: rgba(255,255,255,0.02);" onclick="initiateGoogleAuth()">
+                    <svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    LOGIN WITH GOOGLE
+                </button>
+
+                <div style="text-align: center; color: var(--theme); margin-bottom: 30px; font-size: 0.9rem; letter-spacing: 3px; font-family: 'Share Tech Mono', monospace; opacity: 0.7;">--- OR LOCAL AUTH ---</div>
+
+                <form onsubmit="handleLogin(event)">
+                    <div class="input-group">
+                        <label>OPERATOR_ID (EMAIL)</label>
+                        <input type="email" required placeholder="operator@core.os">
+                    </div>
+                    <div class="input-group">
+                        <label>ACCESS_CYPHER</label>
+                        <input type="password" required placeholder="••••••••••••">
+                    </div>
+                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.2rem; padding: 18px; text-transform: none;">Log in</button>
+                </form>
+                
+                <div class="auth-switch-link" onclick="switchAuthView('signup')">> NO ACCOUNT? INITIALIZE REGISTRATION <</div>
+            </div>
+
+            <div id="auth-view-signup" class="auth-view">
+                <h2 style="text-align: center; margin-bottom: 35px; color: #fff; letter-spacing: 5px; font-size: 2rem;">REGISTRATION</h2>
+                
+                <form onsubmit="handleSignUp(event)">
+                    <div class="input-group" style="margin-bottom: 25px;">
+                        <label>NEW OPERATOR_ID (EMAIL)</label>
+                        <input type="email" required placeholder="operator@core.os">
+                    </div>
+                    <div class="input-group" style="margin-bottom: 25px;">
+                        <label>SET ACCESS_CYPHER</label>
+                        <input type="password" required placeholder="••••••••••••">
+                    </div>
+                    
+                    <div class="verification-warning">
+                        ⚠️ IDENTITY VERIFICATION REQUIRED
+                    </div>
+
+                    <button type="submit" class="btn-cyber" style="width: 100%; font-size: 1.2rem; padding: 18px; font-weight: bold; color: #fff; text-transform: none; background: rgba(0,240,255,0.1);">Sign up</button>
+                </form>
+                
+                <div class="auth-switch-link" onclick="switchAuthView('login')">> ALREADY VERIFIED? PROCEED TO LOGIN <</div>
+            </div>
+
+            <div id="auth-view-verify" class="auth-view">
+                <h2 style="text-align: center; margin-bottom: 15px; color: var(--theme); letter-spacing: 4px; font-size: 1.8rem;">AWAITING VERIFICATION</h2>
+                <p style="text-align: center; font-size: 1rem; margin-bottom: 35px; color: #94a3b8; font-family: 'Share Tech Mono', monospace;">A secure cypher has been transmitted to your email.</p>
+                
+                <form onsubmit="handleVerification(event)">
+                    <div class="input-group">
+                        <label>6-DIGIT CYPHER CODE</label>
+                        <input type="text" required placeholder="0 0 0 0 0 0" style="text-align: center; letter-spacing: 12px; font-size: 1.8rem;" maxlength="6">
+                    </div>
+                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.2rem; padding: 18px;">VERIFY & ESTABLISH LINK</button>
+                </form>
+                
+                <div class="auth-switch-link" onclick="switchAuthView('signup')">< CANCEL OPERATION</div>
+            </div>
+
+            <div id="auth-view-google" class="auth-view">
+                <div class="google-loader">
+                    <div class="spinner"></div>
+                    <h3 style="color: #fff; letter-spacing: 3px; font-size: 1.2rem; font-family: 'Share Tech Mono', monospace;" id="google-status-text">REDIRECTING TO GOOGLE<span class="blink">...</span></h3>
+                    <p style="font-size: 0.95rem; color: #94a3b8; margin-top: 20px; font-family: 'Share Tech Mono', monospace;">Awaiting external OAuth protocol.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="experience" class="page-content">
+        <div class="hud-layout">
+            <div id="video-core">
+                <div class="scanner"></div>
+                <canvas id="webcam-canvas"></canvas>
+                <div style="position: absolute; bottom: 20px; left: 20px; color: var(--theme); font-size: 0.9rem; background: rgba(0,0,0,0.8); padding: 10px 20px; font-family: 'Share Tech Mono', monospace; border: 1px solid rgba(0,240,255,0.3); backdrop-filter: blur(5px);">
+                    > LIVE BIOMETRIC FEED [ACTIVE_LINK]
+                </div>
+            </div>
+            
+            <div class="data-panel">
+                <div class="hud-box">
+                    <h3 style="font-size: 1.3rem; margin-bottom: 30px; color: #fff; letter-spacing: 3px;">PROBABILITY MATRIX</h3>
+                    <div id="bars-container"></div>
+                </div>
+
+                <div class="hud-box" style="flex-grow: 1; display: flex; flex-direction: column; padding: 0; background: none; clip-path: none;">
+                    <div id="ai-console">
+                        > AWAITING SKELETAL INPUT...<span class="blink">_</span>
+                    </div>
+                </div>
+
+                <button class="btn-cyber" style="border-color: #ef4444; color: #ef4444; width: 100%; font-size: 1.1rem; padding: 18px; background: rgba(239, 68, 68, 0.05);" onclick="terminateSystem()">TERMINATE CONNECTION</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
+
+<script>
+    // --- 0. Intro Point Cloud Animation ---
+    const iCanvas = document.getElementById('intro-canvas');
+    const iCtx = iCanvas.getContext('2d');
+    let introPoints = [];
+    let introAngleX = 0;
+    let introAngleY = 0;
+    let introActive = true;
+    let explosionPhase = false;
+    let introScale = 1;
+
+    function initIntroCanvas() {
+        iCanvas.width = window.innerWidth;
+        iCanvas.height = window.innerHeight;
+        introPoints = [];
+        // 生成一个球形点云结构，模拟数据核心
+        const numPoints = 600;
+        for (let i = 0; i < numPoints; i++) {
+            const phi = Math.acos(-1 + (2 * i) / numPoints);
+            const theta = Math.sqrt(numPoints * Math.PI) * phi;
+            // 球体半径分布
+            const r = 200 + Math.random() * 50; 
+            introPoints.push({
+                x: r * Math.cos(theta) * Math.sin(phi),
+                y: r * Math.sin(theta) * Math.sin(phi),
+                z: r * Math.cos(phi),
+                baseR: r, vx: 0, vy: 0, vz: 0 
+            });
+        }
+    }
+
+    function drawIntro() {
+        if (!introActive) return;
+        iCtx.clearRect(0, 0, iCanvas.width, iCanvas.height);
+        
+        const cx = iCanvas.width / 2;
+        const cy = iCanvas.height / 2;
+        
+        introAngleX += 0.002;
+        introAngleY += 0.003;
+        
+        const cosX = Math.cos(introAngleX), sinX = Math.sin(introAngleX);
+        const cosY = Math.cos(introAngleY), sinY = Math.sin(introAngleY);
+
+        iCtx.fillStyle = '#00f0ff';
+        
+        introPoints.forEach(p => {
+            if (explosionPhase) {
+                p.x += p.vx; p.y += p.vy; p.z += p.vz;
+            }
+
+            // 3D 旋转
+            let y1 = p.y * cosX - p.z * sinX;
+            let z1 = p.y * sinX + p.z * cosX;
+            let x2 = p.x * cosY + z1 * sinY;
+            let z2 = -p.x * sinY + z1 * cosY;
+
+            // 透视投影
+            const perspective = 600;
+            const zDepth = perspective / (perspective - z2);
+            const px = cx + x2 * zDepth * introScale;
+            const py = cy + y1 * zDepth * introScale;
+            
+            // 随深度变化的不透明度和大小
+            const alpha = Math.max(0.1, Math.min(1, (z2 + 250) / 500));
+            if (explosionPhase) {
+                iCtx.fillStyle = `rgba(0, 240, 255, ${alpha * (2 - introScale)})`;
+            } else {
+                iCtx.fillStyle = `rgba(0, 240, 255, ${alpha})`;
+            }
+
+            iCtx.beginPath();
+            iCtx.arc(px, py, Math.max(0.5, 2 * zDepth), 0, Math.PI * 2);
+            iCtx.fill();
+        });
+
+        requestAnimationFrame(drawIntro);
+    }
+
+    function startApp() {
+        explosionPhase = true;
+        // 赋予爆炸初速度
+        introPoints.forEach(p => {
+            const speed = 5 + Math.random() * 15;
+            const dist = Math.sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
+            p.vx = (p.x / dist) * speed;
+            p.vy = (p.y / dist) * speed;
+            p.vz = (p.z / dist) * speed;
+        });
+
+        const introScreen = document.getElementById('intro-screen');
+        const appContainer = document.getElementById('app-container');
+        
+        introScreen.style.opacity = '0';
+        appContainer.style.opacity = '1';
+
+        setTimeout(() => {
+            introActive = false;
+            introScreen.style.visibility = 'hidden';
+            initSentinel(); // 确保 Sentinel 画布尺寸在显示后正确
+        }, 1500);
+    }
+
+    window.addEventListener('resize', () => {
+        if(introActive) initIntroCanvas();
+        initBgParticles();
+        initSentinel();
+    });
+
+    // 初始化点云并启动动画
+    initIntroCanvas();
+    drawIntro();
+
+
+    // --- Global State & Config ---
+    let isAuthenticated = false;
+    let systemRunning = false;
+    let expectedVerificationCode = ""; 
+
+    const modelURL_TM = "https://teachablemachine.withgoogle.com/models/sTBoNGgmv/";
+
+    const mouse = { x: null, y: null, radius: 150 };
+    window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
+    window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+
+    // --- 1. Background Particles ---
+    const bgCanvas = document.getElementById('bg-canvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    let particlesArray = [];
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * window.innerWidth;
+            this.y = Math.random() * window.innerHeight;
+            this.size = Math.random() * 2 + 0.5;
+            this.vy = (Math.random() * 0.5) + 0.2;
+            this.waveSpeed = Math.random() * 0.02 + 0.01;
+            this.waveOffset = Math.random() * Math.PI * 2;
+            this.density = (Math.random() * 30) + 1;
+        }
+        draw() {
+            bgCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+            bgCtx.globalAlpha = 0.6;
+            bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2); bgCtx.fill();
+            bgCtx.globalAlpha = 1.0;
+        }
+        update() {
+            this.y -= this.vy;
+            this.x += Math.sin(this.y * this.waveSpeed + this.waveOffset) * 0.5;
+            if(this.y < 0) { this.y = bgCanvas.height; this.x = Math.random() * bgCanvas.width; }
+            if(this.x > bgCanvas.width) this.x = 0;
+            if(this.x < 0) this.x = bgCanvas.width;
+
+            if (mouse.x != null && mouse.y != null) {
+                let dx = mouse.x - this.x; let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx*dx + dy*dy);
+                if (distance < mouse.radius) {
+                    let force = (mouse.radius - distance) / mouse.radius;
+                    this.x -= (dx / distance) * force * this.density; 
+                    this.y -= (dy / distance) * force * this.density;
+                }
+            }
+        }
+    }
+
+    function initBgParticles() {
+        bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
+        particlesArray = [];
+        let numberOfParticles = (bgCanvas.width * bgCanvas.height) / 7000;
+        for(let i=0; i < numberOfParticles; i++) { particlesArray.push(new Particle()); }
+    }
+    
+    function animateBg() {
+        bgCtx.fillStyle = 'rgba(2, 2, 4, 0.2)'; 
+        bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+        for(let i=0; i < particlesArray.length; i++) { particlesArray[i].update(); particlesArray[i].draw(); }
+        requestAnimationFrame(animateBg);
+    }
+    initBgParticles(); animateBg();
+
+
+    // --- 2. Sentinel Viz ---
+    const sentCanvas = document.getElementById('sentinel-canvas');
+    const sentCtx = sentCanvas.getContext('2d');
+    let sentinelAngle = 0;
+
+    const rawPoseModel = [
+        {id: 'nose', x: 0, y: -0.8, z: 0}, {id: 'lShoulder', x: -0.4, y: -0.5, z: 0}, {id: 'rShoulder', x: 0.4, y: -0.5, z: 0},
+        {id: 'lElbow', x: -0.6, y: -0.1, z: 0.2}, {id: 'rElbow', x: 0.6, y: -0.1, z: -0.2},
+        {id: 'lWrist', x: -0.5, y: 0.3, z: 0.4}, {id: 'rWrist', x: 0.5, y: 0.3, z: -0.4},
+        {id: 'lHip', x: -0.25, y: 0.1, z: 0}, {id: 'rHip', x: 0.25, y: 0.1, z: 0},
+        {id: 'lKnee', x: -0.3, y: 0.6, z: 0.1}, {id: 'rKnee', x: 0.3, y: 0.6, z: -0.1},
+        {id: 'lAnkle', x: -0.35, y: 0.9, z: 0.2}, {id: 'rAnkle', x: 0.35, y: 0.9, z: -0.2}
+    ];
+
+    const connections = [
+        ['lShoulder', 'rShoulder'], ['lShoulder', 'lElbow'], ['lElbow', 'lWrist'], ['rShoulder', 'rElbow'], ['rElbow', 'rWrist'],
+        ['lShoulder', 'lHip'], ['rShoulder', 'rHip'], ['lHip', 'rHip'], ['lHip', 'lKnee'], ['lKnee', 'lAnkle'], ['rHip', 'rKnee'], ['rKnee', 'rAnkle'],
+        ['nose', 'lShoulder'], ['nose', 'rShoulder']
+    ];
+
+    function project(point, angle, width, height) {
+        let x_rot = point.x * Math.cos(angle) - point.z * Math.sin(angle);
+        let z_rot = point.x * Math.sin(angle) + point.z * Math.cos(angle);
+        let perspective = 1 + (z_rot * 0.3);
+        return { x: (x_rot / perspective) * (width * 0.3) + (width/2), y: (point.y) * (height * 0.45) + (height/2), z: z_rot };
+    }
+
+    function initSentinel() {
+        const container = document.getElementById('sentinel-viz');
+        if (container && container.offsetWidth > 0) {
+            sentCanvas.width = container.offsetWidth; 
+            sentCanvas.height = container.offsetHeight;
+        }
+    }
+
+    function animateSentinel() {
+        if(document.getElementById('home').style.display === 'none') { requestAnimationFrame(animateSentinel); return; }
+        sentCtx.clearRect(0, 0, sentCanvas.width, sentCanvas.height);
+        sentinelAngle += 0.005; 
+        const currentTheme = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+
+        let projectedPoints = {};
+        rawPoseModel.forEach(p => { projectedPoints[p.id] = project(p, sentinelAngle, sentCanvas.width, sentCanvas.height); });
+
+        sentCtx.lineWidth = 2;
+        connections.forEach(([p1_id, p2_id]) => {
+            const p1 = projectedPoints[p1_id]; const p2 = projectedPoints[p2_id];
+            let opacity = 1 - (((p1.z + p2.z) / 2 + 1) / 2); 
+            sentCtx.strokeStyle = currentTheme.replace('rgb','rgba').replace(')', `, ${opacity * 0.5 + 0.1})`);
+            sentCtx.beginPath(); sentCtx.moveTo(p1.x, p1.y); sentCtx.lineTo(p2.x, p2.y); sentCtx.stroke();
+        });
+
+        rawPoseModel.forEach(p_raw => {
+            const p = projectedPoints[p_raw.id];
+            let opacity = 1 - ((p.z + 1) / 2);
+            sentCtx.fillStyle = currentTheme.replace('rgb','rgba').replace(')', `, ${opacity * 0.8 + 0.2})`);
+            sentCtx.beginPath(); sentCtx.arc(p.x, p.y, 4 * (opacity * 0.5 + 0.5), 0, Math.PI * 2); sentCtx.fill();
+        });
+        requestAnimationFrame(animateSentinel);
+    }
+    animateSentinel();
+
+
+    // --- 3. Routing & AUTHENTICATION FLOW ---
+    function route(pageId) {
+        if(pageId !== 'experience' && systemRunning) terminateSystem(false); 
+        document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelectorAll('.nav-links li').forEach(item => {
+            if(item.innerText.toLowerCase().includes(pageId) || (pageId==='home' && item.innerText==='HOME')) item.classList.add('active');
+        });
+        if(pageId === 'home') initSentinel();
+    }
+
+    function switchAuthView(viewName) {
+        document.querySelectorAll('.auth-view').forEach(v => v.classList.remove('active'));
+        document.getElementById('auth-view-' + viewName).classList.add('active');
+    }
+
+    function openAuth(viewName) {
+        route('auth');
+        switchAuthView(viewName);
+    }
+
+    function attemptStart() {
+        if (!isAuthenticated) openAuth('login');
+        else { route('experience'); startSystem(); }
+    }
+
+    function handleLogin(e) {
+        e.preventDefault();
+        loginSuccess();
+    }
+    
+    function handleSignUp(e) {
+        e.preventDefault();
+        expectedVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        alert("[SYSTEM NOTIFICATION] A verification cypher has been transmitted to your email.\n\n(Simulation mode: direct cypher reveal)\nYour 6-digit access cypher is: " + expectedVerificationCode);
+        switchAuthView('verify');
+    }
+
+    function handleVerification(e) {
+        e.preventDefault();
+        const inputCode = e.target.querySelector('input').value;
+        if (inputCode === expectedVerificationCode) {
+            alert("[SUCCESS] Identity verified. Registration complete.");
+            loginSuccess();
+        } else {
+            alert("[ERROR] Invalid access cypher. Please enter the correct 6-digit code.");
+        }
+    }
+    
+    function initiateGoogleAuth() {
+        switchAuthView('google');
+        const textElem = document.getElementById('google-status-text');
+        
+        textElem.innerHTML = `CONNECTING TO GOOGLE SECURE HANDSHAKE<span class="blink">...</span>`;
+        
+        setTimeout(() => {
+            textElem.innerHTML = `AWAITING PERSONAL IDENTITY VERIFICATION<span class="blink">...</span>`;
+            document.documentElement.style.setProperty('--theme', '#4285F4');
+            document.documentElement.style.setProperty('--theme-glow', 'rgba(66, 133, 244, 0.4)');
+            
+            setTimeout(() => {
+                textElem.innerHTML = `VERIFICATION SUCCESS. ESTABLISHING LINK<span class="blink">...</span>`;
+                document.documentElement.style.setProperty('--theme', '#34A853'); 
+                
+                setTimeout(() => {
+                    document.documentElement.style.setProperty('--theme', '#00f0ff');
+                    document.documentElement.style.setProperty('--theme-glow', 'rgba(0, 240, 255, 0.4)');
+                    loginSuccess();
+                }, 1000);
+            }, 2000);
+        }, 1500);
+    }
+
+    function loginSuccess() {
+        isAuthenticated = true;
+        document.getElementById('auth-ui').innerHTML = `
+            <span style="color: var(--theme); font-size: 0.95rem; letter-spacing: 2px; font-weight:bold; font-family: 'Share Tech Mono', monospace;">[ OPERATOR_ACTIVE ]</span>
+            <button class="btn-cyber" style="border-color: rgba(255,255,255,0.2); color: #94a3b8; padding: 10px 20px; font-size: 0.8rem;" onclick="logout()">LOGOUT</button>
+        `;
+        switchAuthView('login');
+        route('experience');
+        startSystem();
+    }
+
+    function logout() {
+        isAuthenticated = false;
+        terminateSystem(false);
+        document.getElementById('auth-ui').innerHTML = `
+            <button class="btn-cyber" onclick="openAuth('login')" style="text-transform: none;">Log in</button>
+            <button class="btn-cyber btn-solid" onclick="openAuth('signup')" style="text-transform: none;">Sign up</button>
+        `;
+        route('home');
+    }
+
+    // --- 4. Core AI Kinetic Logic ---
+    let model, webcam, webcamCtx, maxPredictions;
+    let currentState = ""; 
+    let loopFrame;
+
+    const EMOTION_LOGS = {
+        calm: "> SCANNING BIOMETRICS...\n> POSTURE: NOMINAL SYMMETRY.\n> BIOLOGICAL FLOW: STABLE.\n> SYSTEM STATUS: NOMINAL CRUISING.",
+        anxious: "> ALERT: IRREGULAR KINETIC CONTRACTIONS!\n> CORTISOL LEVELS: SURGING (ESTIMATED).\n> POSTURE: INWARD / DEFENSIVE.\n> SYSTEM STATUS: INSTABILITY WARNING.",
+        happy: "> DOPAMINE SURGE DETECTED.\n> ENERGY PATHWAY: HIGH-FREQUENCY EXPANSION.\n> PREDICATED STATE: EUPHORIA.\n> SYSTEM STATUS: POSITIVE FEEDBACK ACTIVE."
+    };
+
+    async function startSystem() {
+        if (systemRunning) return;
+        systemRunning = true;
+        
+        document.getElementById('ai-console').innerHTML = "> INITIALIZING NEURAL LINK...<span class='blink'>_</span>";
+
+        model = await tmPose.load(modelURL_TM + "model.json", modelURL_TM + "metadata.json");
+        maxPredictions = model.getTotalClasses();
+
+        webcam = new tmPose.Webcam(600, 600, true); 
+        await webcam.setup(); await webcam.play();
+        
+        const canvas = document.getElementById("webcam-canvas");
+        canvas.width = 600; canvas.height = 600;
+        webcamCtx = canvas.getContext("2d");
+
+        const container = document.getElementById("bars-container");
+        container.innerHTML = "";
+        for (let i = 0; i < maxPredictions; i++) {
+            container.innerHTML += `
+                <div class="bar-wrap">
+                    <div class="bar-label"><span>${model.getClassLabels()[i]}</span><span id="val-${i}">0%</span></div>
+                    <div class="bar-bg"><div id="fill-${i}" class="bar-fill"></div></div>
+                </div>`;
+        }
+        loopFrame = window.requestAnimationFrame(expLoop);
+    }
+
+    async function expLoop() {
+        if(!systemRunning) return;
+        webcam.update(); await predict();
+        loopFrame = window.requestAnimationFrame(expLoop);
+    }
+
+    async function predict() {
+        const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+        const prediction = await model.predict(posenetOutput);
+
+        let topIndex = 0;
+        for (let i = 0; i < maxPredictions; i++) {
+            const prob = prediction[i].probability;
+            document.getElementById(`val-${i}`).innerText = (prob * 100).toFixed(0) + "%";
+            document.getElementById(`fill-${i}`).style.width = (prob * 100).toFixed(0) + "%";
+            if (prob > prediction[topIndex].probability) topIndex = i;
+        }
+
+        const topProb = prediction[topIndex].probability;
+        const topLabel = prediction[topIndex].className.toLowerCase();
+
+        if (topProb > 0.65) updateDynamicFX(topIndex, topLabel);
+        drawWebcamPose(pose);
+    }
+
+    function updateDynamicFX(index, label) {
+        let themeColor, themeGlow, fxClass, logText;
+
+        if (label.includes("anx") || label.includes("sad") || label.includes("stress") || index === 1) {
+            themeColor = "#ff0055"; themeGlow = "rgba(255, 0, 85, 0.5)"; fxClass = "fx-shake"; logText = EMOTION_LOGS.anxious;
+        } else if (label.includes("hap") || label.includes("joy") || label.includes("dance") || index === 2) {
+            themeColor = "#00ffcc"; themeGlow = "rgba(0, 255, 204, 0.5)"; fxClass = "fx-pulse"; logText = EMOTION_LOGS.happy;
+        } else {
+            themeColor = "#00f0ff"; themeGlow = "rgba(0, 240, 255, 0.4)"; fxClass = ""; logText = EMOTION_LOGS.calm;
+        }
+
+        if (currentState !== label) {
+            currentState = label;
+            document.documentElement.style.setProperty('--theme', themeColor);
+            document.documentElement.style.setProperty('--theme-glow', themeGlow);
+            document.getElementById('app-container').className = fxClass; 
+            document.getElementById('ai-console').innerHTML = logText.replace(/\n/g, '<br><br>') + '<br><br><span class="blink">_</span>';
+        }
+    }
+
+    function drawWebcamPose(pose) {
+        if (webcam.canvas) {
+            webcamCtx.drawImage(webcam.canvas, 0, 0);
+            if (pose) {
+                const min = 0.5;
+                const color = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+                webcamCtx.strokeStyle = color; webcamCtx.fillStyle = color; webcamCtx.lineWidth = 5; 
+                tmPose.drawKeypoints(pose.keypoints, min, webcamCtx);
+                tmPose.drawSkeleton(pose.keypoints, min, webcamCtx);
+            }
+        }
+    }
+
+    function terminateSystem(goHome = true) {
+        systemRunning = false;
+        if(webcam) webcam.stop();
+        if(loopFrame) window.cancelAnimationFrame(loopFrame);
+        
+        document.documentElement.style.setProperty('--theme', '#00f0ff');
+        document.documentElement.style.setProperty('--theme-glow', 'rgba(0, 240, 255, 0.4)');
+        document.getElementById('app-container').className = "";
+        currentState = "";
+        
+        if(goHome) route('home');
+    }
+</script>
+</body>
+</html>
     
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
