@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Motion Emotion System - Secure Protocol</title>
+    <title>Motion Emotion System - Kinetic Interface</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
 
@@ -27,9 +27,11 @@
         #app-container {
             width: 100vw; height: 100vh; position: relative;
             background: radial-gradient(circle at center, #0a0a15 0%, var(--bg-base) 100%);
+            display: flex; flex-direction: column; transition: all 0.5s ease-out;
         }
 
-        /* --- 导航栏 --- */
+        #bg-canvas { position: absolute; inset: 0; z-index: 1; opacity: 0.8; }
+
         nav {
             position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
             display: flex; justify-content: space-between; align-items: center;
@@ -37,238 +39,696 @@
             border-bottom: 1px solid var(--theme); box-shadow: 0 0 25px var(--theme-glow);
         }
         
-        .logo { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: 900; color: var(--theme); letter-spacing: 2px; text-shadow: 0 0 15px var(--theme); }
-        .auth-cluster { display: flex; gap: 15px; }
+        .logo { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: 900; color: var(--theme); letter-spacing: 2px; text-shadow: 0 0 15px var(--theme); text-transform: uppercase;}
+        
+        .nav-links { display: flex; list-style: none; gap: 35px; }
+        .nav-links li { font-size: 1.1rem; letter-spacing: 1px; transition: all 0.3s; color: #818cf8; text-transform: uppercase; font-family: 'Orbitron', sans-serif;}
+        .nav-links li:hover, .nav-links li.active { color: var(--theme); text-shadow: 0 0 10px var(--theme-glow); transform: translateY(-2px); }
+
+        .auth-cluster { display: flex; gap: 15px; align-items: center; }
 
         .btn-cyber {
             background: transparent; border: 1px solid var(--theme); color: var(--theme);
-            padding: 10px 25px; font-family: 'Orbitron'; font-size: 0.85rem; letter-spacing: 1px;
-            transition: all 0.3s; text-transform: uppercase; cursor: pointer;
+            padding: 12px 30px; font-family: 'Orbitron'; font-size: 0.9rem; letter-spacing: 2px;
+            transition: all 0.3s; text-transform: uppercase; position: relative; overflow: hidden;
+            display: flex; justify-content: center; align-items: center; gap: 10px;
         }
-        .btn-cyber:hover { background: var(--theme); color: #000; box-shadow: 0 0 20px var(--theme-glow); }
-        .btn-solid { background: var(--theme); color: #000; font-weight: bold; }
+        .btn-cyber::before { content:''; position: absolute; top:0; left:-100%; width:100%; height:100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: 0.5s; }
+        .btn-cyber:hover::before { left: 100%; }
+        .btn-cyber:hover { background: var(--theme); color: #000; box-shadow: 0 0 30px var(--theme-glow); font-weight: bold;}
+        .btn-solid { background: var(--theme); color: #000; font-weight: bold; border: none; }
 
-        /* --- 页面容器 --- */
         .page-content {
             position: absolute; top: 80px; left: 0; right: 0; bottom: 0;
-            padding: 40px; display: none; z-index: 10;
+            padding: 40px 6vw; display: none; z-index: 10; flex-direction: column; overflow-y: auto;
         }
-        .page-content.active { display: flex; flex-direction: column; align-items: center; justify-content: center; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .page-content.active { display: flex; animation: pageInit 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 
-        /* --- 验证框主体 --- */
-        .auth-card {
-            width: 450px; background: rgba(5, 5, 12, 0.95); border: 1px solid var(--theme);
-            padding: 40px; box-shadow: 0 0 50px rgba(0, 0, 0, 0.8); position: relative;
+        @keyframes pageInit {
+            from { opacity: 0; transform: translateY(30px) scale(1.02); filter: blur(10px); }
+            to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
         }
-        .auth-card h2 { font-family: 'Orbitron'; margin-bottom: 30px; text-align: center; color: var(--theme); letter-spacing: 4px; }
 
-        .input-group { margin-bottom: 20px; }
-        .input-group label { display: block; font-size: 0.75rem; color: var(--theme); margin-bottom: 8px; letter-spacing: 2px; }
+        h1, h2, h3 { font-family: 'Orbitron', sans-serif; text-transform: uppercase; margin-bottom: 15px; font-weight: 700;}
+        h1 { font-size: 4rem; letter-spacing: 2px; line-height: 1.1; color: #fff; text-shadow: 0 0 20px var(--theme-glow); margin-bottom: 20px;}
+        p { font-size: 1.15rem; line-height: 1.7; color: #cbd5e1; margin-bottom: 25px; max-width: 900px; }
+
+        #home { flex-direction: row; align-items: center; justify-content: space-between; padding-top: 0; padding-bottom: 0;}
+        #home .hero-text { flex: 1; max-width: 55%; z-index: 15; }
+        
+        #sentinel-viz {
+            flex: 1; height: 100%; max-width: 45%;
+            position: relative; display: flex; justify-content: center; align-items: center;
+            z-index: 5;
+        }
+        #sentinel-canvas { width: 100%; height: 90%; }
+        .viz-label {
+            position: absolute; bottom: 10%; right: 0;
+            font-size: 0.8rem; color: var(--theme); opacity: 0.7;
+            writing-mode: vertical-rl; text-transform: uppercase; letter-spacing: 3px;
+        }
+
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 35px; margin-top: 40px; }
+        .tech-card {
+            background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05);
+            border-top: 4px solid var(--theme); padding: 35px; backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .tech-card:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 15px 35px rgba(0,0,0,0.5), 0 0 15px var(--theme-glow); border-color: var(--theme); }
+        .tech-card h3 { color: #fff; font-size: 1.4rem; }
+
+        /* --- Updated Auth Page Styling --- */
+        #auth { justify-content: center; align-items: center; }
+        .auth-box {
+            width: 450px; padding: 50px; background: rgba(5, 5, 10, 0.9);
+            border: 1px solid var(--theme); box-shadow: 0 0 40px var(--theme-glow);
+            position: relative; overflow: hidden;
+            transition: height 0.3s ease;
+        }
+        .auth-box::after { content:''; position: absolute; inset: -1px; background: linear-gradient(135deg, var(--theme), transparent, var(--theme)); z-index: -1; filter: blur(2px); }
+        
+        .auth-view { display: none; flex-direction: column; animation: fadeIn 0.4s ease forwards;}
+        .auth-view.active { display: flex; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+        .input-group { margin-bottom: 25px; }
+        .input-group label { display: block; font-size: 0.85rem; color: var(--theme); margin-bottom: 10px; letter-spacing: 2px; text-transform: uppercase;}
         .input-group input {
-            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            color: #fff; padding: 12px; font-family: 'Share Tech Mono'; font-size: 1.1rem; outline: none;
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; padding: 15px; font-family: 'Share Tech Mono'; font-size: 1.2rem; outline: none;
+            transition: all 0.3s;
         }
-        .input-group input:focus { border-color: var(--theme); box-shadow: 0 0 10px var(--theme-glow); }
+        .input-group input:focus { border-color: var(--theme); box-shadow: 0 0 15px var(--theme-glow); background: rgba(0,0,0,0.5); }
+        
+        .verification-warning {
+            color: #ef4444; font-size: 0.8rem; text-align: center; 
+            margin-top: -10px; margin-bottom: 20px; font-weight: bold; letter-spacing: 1px;
+        }
 
-        /* --- 谷歌登录全屏模拟层 --- */
-        #google-overlay {
-            position: fixed; inset: 0; background: #fff; z-index: 1000;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            color: #202124; font-family: 'Roboto', sans-serif;
+        .auth-switch-link {
+            text-align: center; margin-top: 25px; font-size: 0.85rem; color: #94a3b8; 
+            letter-spacing: 1px; transition: color 0.3s;
         }
-        .google-account-selector {
-            width: 400px; padding: 40px; border: 1px solid #dadce0; border-radius: 8px; text-align: center;
-        }
-        .account-item {
-            display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #eee;
-            cursor: pointer; transition: background 0.2s;
-        }
-        .account-item:hover { background: #f7f8f8; }
-        .avatar-mock { width: 35px; height: 35px; border-radius: 50%; background: #4285F4; color: white; line-height: 35px; margin-right: 15px; }
+        .auth-switch-link:hover { color: var(--theme); text-shadow: 0 0 8px var(--theme-glow); }
 
-        /* --- 消息提示 --- */
-        #sys-msg { color: #ff0055; font-size: 0.8rem; height: 20px; margin-bottom: 10px; text-align: center; }
+        /* --- Mock Google Auth Loader --- */
+        .google-loader {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 250px; text-align: center;
+        }
+        .spinner {
+            width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #4285F4; border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 30px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- Core Experience Page --- */
+        #experience { padding: 30px; }
+        .hud-layout { display: grid; grid-template-columns: 1fr 420px; gap: 30px; height: 100%; align-items: stretch; }
+        
+        #video-core {
+            position: relative; background: #000; border: 2px solid var(--theme);
+            overflow: hidden; box-shadow: 0 0 30px rgba(0,0,0,0.5), inset 0 0 100px rgba(0,0,0,0.9);
+            border-radius: 5px;
+        }
+        canvas#webcam-canvas { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.1) brightness(1.1); }
+        
+        .scanner {
+            position: absolute; width: 100%; height: 3px; background: var(--theme);
+            box-shadow: 0 0 20px 4px var(--theme); opacity: 0.8; z-index: 5;
+            animation: scanLoop 3s infinite cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes scanLoop { 0% { top: -5%; } 100% { top: 105%; } }
+
+        .data-panel { display: flex; flex-direction: column; gap: 20px; }
+        .hud-box {
+            background: rgba(5, 5, 10, 0.8); border: 1px solid rgba(255,255,255,0.08);
+            border-left: 5px solid var(--theme); padding: 30px; flex-shrink: 0;
+            position: relative;
+        }
+        .hud-box::before { content:''; position: absolute; top:0; right:0; width: 20px; height: 20px; border-top: 2px solid var(--theme); border-right: 2px solid var(--theme); opacity: 0.5;}
+        
+        .bar-wrap { margin-bottom: 20px; }
+        .bar-label { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
+        .bar-bg { width: 100%; height: 5px; background: #1a1a22; overflow: hidden; position: relative;}
+        .bar-fill { height: 100%; width: 0%; background: var(--theme); box-shadow: 0 0 15px var(--theme); transition: width 0.3s cubic-bezier(0.23, 1, 0.32, 1); }
+
+        #ai-console {
+            flex-grow: 1; background: #000; border: 1px solid rgba(255,255,255,0.05); padding: 25px;
+            font-size: 1rem; line-height: 1.8; color: var(--theme); overflow-y: auto;
+            font-family: 'Share Tech Mono', monospace; box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+        }
+        .blink { animation: textBlink 1s infinite; }
+        @keyframes textBlink { 50% { opacity: 0; } }
+
+        /* === Advanced Dynamic FX (States) === */
+        .fx-pulse #viewport-overlay {
+            position: absolute; inset: 0; pointer-events: none; z-index: 2;
+            background: radial-gradient(circle, transparent 30%, var(--theme-glow) 150%);
+            animation: pulseGlow 2s infinite alternate;
+        }
+        @keyframes pulseGlow { from { opacity: 0.2; } to { opacity: 0.6; } }
+
+        .fx-shake .hud-box, .fx-shake #video-core { animation: shakeFrame 0.1s infinite; }
+        @keyframes shakeFrame { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -1px); } 100% { transform: translate(-1px, 1px); } }
+        .fx-shake canvas#webcam-canvas { filter: contrast(1.5) brightness(1.2) hue-rotate(10deg); }
 
     </style>
 </head>
 <body>
 
 <div id="app-container">
+    <canvas id="bg-canvas"></canvas>
+    <div id="viewport-overlay"></div>
+
     <nav>
-        <div class="logo">MOTION EMOTION</div>
-        <div class="auth-cluster" id="nav-auth">
-            <button class="btn-cyber" onclick="showView('login')">Log in</button>
-            <button class="btn-cyber btn-solid" onclick="showView('signup')">Sign up</button>
+        <div class="logo">Motion Emotion System</div>
+        <ul class="nav-links">
+            <li class="active" onclick="route('home')">HOME</li>
+            <li onclick="route('about')">ABOUT US</li>
+            <li onclick="route('project')">PROJECT</li>
+            <li onclick="route('guide')">GUIDE</li>
+        </ul>
+        <div class="auth-cluster" id="auth-ui">
+            <button class="btn-cyber" onclick="openAuth('login')">LOGIN</button>
+            <button class="btn-cyber btn-solid" onclick="openAuth('signup')">SIGN UP</button>
         </div>
     </nav>
 
     <div id="home" class="page-content active">
-        <h1 style="font-family: 'Orbitron'; font-size: 3rem; margin-bottom: 20px;">SYSTEM STANDBY</h1>
-        <p>Please Log in to access biometric interface.</p>
-    </div>
-
-    <div id="view-login" class="page-content">
-        <div class="auth-card">
-            <h2>Log in</h2>
-            <button class="btn-cyber" style="width: 100%; margin-bottom: 25px; border-color: #4285F4; color: #4285F4;" onclick="openGoogleMock()">
-                CONTINUE WITH GOOGLE
-            </button>
-            <div style="text-align: center; margin-bottom: 20px; font-size: 0.8rem; opacity: 0.5;">OR USE SYSTEM CREDENTIALS</div>
-            <div class="input-group">
-                <label>OPERATOR EMAIL</label>
-                <input type="email" id="login-email" placeholder="name@domain.com">
-            </div>
-            <div class="input-group">
-                <label>PASSWORD</label>
-                <input type="password" id="login-pass" placeholder="••••••••">
-            </div>
-            <button class="btn-cyber btn-solid" style="width: 100%;" onclick="mockLogin()">ESTABLISH LINK</button>
-            <p onclick="showView('signup')" style="font-size: 0.8rem; margin-top: 20px; text-align: center; cursor: pointer;">No ID? Register here</p>
-        </div>
-    </div>
-
-    <div id="view-signup" class="page-content">
-        <div class="auth-card">
-            <h2>Sign up</h2>
-            <div id="sys-msg"></div>
-            <div id="signup-step-1">
-                <div class="input-group">
-                    <label>NEW OPERATOR EMAIL</label>
-                    <input type="email" id="reg-email" placeholder="operator@core.os">
-                </div>
-                <div class="input-group">
-                    <label>SET PASSWORD</label>
-                    <input type="password" id="reg-pass" placeholder="••••••••">
-                </div>
-                <button class="btn-cyber btn-solid" style="width: 100%;" onclick="sendMockEmail()">SEND VERIFICATION CODE</button>
-            </div>
-
-            <div id="signup-step-2" style="display: none;">
-                <p style="font-size: 0.8rem; margin-bottom: 20px; color: var(--theme);">A 6-digit code was sent to your email.</p>
-                <div class="input-group">
-                    <label>ENTER CODE</label>
-                    <input type="text" id="reg-code" maxlength="6" style="text-align: center; letter-spacing: 10px;">
-                </div>
-                <button class="btn-cyber btn-solid" style="width: 100%;" onclick="verifyAndRegister()">VERIFY & REGISTER</button>
+        <div class="hero-text">
+            <p style="color: var(--theme); letter-spacing: 5px; margin-bottom: 15px; font-weight: bold; font-family: 'Orbitron', sans-serif;">Calm · Anxiety · Happiness</p>
+            <h1 style="font-size: 4rem; letter-spacing: 2px;">Emotion Recognition System</h1>
+            <p style="font-size: 1.5rem; color: #fff; margin-bottom: 10px; font-family: 'Orbitron', sans-serif;">A motion-based emotion recognition interface</p>
+            <p style="letter-spacing: 2px; color: var(--theme); opacity: 0.8;">Determined by your body</p>
+            <div style="margin-top: 45px;">
+                <button class="btn-cyber btn-solid" style="padding: 20px 60px; font-size: 1.2rem;" onclick="attemptStart()">Start Experience</button>
             </div>
         </div>
-    </div>
-
-    <div id="view-experience" class="page-content">
-        <h2 style="color: var(--theme); font-family: 'Orbitron';">BIOMETRIC INTERFACE ACTIVE</h2>
-        <p>Neural link established. System is monitoring kinetic flow.</p>
-        <button class="btn-cyber" style="margin-top: 50px; border-color: #ff0055; color: #ff0055;" onclick="logout()">TERMINATE SESSION</button>
-    </div>
-</div>
-
-<div id="google-overlay">
-    <div class="google-account-selector">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" width="75" style="margin-bottom: 20px;">
-        <h3 style="margin-bottom: 10px; font-size: 1.5rem;">Choose an account</h3>
-        <p style="color: #5f6368; margin-bottom: 20px;">to continue to <b>Motion Emotion System</b></p>
         
-        <div class="account-item" onclick="selectGoogleAccount('Jiang Aoxiang', 'jiang.a@gmail.com')">
-            <div class="avatar-mock">J</div>
-            <div style="text-align: left;">
-                <div style="font-weight: bold; font-size: 0.9rem;">Jiang Aoxiang</div>
-                <div style="font-size: 0.8rem; color: #5f6368;">jiang.a@gmail.com</div>
+        <div id="sentinel-viz">
+            <canvas id="sentinel-canvas"></canvas>
+            <div class="viz-label">SENTINEL_PROTOTYPE_v4</div>
+        </div>
+    </div>
+
+    <div id="about" class="page-content">
+        <h2>ABOUT US</h2>
+        <div class="tech-card" style="max-width: 1000px; margin-top: 20px;">
+            <p>We are creators from a background in visual and digital media, focusing on the relationship between technology and human perception. We attempt to observe and understand emotions not through language, but through bodily movement. This project is based on AI motion recognition, translating human gestures into emotional signals and exploring whether emotions can truly be "recognized."</p>
+            <p>By training and classifying three fundamental emotional states—Calm, Anxiety, and Happiness—we developed a system where users interact without words, relying solely on physical expression. Using accessible machine learning tools, we transform complex AI processes into an intuitive and perceptible experience.</p>
+            <p>In an era where artificial intelligence increasingly participates in interpretation and decision-making, we hope this project prompts reflection: are emotions truly understood, or merely identified and defined?</p>
+        </div>
+    </div>
+
+    <div id="project" class="page-content">
+        <h2>PROJECT DETAILS</h2>
+        <div class="tech-card" style="max-width: 1000px; margin-top: 20px;">
+            <p>In today's digital environment, artificial intelligence is increasingly involved in analyzing and interpreting human behavior and emotions. However, most emotion recognition systems rely heavily on facial expressions or voice input, which to some extent limits the diversity of emotional expression. Therefore, this project approaches the problem from a different perspective—using body movement as the primary basis for recognition, with facial expression as a secondary reference, to explore a more holistic way of perceiving human emotions.</p>
+            <p>This project is developed using Google's Teachable Machine platform. By collecting and training motion data, we built a model capable of recognizing three fundamental emotional states: Calm, Anxiety, and Happiness. In the interactive experience, users do not need to provide verbal input; instead, they express emotions through specific body movements, which the system recognizes and responds to in real time, creating an intuitive human–computer interaction process.</p>
+            <p>Through this approach, we aim to move beyond traditional face-centered emotion recognition and shift attention toward the expressive potential of the human body. At the same time, by leveraging accessible machine learning tools, we transform complex technical processes into participatory and experiential interactions, allowing users to understand the technology through engagement and reconsider how emotions are perceived and defined.</p>
+        </div>
+    </div>
+
+    <div id="guide" class="page-content">
+        <h2>CALIBRATION PROTOCOL</h2>
+        <p style="margin-bottom: 30px;">Operators must maintain a distance of 2-3 meters from the sensor. Match the kinetic references below to initiate state synchronization.</p>
+        <div class="grid-cards">
+            <div class="tech-card" style="border-top-color: #0088ff; text-align: center;">
+                <svg viewBox="0 0 100 100" width="100" height="100" stroke="#0088ff" stroke-width="4" stroke-linecap="round" fill="none" style="margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(0,136,255,0.5));">
+                    <circle cx="50" cy="20" r="10"/>
+                    <path d="M50 30 v35 M50 35 l-15 25 M50 35 l15 25 M50 65 l-12 30 M50 65 l12 30"/>
+                </svg>
+                <h3 style="color: #0088ff">[01] CALM (BASELINE)</h3>
+                <p style="text-align: left; font-size: 1rem;">Neutral, relaxed posture. Arms hang naturally at sides. Static or minimal movement. Mapped as biological homeostasis.</p>
+            </div>
+            <div class="tech-card" style="border-top-color: #ff0055; text-align: center;">
+                <svg viewBox="0 0 100 100" width="100" height="100" stroke="#ff0055" stroke-width="4" stroke-linecap="round" fill="none" style="margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(255,0,85,0.5));">
+                    <circle cx="50" cy="25" r="10"/>
+                    <path d="M50 35 v30 M50 40 l-18 -15 l 10 -15 M50 40 l18 -15 l -10 -15 M50 65 l-15 20 l 0 10 M50 65 l15 20 l 0 10"/>
+                </svg>
+                <h3 style="color: #ff0055">[02] ANXIOUS (STRESS)</h3>
+                <p style="text-align: left; font-size: 1rem;">Closed posture. Restless inward motions. Hands touching face or head. Leaning forward. Mapped as kinetic overload.</p>
+            </div>
+            <div class="tech-card" style="border-top-color: #00ffcc; text-align: center;">
+                <svg viewBox="0 0 100 100" width="100" height="100" stroke="#00ffcc" stroke-width="4" stroke-linecap="round" fill="none" style="margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(0,255,204,0.5));">
+                    <circle cx="50" cy="18" r="10"/>
+                    <path d="M50 28 v32 M50 35 l-25 -20 M50 35 l25 -20 M50 60 l-20 35 M50 60 l20 35"/>
+                </svg>
+                <h3 style="color: #00ffcc">[03] HAPPY (EUPHORIA)</h3>
+                <p style="text-align: left; font-size: 1rem;">Expansive, energetic motions. Arms raised high or dancing. Head tilted upward. Mapped as spatial expansion.</p>
             </div>
         </div>
-        <div class="account-item" onclick="selectGoogleAccount('Guest User', 'guest.motion@gmail.com')">
-            <div class="avatar-mock" style="background: #34A853;">G</div>
-            <div style="text-align: left;">
-                <div style="font-weight: bold; font-size: 0.9rem;">Guest User</div>
-                <div style="font-size: 0.8rem; color: #5f6368;">guest.motion@gmail.com</div>
+    </div>
+
+    <div id="auth" class="page-content">
+        <div class="auth-box">
+            
+            <div id="auth-view-login" class="auth-view active">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #fff; letter-spacing: 3px;">SYSTEM LOGIN</h2>
+                
+                <button type="button" class="btn-cyber" style="width: 100%; margin-bottom: 25px; border-color: #cbd5e1; color: #fff; background: rgba(255,255,255,0.05);" onclick="initiateGoogleAuth()">
+                    <svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    LOGIN WITH GOOGLE
+                </button>
+
+                <div style="text-align: center; color: var(--theme); margin-bottom: 25px; font-size: 0.8rem; letter-spacing: 2px;">--- OR LOCAL AUTH ---</div>
+
+                <form onsubmit="handleLogin(event)">
+                    <div class="input-group">
+                        <label>OPERATOR_ID (EMAIL)</label>
+                        <input type="email" required placeholder="operator@core.os">
+                    </div>
+                    <div class="input-group">
+                        <label>ACCESS_CYPHER</label>
+                        <input type="password" required placeholder="••••••••••••">
+                    </div>
+                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.1rem; padding: 18px;">ESTABLISH LINK</button>
+                </form>
+                
+                <div class="auth-switch-link" onclick="switchAuthView('signup')">> NO ACCOUNT? INITIALIZE REGISTRATION <</div>
+            </div>
+
+            <div id="auth-view-signup" class="auth-view">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #fff; letter-spacing: 3px;">REGISTRATION</h2>
+                
+                <form onsubmit="handleSignUp(event)">
+                    <div class="input-group" style="margin-bottom: 20px;">
+                        <label>NEW OPERATOR_ID (EMAIL)</label>
+                        <input type="email" required placeholder="operator@core.os">
+                    </div>
+                    <div class="input-group" style="margin-bottom: 20px;">
+                        <label>SET ACCESS_CYPHER</label>
+                        <input type="password" required placeholder="••••••••••••">
+                    </div>
+                    
+                    <div class="verification-warning">
+                        ⚠️ IDENTITY VERIFICATION REQUIRED FOR NEW REGISTRATIONS
+                    </div>
+
+                    <button type="submit" class="btn-cyber" style="width: 100%; font-size: 1.1rem; padding: 18px; font-weight: bold; color: #fff;">REGISTER IDENTITY</button>
+                </form>
+                
+                <div class="auth-switch-link" onclick="switchAuthView('login')">> ALREADY VERIFIED? PROCEED TO LOGIN <</div>
+            </div>
+
+            <div id="auth-view-verify" class="auth-view">
+                <h2 style="text-align: center; margin-bottom: 10px; color: var(--theme); letter-spacing: 3px;">AWAITING VERIFICATION</h2>
+                <p style="text-align: center; font-size: 0.9rem; margin-bottom: 30px; color: #94a3b8;">A secure cypher has been transmitted to your email. Enter it below to complete authorization.</p>
+                
+                <form onsubmit="handleVerification(event)">
+                    <div class="input-group">
+                        <label>6-DIGIT CYPHER CODE</label>
+                        <input type="text" required placeholder="0 0 0 0 0 0" style="text-align: center; letter-spacing: 8px; font-size: 1.5rem;" maxlength="6">
+                    </div>
+                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.1rem; padding: 18px;">VERIFY & ESTABLISH LINK</button>
+                </form>
+                
+                <div class="auth-switch-link" onclick="switchAuthView('signup')">< CANCEL OPERATION</div>
+            </div>
+
+            <div id="auth-view-google" class="auth-view">
+                <div class="google-loader">
+                    <div class="spinner"></div>
+                    <h3 style="color: #fff; letter-spacing: 2px;" id="google-status-text">REDIRECTING TO GOOGLE SECURE SERVERS<span class="blink">...</span></h3>
+                    <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 15px;">Awaiting personal verification via external OAuth protocol.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="experience" class="page-content">
+        <div class="hud-layout">
+            <div id="video-core">
+                <div class="scanner"></div>
+                <canvas id="webcam-canvas"></canvas>
+                <div style="position: absolute; bottom: 20px; left: 20px; color: var(--theme); font-size: 0.85rem; background: rgba(0,0,0,0.6); padding: 8px 15px; font-family: 'Share Tech Mono'; border: 1px solid rgba(255,255,255,0.1);">
+                    LIVE BIOMETRIC FEED [ACTIVE_LINK]
+                </div>
+            </div>
+            
+            <div class="data-panel">
+                <div class="hud-box">
+                    <h3 style="font-size: 1.2rem; margin-bottom: 25px; color: #fff;">PROBABILITY MATRIX</h3>
+                    <div id="bars-container"></div>
+                </div>
+
+                <div class="hud-box" style="flex-grow: 1; display: flex; flex-direction: column; padding: 0; border-left: none; background: none;">
+                    <div id="ai-console">
+                        > AWAITING SKELETAL INPUT...<span class="blink">_</span>
+                    </div>
+                </div>
+
+                <button class="btn-cyber" style="border-color: #ef4444; color: #ef4444; width: 100%;" onclick="terminateSystem()">TERMINATE CONNECTION</button>
             </div>
         </div>
-        <p style="margin-top: 20px; font-size: 0.8rem; color: #5f6368;">Use another account</p>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
 
 <script>
-    let generatedCode = ""; // 存储生成的随机验证码
-    let currentUser = null;
+    // --- Global State & Config ---
+    let isAuthenticated = false;
+    let systemRunning = false;
+    const modelURL_TM = "https://teachablemachine.withgoogle.com/models/sTBoNGgmv/";
 
-    // --- 界面切换逻辑 ---
-    function showView(viewId) {
+    const mouse = { x: null, y: null, radius: 150 };
+    window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
+    window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+
+    // --- 1. Background Particles ---
+    const bgCanvas = document.getElementById('bg-canvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    let particlesArray = [];
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * bgCanvas.width;
+            this.y = Math.random() * bgCanvas.height;
+            this.size = Math.random() * 2 + 0.5;
+            this.vy = (Math.random() * 0.5) + 0.2;
+            this.waveSpeed = Math.random() * 0.02 + 0.01;
+            this.waveOffset = Math.random() * Math.PI * 2;
+            this.density = (Math.random() * 30) + 1;
+        }
+        draw() {
+            bgCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+            bgCtx.globalAlpha = 0.6;
+            bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2); bgCtx.fill();
+            bgCtx.globalAlpha = 1.0;
+        }
+        update() {
+            this.y -= this.vy;
+            this.x += Math.sin(this.y * this.waveSpeed + this.waveOffset) * 0.5;
+            if(this.y < 0) { this.y = bgCanvas.height; this.x = Math.random() * bgCanvas.width; }
+            if(this.x > bgCanvas.width) this.x = 0;
+            if(this.x < 0) this.x = bgCanvas.width;
+
+            if (mouse.x != null && mouse.y != null) {
+                let dx = mouse.x - this.x; let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx*dx + dy*dy);
+                if (distance < mouse.radius) {
+                    let force = (mouse.radius - distance) / mouse.radius;
+                    this.x -= (dx / distance) * force * this.density; 
+                    this.y -= (dy / distance) * force * this.density;
+                }
+            }
+        }
+    }
+
+    function initBgParticles() {
+        bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
+        particlesArray = [];
+        let numberOfParticles = (bgCanvas.width * bgCanvas.height) / 7000;
+        for(let i=0; i < numberOfParticles; i++) { particlesArray.push(new Particle()); }
+    }
+    
+    function animateBg() {
+        bgCtx.fillStyle = 'rgba(2, 2, 4, 0.2)'; 
+        bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+        for(let i=0; i < particlesArray.length; i++) { particlesArray[i].update(); particlesArray[i].draw(); }
+        requestAnimationFrame(animateBg);
+    }
+    window.addEventListener('resize', initBgParticles);
+    initBgParticles(); animateBg();
+
+
+    // --- 2. Sentinel Viz ---
+    const sentCanvas = document.getElementById('sentinel-canvas');
+    const sentCtx = sentCanvas.getContext('2d');
+    let sentinelAngle = 0;
+
+    const rawPoseModel = [
+        {id: 'nose', x: 0, y: -0.8, z: 0}, {id: 'lShoulder', x: -0.4, y: -0.5, z: 0}, {id: 'rShoulder', x: 0.4, y: -0.5, z: 0},
+        {id: 'lElbow', x: -0.6, y: -0.1, z: 0.2}, {id: 'rElbow', x: 0.6, y: -0.1, z: -0.2},
+        {id: 'lWrist', x: -0.5, y: 0.3, z: 0.4}, {id: 'rWrist', x: 0.5, y: 0.3, z: -0.4},
+        {id: 'lHip', x: -0.25, y: 0.1, z: 0}, {id: 'rHip', x: 0.25, y: 0.1, z: 0},
+        {id: 'lKnee', x: -0.3, y: 0.6, z: 0.1}, {id: 'rKnee', x: 0.3, y: 0.6, z: -0.1},
+        {id: 'lAnkle', x: -0.35, y: 0.9, z: 0.2}, {id: 'rAnkle', x: 0.35, y: 0.9, z: -0.2}
+    ];
+
+    const connections = [
+        ['lShoulder', 'rShoulder'], ['lShoulder', 'lElbow'], ['lElbow', 'lWrist'], ['rShoulder', 'rElbow'], ['rElbow', 'rWrist'],
+        ['lShoulder', 'lHip'], ['rShoulder', 'rHip'], ['lHip', 'rHip'], ['lHip', 'lKnee'], ['lKnee', 'lAnkle'], ['rHip', 'rKnee'], ['rKnee', 'rAnkle'],
+        ['nose', 'lShoulder'], ['nose', 'rShoulder']
+    ];
+
+    function project(point, angle, width, height) {
+        let x_rot = point.x * Math.cos(angle) - point.z * Math.sin(angle);
+        let z_rot = point.x * Math.sin(angle) + point.z * Math.cos(angle);
+        let perspective = 1 + (z_rot * 0.3);
+        return { x: (x_rot / perspective) * (width * 0.3) + (width/2), y: (point.y) * (height * 0.45) + (height/2), z: z_rot };
+    }
+
+    function initSentinel() {
+        const container = document.getElementById('sentinel-viz');
+        sentCanvas.width = container.offsetWidth; sentCanvas.height = container.offsetHeight;
+    }
+
+    function animateSentinel() {
+        if(document.getElementById('home').style.display === 'none') { requestAnimationFrame(animateSentinel); return; }
+        sentCtx.clearRect(0, 0, sentCanvas.width, sentCanvas.height);
+        sentinelAngle += 0.005; 
+        const currentTheme = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+
+        let projectedPoints = {};
+        rawPoseModel.forEach(p => { projectedPoints[p.id] = project(p, sentinelAngle, sentCanvas.width, sentCanvas.height); });
+
+        sentCtx.lineWidth = 1.5;
+        connections.forEach(([p1_id, p2_id]) => {
+            const p1 = projectedPoints[p1_id]; const p2 = projectedPoints[p2_id];
+            let opacity = 1 - (((p1.z + p2.z) / 2 + 1) / 2); 
+            sentCtx.strokeStyle = currentTheme.replace('rgb','rgba').replace(')', `, ${opacity * 0.4 + 0.1})`);
+            sentCtx.beginPath(); sentCtx.moveTo(p1.x, p1.y); sentCtx.lineTo(p2.x, p2.y); sentCtx.stroke();
+        });
+
+        rawPoseModel.forEach(p_raw => {
+            const p = projectedPoints[p_raw.id];
+            let opacity = 1 - ((p.z + 1) / 2);
+            sentCtx.fillStyle = currentTheme.replace('rgb','rgba').replace(')', `, ${opacity * 0.7 + 0.2})`);
+            sentCtx.beginPath(); sentCtx.arc(p.x, p.y, 3 * (opacity * 0.5 + 0.5), 0, Math.PI * 2); sentCtx.fill();
+        });
+        requestAnimationFrame(animateSentinel);
+    }
+    window.addEventListener('resize', initSentinel);
+    initSentinel(); animateSentinel();
+
+
+    // --- 3. Routing & AUTHENTICATION FLOW ---
+    function route(pageId) {
+        if(pageId !== 'experience' && systemRunning) terminateSystem(false); 
         document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
-        document.getElementById('view-' + viewId).classList.add('active');
-        document.getElementById('sys-msg').innerText = "";
+        document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelectorAll('.nav-links li').forEach(item => {
+            if(item.innerText.toLowerCase().includes(pageId) || (pageId==='home' && item.innerText==='HOME')) item.classList.add('active');
+        });
+        if(pageId === 'home') initSentinel();
     }
 
-    // --- 注册逻辑：带真实验证码校验 ---
-    function sendMockEmail() {
-        const email = document.getElementById('reg-email').value;
-        if (!email.includes('@')) {
-            document.getElementById('sys-msg').innerText = "ERROR: INVALID EMAIL";
-            return;
-        }
+    // AUTH UI Switcher
+    function switchAuthView(viewName) {
+        document.querySelectorAll('.auth-view').forEach(v => v.classList.remove('active'));
+        document.getElementById('auth-view-' + viewName).classList.add('active');
+    }
+
+    // Direct nav button handlers
+    function openAuth(viewName) {
+        route('auth');
+        switchAuthView(viewName);
+    }
+
+    function attemptStart() {
+        if (!isAuthenticated) openAuth('login');
+        else { route('experience'); startSystem(); }
+    }
+
+    // Auth Form Handlers
+    function handleLogin(e) {
+        e.preventDefault();
+        loginSuccess();
+    }
+    
+    function handleSignUp(e) {
+        e.preventDefault();
+        // Go to Email Verification step instead of direct login
+        switchAuthView('verify');
+    }
+
+    function handleVerification(e) {
+        e.preventDefault();
+        // Verification success
+        loginSuccess();
+    }
+    
+    function initiateGoogleAuth() {
+        switchAuthView('google');
+        const textElem = document.getElementById('google-status-text');
         
-        // 生成随机 6 位验证码
-        generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
-        
-        // 模拟发送邮件（弹窗显示以便测试）
-        alert("【系统后台服务】\n验证码已发送至: " + email + "\n\n您的验证码是: " + generatedCode);
-        
-        document.getElementById('signup-step-1').style.display = 'none';
-        document.getElementById('signup-step-2').style.display = 'block';
-    }
-
-    function verifyAndRegister() {
-        const inputCode = document.getElementById('reg-code').value;
-        if (inputCode === generatedCode && generatedCode !== "") {
-            alert("验证成功！账户已激活。");
-            loginSuccess("New User");
-        } else {
-            document.getElementById('sys-msg').innerText = "INVALID CODE. ACCESS DENIED.";
-        }
-    }
-
-    // --- 谷歌登录逻辑：模拟后台切换 ---
-    function openGoogleMock() {
-        document.getElementById('google-overlay').style.display = 'flex';
-    }
-
-    function selectGoogleAccount(name, email) {
-        // 模拟正在验证
-        const overlay = document.getElementById('google-overlay');
-        overlay.innerHTML = `
-            <div style="text-align:center;">
-                <div class="avatar-mock" style="margin: 0 auto 20px auto; width: 60px; height: 60px; line-height: 60px; font-size: 1.5rem;">${name[0]}</div>
-                <h3>Verifying Identity...</h3>
-                <p>Returning to Motion Emotion System</p>
-            </div>
-        `;
+        // Mocking the OAuth Redirect and Verification Flow
+        textElem.innerHTML = `CONNECTING TO GOOGLE SECURE HANDSHAKE<span class="blink">...</span>`;
         
         setTimeout(() => {
-            overlay.style.display = 'none';
-            loginSuccess(name);
-            // 重置 overlay 内容方便下次使用
-            location.reload(); 
+            textElem.innerHTML = `AWAITING PERSONAL IDENTITY VERIFICATION<span class="blink">...</span>`;
+            // Change theme color temporarily to Google Blue to simulate external process
+            document.documentElement.style.setProperty('--theme', '#4285F4');
+            document.documentElement.style.setProperty('--theme-glow', 'rgba(66, 133, 244, 0.4)');
+            
+            setTimeout(() => {
+                textElem.innerHTML = `VERIFICATION SUCCESS. ESTABLISHING LINK<span class="blink">...</span>`;
+                document.documentElement.style.setProperty('--theme', '#34A853'); // Google Green for success
+                
+                setTimeout(() => {
+                    // Reset to system theme and login
+                    document.documentElement.style.setProperty('--theme', '#00f0ff');
+                    document.documentElement.style.setProperty('--theme-glow', 'rgba(0, 240, 255, 0.4)');
+                    loginSuccess();
+                }, 1000);
+            }, 2000);
         }, 1500);
     }
 
-    // --- 登录通用成功处理 ---
-    function loginSuccess(userName) {
-        currentUser = userName;
-        document.getElementById('nav-auth').innerHTML = `
-            <span style="color:var(--theme); margin-right:20px;">[ ${userName.toUpperCase()} ]</span>
-            <button class="btn-cyber" onclick="logout()">Logout</button>
+    function loginSuccess() {
+        isAuthenticated = true;
+        document.getElementById('auth-ui').innerHTML = `
+            <span style="color: var(--theme); font-size: 0.9rem; letter-spacing: 1px; font-weight:bold;">[ OPERATOR_ACTIVE ]</span>
+            <button class="btn-cyber" style="border-color: #475569; color: #94a3b8; padding: 10px 20px; font-size: 0.8rem;" onclick="logout()">LOGOUT</button>
         `;
-        showView('experience');
-    }
-
-    function mockLogin() {
-        const email = document.getElementById('login-email').value;
-        if (email) loginSuccess(email.split('@')[0]);
-        else alert("Please enter credentials");
+        // Reset auth box to login for next time
+        switchAuthView('login');
+        route('experience');
+        startSystem();
     }
 
     function logout() {
-        location.reload(); // 简单重置
+        isAuthenticated = false;
+        terminateSystem(false);
+        document.getElementById('auth-ui').innerHTML = `
+            <button class="btn-cyber" onclick="openAuth('login')">LOGIN</button>
+            <button class="btn-cyber btn-solid" onclick="openAuth('signup')">SIGN UP</button>
+        `;
+        route('home');
+    }
+
+    // --- 4. Core AI Kinetic Logic ---
+    let model, webcam, webcamCtx, maxPredictions;
+    let currentState = ""; 
+    let loopFrame;
+
+    const EMOTION_LOGS = {
+        calm: "> SCANNING BIOMETRICS...\n> POSTURE: NOMINAL SYMMETRY.\n> BIOLOGICAL FLOW: STABLE.\n> SYSTEM STATUS: NOMINAL CRUISING.",
+        anxious: "> ALERT: IRREGULAR KINETIC CONTRACTIONS!\n> CORTISOL LEVELS: SURGING (ESTIMATED).\n> POSTURE: INWARD / DEFENSIVE.\n> SYSTEM STATUS: INSTABILITY WARNING.",
+        happy: "> DOPAMINE SURGE DETECTED.\n> ENERGY PATHWAY: HIGH-FREQUENCY EXPANSION.\n> PREDICATED STATE: EUPHORIA.\n> SYSTEM STATUS: POSITIVE FEEDBACK ACTIVE."
+    };
+
+    async function startSystem() {
+        if (systemRunning) return;
+        systemRunning = true;
+        
+        document.getElementById('ai-console').innerHTML = "> INITIALIZING NEURAL LINK...<span class='blink'>_</span>";
+
+        model = await tmPose.load(modelURL_TM + "model.json", modelURL_TM + "metadata.json");
+        maxPredictions = model.getTotalClasses();
+
+        webcam = new tmPose.Webcam(600, 600, true); 
+        await webcam.setup(); await webcam.play();
+        
+        const canvas = document.getElementById("webcam-canvas");
+        canvas.width = 600; canvas.height = 600;
+        webcamCtx = canvas.getContext("2d");
+
+        const container = document.getElementById("bars-container");
+        container.innerHTML = "";
+        for (let i = 0; i < maxPredictions; i++) {
+            container.innerHTML += `
+                <div class="bar-wrap">
+                    <div class="bar-label"><span>${model.getClassLabels()[i]}</span><span id="val-${i}">0%</span></div>
+                    <div class="bar-bg"><div id="fill-${i}" class="bar-fill"></div></div>
+                </div>`;
+        }
+        loopFrame = window.requestAnimationFrame(expLoop);
+    }
+
+    async function expLoop() {
+        if(!systemRunning) return;
+        webcam.update(); await predict();
+        loopFrame = window.requestAnimationFrame(expLoop);
+    }
+
+    async function predict() {
+        const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+        const prediction = await model.predict(posenetOutput);
+
+        let topIndex = 0;
+        for (let i = 0; i < maxPredictions; i++) {
+            const prob = prediction[i].probability;
+            document.getElementById(`val-${i}`).innerText = (prob * 100).toFixed(0) + "%";
+            document.getElementById(`fill-${i}`).style.width = (prob * 100).toFixed(0) + "%";
+            if (prob > prediction[topIndex].probability) topIndex = i;
+        }
+
+        const topProb = prediction[topIndex].probability;
+        const topLabel = prediction[topIndex].className.toLowerCase();
+
+        if (topProb > 0.65) updateDynamicFX(topIndex, topLabel);
+        drawWebcamPose(pose);
+    }
+
+    function updateDynamicFX(index, label) {
+        let themeColor, themeGlow, fxClass, logText;
+
+        if (label.includes("anx") || label.includes("sad") || label.includes("stress") || index === 1) {
+            themeColor = "#ff0055"; themeGlow = "rgba(255, 0, 85, 0.5)"; fxClass = "fx-shake"; logText = EMOTION_LOGS.anxious;
+        } else if (label.includes("hap") || label.includes("joy") || label.includes("dance") || index === 2) {
+            themeColor = "#00ffcc"; themeGlow = "rgba(0, 255, 204, 0.5)"; fxClass = "fx-pulse"; logText = EMOTION_LOGS.happy;
+        } else {
+            themeColor = "#00f0ff"; themeGlow = "rgba(0, 240, 255, 0.4)"; fxClass = ""; logText = EMOTION_LOGS.calm;
+        }
+
+        if (currentState !== label) {
+            currentState = label;
+            document.documentElement.style.setProperty('--theme', themeColor);
+            document.documentElement.style.setProperty('--theme-glow', themeGlow);
+            document.getElementById('app-container').className = fxClass; 
+            document.getElementById('ai-console').innerHTML = logText.replace(/\n/g, '<br><br>') + '<br><br><span class="blink">_</span>';
+        }
+    }
+
+    function drawWebcamPose(pose) {
+        if (webcam.canvas) {
+            webcamCtx.drawImage(webcam.canvas, 0, 0);
+            if (pose) {
+                const min = 0.5;
+                const color = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+                webcamCtx.strokeStyle = color; webcamCtx.fillStyle = color; webcamCtx.lineWidth = 5; 
+                tmPose.drawKeypoints(pose.keypoints, min, webcamCtx);
+                tmPose.drawSkeleton(pose.keypoints, min, webcamCtx);
+            }
+        }
+    }
+
+    function terminateSystem(goHome = true) {
+        systemRunning = false;
+        if(webcam) webcam.stop();
+        if(loopFrame) window.cancelAnimationFrame(loopFrame);
+        
+        document.documentElement.style.setProperty('--theme', '#00f0ff');
+        document.documentElement.style.setProperty('--theme-glow', 'rgba(0, 240, 255, 0.4)');
+        document.getElementById('app-container').className = "";
+        currentState = "";
+        
+        if(goHome) route('home');
     }
 </script>
-
 </body>
 </html>
