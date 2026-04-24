@@ -39,7 +39,7 @@
         }
         #intro-canvas { 
             position: absolute; inset: 0; z-index: 1; pointer-events: none;
-            opacity: 0; animation: fadeInCanvas 2s forwards; /* 粒子淡入 */
+            opacity: 0; animation: fadeInCanvas 2s forwards; 
         }
         @keyframes fadeInCanvas { to { opacity: 1; } }
 
@@ -47,7 +47,7 @@
             position: relative; z-index: 2; text-align: center;
             opacity: 0; transform: scale(0.9); 
             animation: introPop 1.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards; 
-            animation-delay: 0.3s; /* 文案浮现动画 */
+            animation-delay: 0.3s; 
         }
         @keyframes introPop { to { opacity: 1; transform: scale(1); } }
 
@@ -72,7 +72,7 @@
             transform: scale(1.05);
         }
 
-        /* --- 新增：高级酷炫的过渡粒子动画层 (Warp Transition) --- */
+        /* --- 高级酷炫的过渡粒子动画层 (Warp Transition) --- */
         #warp-transition {
             position: fixed; inset: 0; z-index: 10000; background: #020204;
             display: none; justify-content: center; align-items: center; flex-direction: column;
@@ -558,7 +558,7 @@
     let introPoints = [];
     let introAngleX = 0, introAngleY = 0;
     let explosionPhase = false;
-    let introScaleCurrent = 0.1; // 初始化极小，用于进场生长动画
+    let introScaleCurrent = 0.1;
     let introScaleTarget = 1;
 
     function initIntro() {
@@ -583,7 +583,6 @@
         const cx = iCanvas.width / 2; const cy = iCanvas.height / 2;
         introAngleX += 0.002; introAngleY += 0.003;
         
-        // 增加动态生长的入场缓动效果
         if (!explosionPhase) {
             introScaleCurrent += (introScaleTarget - introScaleCurrent) * 0.05;
         }
@@ -620,7 +619,7 @@
 
     function startApp() {
         explosionPhase = true;
-        introScaleTarget = 2.5; // 点击后放大炸开
+        introScaleTarget = 2.5; 
         setTimeout(() => {
             document.getElementById('intro-screen').style.opacity = '0';
             document.getElementById('intro-screen').style.visibility = 'hidden';
@@ -662,7 +661,7 @@
         let frameCount = 0;
         function renderWarp() {
             if (!warpActive) return;
-            warpCtx.fillStyle = 'rgba(2, 2, 4, 0.3)'; // 拖尾特效
+            warpCtx.fillStyle = 'rgba(2, 2, 4, 0.3)'; 
             warpCtx.fillRect(0, 0, warpCanvas.width, warpCanvas.height);
 
             const cx = warpCanvas.width / 2;
@@ -671,7 +670,7 @@
             warpCtx.fillStyle = '#00f0ff';
             warpParticles.forEach(p => {
                 p.z -= p.speed;
-                p.speed += 0.2; // 向前加速
+                p.speed += 0.2; 
                 if (p.z <= 1) {
                     p.z = 1000;
                     p.speed = Math.random() * 5 + 2;
@@ -687,7 +686,6 @@
                 warpCtx.arc(px, py, size, 0, Math.PI * 2);
                 warpCtx.fill();
                 
-                // 绘制拉长的穿梭线条
                 let prevPerspective = 800 / (p.z + p.speed * 2);
                 let prevPx = cx + p.x * prevPerspective;
                 let prevPy = cy + p.y * prevPerspective;
@@ -708,7 +706,6 @@
         }
         renderWarp();
 
-        // 2.5秒后动画淡出并执行系统启动回调
         setTimeout(() => {
             warpDiv.style.opacity = '0';
             setTimeout(() => {
@@ -720,22 +717,27 @@
     }
 
     // ==========================================
-    // Sentinel 模型渲染 (首页网格骨架)
+    // Sentinel 模型渲染 (首页网格骨架 - 完全使用原版代码)
     // ==========================================
     const sentCanvas = document.getElementById('sentinel-canvas');
     const sentCtx = sentCanvas.getContext('2d');
     let sentinelAngle = 0;
     
     const rawPoseModel = [
-        {id:'nose', x:0, y:-0.6, z:0.2}, {id:'lShoulder', x:-0.4, y:-0.3, z:0}, {id:'rShoulder', x:0.4, y:-0.3, z:0},
-        {id:'lElbow', x:-0.5, y:0, z:0.1}, {id:'rElbow', x:0.5, y:0, z:0.1}, {id:'lWrist', x:-0.4, y:0.3, z:0.3},
-        {id:'rWrist', x:0.4, y:0.3, z:0.3}, {id:'lHip', x:-0.2, y:0.3, z:0}, {id:'rHip', x:0.2, y:0.3, z:0},
-        {id:'lKnee', x:-0.2, y:0.7, z:0}, {id:'rKnee', x:0.2, y:0.7, z:0}, {id:'lAnkle', x:-0.2, y:1, z:0}, {id:'rAnkle', x:0.2, y:1, z:0}
+        {id:'nose', x:0, y:-0.6, z:0.2},
+        {id:'lShoulder', x:-0.4, y:-0.3, z:0}, {id:'rShoulder', x:0.4, y:-0.3, z:0},
+        {id:'lElbow', x:-0.5, y:0, z:0.1}, {id:'rElbow', x:0.5, y:0, z:0.1},
+        {id:'lWrist', x:-0.4, y:0.3, z:0.3}, {id:'rWrist', x:0.4, y:0.3, z:0.3},
+        {id:'lHip', x:-0.2, y:0.3, z:0}, {id:'rHip', x:0.2, y:0.3, z:0},
+        {id:'lKnee', x:-0.2, y:0.7, z:0}, {id:'rKnee', x:0.2, y:0.7, z:0},
+        {id:'lAnkle', x:-0.2, y:1, z:0}, {id:'rAnkle', x:0.2, y:1, z:0}
     ];
+    
     const connections = [
-        ['lShoulder', 'rShoulder'], ['lShoulder', 'lElbow'], ['lElbow', 'lWrist'], ['rShoulder', 'rElbow'], ['rElbow', 'rWrist'], 
-        ['lShoulder', 'lHip'], ['rShoulder', 'rHip'], ['lHip', 'rHip'], ['lHip', 'lKnee'], ['lKnee', 'lAnkle'], ['rHip', 'rKnee'], 
-        ['rKnee', 'rAnkle'], ['nose', 'lShoulder'], ['nose', 'rShoulder']
+        ['lShoulder', 'rShoulder'], ['lShoulder', 'lElbow'], ['lElbow', 'lWrist'],
+        ['rShoulder', 'rElbow'], ['rElbow', 'rWrist'], ['lShoulder', 'lHip'],
+        ['rShoulder', 'rHip'], ['lHip', 'rHip'], ['lHip', 'lKnee'], ['lKnee', 'lAnkle'],
+        ['rHip', 'rKnee'], ['rKnee', 'rAnkle'], ['nose', 'lShoulder'], ['nose', 'rShoulder']
     ];
 
     function project(point, angle, width, height) {
@@ -752,7 +754,8 @@
     function initSentinel() {
         const container = document.getElementById('sentinel-viz');
         if (container && container.offsetWidth > 0) {
-            sentCanvas.width = container.offsetWidth; sentCanvas.height = container.offsetHeight;
+            sentCanvas.width = container.offsetWidth;
+            sentCanvas.height = container.offsetHeight;
         }
     }
 
@@ -762,6 +765,7 @@
         }
         sentCtx.clearRect(0, 0, sentCanvas.width, sentCanvas.height);
         sentinelAngle += 0.005;
+        
         const currentTheme = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
         
         let projectedPoints = {};
@@ -769,7 +773,8 @@
         
         sentCtx.lineWidth = 2;
         connections.forEach(([p1_id, p2_id]) => {
-            const p1 = projectedPoints[p1_id]; const p2 = projectedPoints[p2_id];
+            const p1 = projectedPoints[p1_id];
+            const p2 = projectedPoints[p2_id];
             let opacity = 1 - (((p1.z + p2.z) / 2 + 1) / 2);
             sentCtx.strokeStyle = currentTheme.replace('rgb','rgba').replace(')', `, ${opacity * 0.5 + 0.1})`);
             sentCtx.beginPath(); sentCtx.moveTo(p1.x, p1.y); sentCtx.lineTo(p2.x, p2.y); sentCtx.stroke();
@@ -851,7 +856,6 @@
         }, 1500);
     }
 
-    // 修改尝试启动逻辑：如果已登录，触发过渡穿梭动画后再进入体验系统
     function attemptStart() {
         if (!isAuthenticated) {
             openAuth('login');
@@ -886,9 +890,9 @@
     }
 
     // ==========================================
-    // AI 核心：Teachable Machine 系统
+    // AI 核心：Teachable Machine 系统 (已替换真实URL)
     // ==========================================
-    const URL = "https://teachablemachine.withgoogle.com/models/YOUR_MODEL_URL/"; // 注意：请确保这里是你真实的TM模型URL
+    const URL = "https://teachablemachine.withgoogle.com/models/K0q2J1p0N/";
     let model, webcam, webcamCtx, maxPredictions;
     let systemRunning = false;
     let loopFrame;
@@ -936,7 +940,7 @@
 
         let topIndex = 0;
         for (let i = 0; i < maxPredictions; i++) {
-            if(i > 2) break; // 对应UI中只做了3个bar
+            if(i > 2) break; 
             const prob = prediction[i].probability;
             document.getElementById(`val-${i}`).innerText = (prob * 100).toFixed(0) + "%"; 
             document.getElementById(`fill-${i}`).style.width = (prob * 100).toFixed(0) + "%"; 
@@ -967,7 +971,7 @@
             fxClass = "fx-pulse";
             logText = "> EUPHORIA PROTOCOL ACTIVE\n> SPATIAL EXPANSION DETECTED\n> NEURAL LINK HARMONIZED...";
         } else {
-            themeColor = "#0088ff"; // Calm Default
+            themeColor = "#0088ff"; 
             themeGlow = "rgba(0, 136, 255, 0.4)";
             fxClass = "";
             logText = "> BASELINE HOMEOSTASIS\n> POSTURE NEUTRAL\n> SYSTEM NOMINAL...";
