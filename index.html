@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Motion Emotion System - Kinetic Interface</title>
     <style>
-        /* 引入了更高级的字体组合：Rajdhani 用于正文质感，Orbitron 用于科幻标题，Share Tech Mono 用于数据/代码 */
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@300;500;600;700&family=Share+Tech+Mono&display=swap');
 
         :root {
@@ -36,7 +35,7 @@
             transition: opacity 1.2s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
         #intro-canvas { position: absolute; inset: 0; z-index: 1; }
-        .loader-ui { position: relative; z-index: 2; text-align: center; }
+        .loader-ui { position: relative; z-index: 2; text-align: center; pointer-events: none;}
         .loader-title {
             font-family: 'Orbitron', sans-serif; font-size: 2.5rem; color: #fff;
             letter-spacing: 10px; text-shadow: 0 0 20px var(--theme-glow);
@@ -163,10 +162,6 @@
 
         .auth-switch-link { text-align: center; margin-top: 25px; font-size: 0.9rem; color: #64748b; font-weight: 600; transition: color 0.3s; cursor: pointer;}
         .auth-switch-link:hover { color: var(--theme); }
-
-        .google-loader { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 250px; text-align: center; }
-        .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--theme); border-radius: 50%; animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite; margin-bottom: 30px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
 
         /* --- Core Experience --- */
         #experience { padding: 30px 5vw; }
@@ -371,18 +366,17 @@
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
 
 <script>
-    // --- 1. Point Cloud Intro Animation ---
+    // --- 1. Point Cloud Intro Animation (已修复过场机制) ---
     function initIntroAnimation() {
         const canvas = document.getElementById('intro-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
         
         let particles = [];
-        // 生成球体点云
         for(let i=0; i<400; i++) {
             let theta = Math.random() * 2 * Math.PI;
             let phi = Math.acos((Math.random() * 2) - 1);
-            let r = 180; // 半径
+            let r = 180; 
             particles.push({
                 x: r * Math.sin(phi) * Math.cos(theta),
                 y: r * Math.sin(phi) * Math.sin(theta),
@@ -394,24 +388,38 @@
         }
 
         let angleY = 0; let angleX = 0;
-        let introPhase = 0; // 0: 旋转, 1: 膨胀消散
+        let introPhase = 0; // 0: 旋转, 1: 膨胀消散, 2: 已结束
         let explodeFactor = 1;
         let pOpacity = 1;
+
+        // 核心过渡函数：将 Loader 彻底移除视野
+        function endIntro() {
+            if (introPhase === 2) return;
+            introPhase = 2; // 标记动画已结束
+            
+            const loader = document.getElementById('intro-loader');
+            if (loader) {
+                loader.style.pointerEvents = 'none'; // 确保鼠标穿透
+                loader.style.opacity = '0';          // 触发 CSS 渐隐
+                setTimeout(() => {
+                    loader.style.display = 'none';   // 渐隐完成后彻底隐藏
+                }, 1200);
+            }
+        }
 
         function animateIntro() {
             if(introPhase === 2) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             angleY += 0.015; angleX += 0.005;
 
-            ctx.fillStyle = `rgba(0, 240, 255, ${pOpacity})`;
+            // 确保透明度不会变成负数，防止 Canvas 渲染错误导致画面卡死
+            ctx.fillStyle = `rgba(0, 240, 255, ${Math.max(0, pOpacity)})`;
             
             particles.forEach(p => {
-                // Y轴旋转
                 let x1 = p.origX * Math.cos(angleY) - p.origZ * Math.sin(angleY);
                 let z1 = p.origX * Math.sin(angleY) + p.origZ * Math.cos(angleY);
                 let y1 = p.origY;
                 
-                // X轴轻微旋转叠加
                 let y2 = y1 * Math.cos(angleX) - z1 * Math.sin(angleX);
                 let z2 = y1 * Math.sin(angleX) + z1 * Math.cos(angleX);
                 let x2 = x1;
@@ -420,7 +428,6 @@
                     x2 *= explodeFactor; y2 *= explodeFactor; z2 *= explodeFactor;
                 }
 
-                // 3D 投影
                 let scale = 500 / (500 + z2);
                 let px = (canvas.width/2) + x2 * scale;
                 let py = (canvas.height/2) + y2 * scale;
@@ -434,19 +441,27 @@
                 explodeFactor += 0.04;
                 pOpacity -= 0.02;
                 if(pOpacity <= 0) {
-                    document.getElementById('intro-loader').style.opacity = '0';
-                    setTimeout(() => document.getElementById('intro-loader').style.display = 'none', 1200);
-                    introPhase = 2; // 动画结束
+                    endIntro(); // 粒子透明后，自动执行过渡
                 }
             }
             if(introPhase !== 2) requestAnimationFrame(animateIntro);
         }
         animateIntro();
 
-        // 2.5秒后开始爆炸消散过渡
-        setTimeout(() => { introPhase = 1; }, 2500);
+        // 2.5秒后自动开始爆炸消散过渡
+        setTimeout(() => { 
+            if (introPhase === 0) introPhase = 1; 
+        }, 2500);
+
+        // 兜底机制：防止因为息屏、浏览器降频等问题卡死，强制 4 秒后必定进入主界面
+        setTimeout(endIntro, 4000);
+        
+        // 允许用户直接点击屏幕任意位置跳过开场动画
+        document.getElementById('intro-loader').addEventListener('click', endIntro);
     }
-    window.addEventListener('load', initIntroAnimation);
+    
+    // 不再等待外部资源(图片/模型加载)，DOM解析完立刻运行动画，避免白屏卡顿
+    initIntroAnimation();
 
 
     // --- Global State & Config ---
@@ -549,7 +564,6 @@
     function animateSentinel() {
         if(document.getElementById('home').style.display === 'none') { requestAnimationFrame(animateSentinel); return; }
         
-        // 运动模糊尾迹效果
         sentCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
         sentCtx.fillRect(0, 0, sentCanvas.width, sentCanvas.height);
         
@@ -559,7 +573,6 @@
         let projectedPoints = {};
         rawPoseModel.forEach(p => { projectedPoints[p.id] = project(p, sentinelAngle, sentCanvas.width, sentCanvas.height); });
 
-        // 绘制骨骼线 (带有发光)
         sentCtx.shadowBlur = 10;
         sentCtx.shadowColor = currentTheme;
         sentCtx.lineWidth = 1.5;
@@ -570,23 +583,19 @@
             sentCtx.beginPath(); sentCtx.moveTo(p1.x, p1.y); sentCtx.lineTo(p2.x, p2.y); sentCtx.stroke();
         });
 
-        // 绘制高级关节节点 (实心圆 + 外环)
         rawPoseModel.forEach(p_raw => {
             const p = projectedPoints[p_raw.id];
             let opacity = 1 - ((p.z + 1) / 2);
             let colorStr = currentTheme.replace('rgb','rgba').replace(')', `, ${opacity * 0.8 + 0.2})`);
             
-            // 内核
             sentCtx.fillStyle = colorStr;
             sentCtx.beginPath(); sentCtx.arc(p.x, p.y, 3 * (opacity * 0.5 + 0.5), 0, Math.PI * 2); sentCtx.fill();
             
-            // 外圈环绕
             sentCtx.strokeStyle = colorStr;
             sentCtx.lineWidth = 1;
             sentCtx.beginPath(); sentCtx.arc(p.x, p.y, 8 * (opacity * 0.5 + 0.5), 0, Math.PI * 2); sentCtx.stroke();
         });
 
-        // 绘制环绕数据轨道 (模拟高级扫描仪)
         sentCtx.shadowBlur = 0;
         sentCtx.beginPath();
         let orbitRadius = sentCanvas.width * 0.25;
@@ -631,7 +640,6 @@
     function handleSignUp(e) {
         e.preventDefault();
         expectedVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-        // 保持全英文提示
         alert("[SYSTEM NOTIFICATION] A verification cypher has been transmitted to your email.\n\n(Simulation mode: direct cypher reveal)\nYour 6-digit access cypher is: " + expectedVerificationCode);
         switchAuthView('verify');
     }
