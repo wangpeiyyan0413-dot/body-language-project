@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Motion Emotion System - Kinetic Interface</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Roboto:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
 
         :root {
             --theme: #00f0ff; 
@@ -47,11 +47,10 @@
 
         .auth-cluster { display: flex; gap: 15px; align-items: center; }
 
-        /* Button styles updated for text-transform */
         .btn-cyber {
             background: transparent; border: 1px solid var(--theme); color: var(--theme);
-            padding: 12px 30px; font-family: 'Orbitron'; font-size: 0.95rem; letter-spacing: 1px;
-            transition: all 0.3s; position: relative; overflow: hidden;
+            padding: 12px 30px; font-family: 'Orbitron'; font-size: 0.9rem; letter-spacing: 2px;
+            transition: all 0.3s; text-transform: uppercase; position: relative; overflow: hidden;
             display: flex; justify-content: center; align-items: center; gap: 10px;
         }
         .btn-cyber::before { content:''; position: absolute; top:0; left:-100%; width:100%; height:100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: 0.5s; }
@@ -83,13 +82,28 @@
             z-index: 5;
         }
         #sentinel-canvas { width: 100%; height: 90%; }
+        .viz-label {
+            position: absolute; bottom: 10%; right: 0;
+            font-size: 0.8rem; color: var(--theme); opacity: 0.7;
+            writing-mode: vertical-rl; text-transform: uppercase; letter-spacing: 3px;
+        }
 
-        /* --- Auth Page Styling --- */
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 35px; margin-top: 40px; }
+        .tech-card {
+            background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05);
+            border-top: 4px solid var(--theme); padding: 35px; backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .tech-card:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 15px 35px rgba(0,0,0,0.5), 0 0 15px var(--theme-glow); border-color: var(--theme); }
+        .tech-card h3 { color: #fff; font-size: 1.4rem; }
+
+        /* --- Updated Auth Page Styling --- */
         #auth { justify-content: center; align-items: center; }
         .auth-box {
             width: 450px; padding: 50px; background: rgba(5, 5, 10, 0.9);
             border: 1px solid var(--theme); box-shadow: 0 0 40px var(--theme-glow);
             position: relative; overflow: hidden;
+            transition: height 0.3s ease;
         }
         .auth-box::after { content:''; position: absolute; inset: -1px; background: linear-gradient(135deg, var(--theme), transparent, var(--theme)); z-index: -1; filter: blur(2px); }
         
@@ -107,209 +121,428 @@
         }
         .input-group input:focus { border-color: var(--theme); box-shadow: 0 0 15px var(--theme-glow); background: rgba(0,0,0,0.5); }
         
+        .verification-warning {
+            color: #ef4444; font-size: 0.8rem; text-align: center; 
+            margin-top: -10px; margin-bottom: 20px; font-weight: bold; letter-spacing: 1px;
+        }
+
         .auth-switch-link {
             text-align: center; margin-top: 25px; font-size: 0.85rem; color: #94a3b8; 
             letter-spacing: 1px; transition: color 0.3s;
         }
         .auth-switch-link:hover { color: var(--theme); text-shadow: 0 0 8px var(--theme-glow); }
 
-        /* --- MOCK GOOGLE OAUTH POPUP STYLES --- */
-        #google-oauth-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999;
-            display: none; justify-content: center; align-items: center;
-            backdrop-filter: blur(5px);
-            font-family: 'Roboto', sans-serif; /* Use standard Google font here */
-            cursor: default;
+        /* --- Mock Google Auth Loader --- */
+        .google-loader {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 250px; text-align: center;
         }
-        .google-dialog {
-            background: #fff; border-radius: 8px; width: 400px; max-width: 90%;
-            padding: 35px 40px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-            color: #202124; animation: popUp 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        .spinner {
+            width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #4285F4; border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 30px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- Core Experience Page --- */
+        #experience { padding: 30px; }
+        .hud-layout { display: grid; grid-template-columns: 1fr 420px; gap: 30px; height: 100%; align-items: stretch; }
+        
+        #video-core {
+            position: relative; background: #000; border: 2px solid var(--theme);
+            overflow: hidden; box-shadow: 0 0 30px rgba(0,0,0,0.5), inset 0 0 100px rgba(0,0,0,0.9);
+            border-radius: 5px;
+        }
+        canvas#webcam-canvas { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.1) brightness(1.1); }
+        
+        .scanner {
+            position: absolute; width: 100%; height: 3px; background: var(--theme);
+            box-shadow: 0 0 20px 4px var(--theme); opacity: 0.8; z-index: 5;
+            animation: scanLoop 3s infinite cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes scanLoop { 0% { top: -5%; } 100% { top: 105%; } }
+
+        .data-panel { display: flex; flex-direction: column; gap: 20px; }
+        .hud-box {
+            background: rgba(5, 5, 10, 0.8); border: 1px solid rgba(255,255,255,0.08);
+            border-left: 5px solid var(--theme); padding: 30px; flex-shrink: 0;
             position: relative;
         }
-        @keyframes popUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .hud-box::before { content:''; position: absolute; top:0; right:0; width: 20px; height: 20px; border-top: 2px solid var(--theme); border-right: 2px solid var(--theme); opacity: 0.5;}
         
-        .g-logo-wrap { text-align: center; margin-bottom: 15px; }
-        .g-logo-wrap svg { width: 48px; height: 48px; }
-        .google-dialog h2 { font-family: 'Roboto', sans-serif; font-size: 24px; font-weight: 400; text-align: center; margin-bottom: 10px; text-transform: none; letter-spacing: normal; color: #202124;}
-        .google-dialog p { font-size: 16px; text-align: center; color: #5f6368; margin-bottom: 30px; letter-spacing: normal; font-family: 'Roboto', sans-serif;}
-        
-        .account-list { border: 1px solid #dadce0; border-radius: 8px; overflow: hidden; }
-        .account-item {
-            display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #dadce0;
-            cursor: pointer; transition: background 0.2s;
+        .bar-wrap { margin-bottom: 20px; }
+        .bar-label { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
+        .bar-bg { width: 100%; height: 5px; background: #1a1a22; overflow: hidden; position: relative;}
+        .bar-fill { height: 100%; width: 0%; background: var(--theme); box-shadow: 0 0 15px var(--theme); transition: width 0.3s cubic-bezier(0.23, 1, 0.32, 1); }
+
+        #ai-console {
+            flex-grow: 1; background: #000; border: 1px solid rgba(255,255,255,0.05); padding: 25px;
+            font-size: 1rem; line-height: 1.8; color: var(--theme); overflow-y: auto;
+            font-family: 'Share Tech Mono', monospace; box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
         }
-        .account-item:last-child { border-bottom: none; }
-        .account-item:hover { background: #f8f9fa; }
-        
-        .acc-avatar { width: 36px; height: 36px; border-radius: 50%; background: #1a73e8; color: white; display: flex; justify-content: center; align-items: center; font-weight: 500; font-size: 18px; margin-right: 12px; }
-        .acc-info { flex: 1; }
-        .acc-name { font-size: 14px; font-weight: 500; color: #3c4043; margin-bottom: 2px;}
-        .acc-email { font-size: 12px; color: #5f6368; }
-        
-        .g-footer { margin-top: 30px; font-size: 12px; color: #5f6368; display: flex; justify-content: space-between; }
-        .g-close { position: absolute; top: 15px; right: 15px; color: #5f6368; cursor: pointer; font-size: 20px; font-weight: bold;}
+        .blink { animation: textBlink 1s infinite; }
+        @keyframes textBlink { 50% { opacity: 0; } }
+
+        /* === Advanced Dynamic FX (States) === */
+        .fx-pulse #viewport-overlay {
+            position: absolute; inset: 0; pointer-events: none; z-index: 2;
+            background: radial-gradient(circle, transparent 30%, var(--theme-glow) 150%);
+            animation: pulseGlow 2s infinite alternate;
+        }
+        @keyframes pulseGlow { from { opacity: 0.2; } to { opacity: 0.6; } }
+
+        .fx-shake .hud-box, .fx-shake #video-core { animation: shakeFrame 0.1s infinite; }
+        @keyframes shakeFrame { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -1px); } 100% { transform: translate(-1px, 1px); } }
+        .fx-shake canvas#webcam-canvas { filter: contrast(1.5) brightness(1.2) hue-rotate(10deg); }
 
     </style>
 </head>
 <body>
 
-<div id="google-oauth-overlay">
-    <div class="google-dialog">
-        <span class="g-close" onclick="closeGoogleAuth()">×</span>
-        <div class="g-logo-wrap">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-            </svg>
-        </div>
-        <h2>Sign in with Google</h2>
-        <p style="margin-bottom: 20px;">Choose an account to continue to <b>Motion Emotion System</b></p>
-        
-        <div class="account-list">
-            <div class="account-item" onclick="selectGoogleAccount('User Alpha', 'alpha.operator@gmail.com')">
-                <div class="acc-avatar" style="background:#1a73e8;">A</div>
-                <div class="acc-info">
-                    <div class="acc-name">User Alpha</div>
-                    <div class="acc-email">alpha.operator@gmail.com</div>
-                </div>
-            </div>
-            <div class="account-item" onclick="selectGoogleAccount('Personal Account', 'my.personal.email@gmail.com')">
-                <div class="acc-avatar" style="background:#e91e63;">P</div>
-                <div class="acc-info">
-                    <div class="acc-name">Personal Account</div>
-                    <div class="acc-email">my.personal.email@gmail.com</div>
-                </div>
-            </div>
-            <div class="account-item" style="border-top: 1px solid #dadce0;">
-                <svg style="width:20px; height:20px; margin:0 20px 0 8px; fill:#5f6368;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
-                <div class="acc-info"><div class="acc-name">Use another account</div></div>
-            </div>
-        </div>
-        
-        <div class="g-footer">
-            <span>English (United States)</span>
-            <span style="display:flex; gap:15px;"><span>Help</span><span>Privacy</span><span>Terms</span></span>
-        </div>
-    </div>
-</div>
-
 <div id="app-container">
     <canvas id="bg-canvas"></canvas>
+    <div id="viewport-overlay"></div>
 
     <nav>
         <div class="logo">Motion Emotion System</div>
         <ul class="nav-links">
             <li class="active" onclick="route('home')">HOME</li>
-            <li onclick="route('about')">ABOUT</li>
+            <li onclick="route('about')">ABOUT US</li>
+            <li onclick="route('project')">PROJECT</li>
+            <li onclick="route('guide')">GUIDE</li>
         </ul>
         <div class="auth-cluster" id="auth-ui">
-            <button class="btn-cyber" onclick="openAuth('login')">Log in</button>
-            <button class="btn-cyber btn-solid" onclick="openAuth('signup')">Sign up</button>
+            <button class="btn-cyber" onclick="openAuth('login')">LOGIN</button>
+            <button class="btn-cyber btn-solid" onclick="openAuth('signup')">SIGN UP</button>
         </div>
     </nav>
 
     <div id="home" class="page-content active">
         <div class="hero-text">
-            <h1 style="font-size: 3.5rem;">Emotion Recognition</h1>
-            <p style="font-size: 1.2rem; color: #fff;">A motion-based emotion recognition interface.</p>
-            <button class="btn-cyber btn-solid" style="padding: 15px 40px;" onclick="attemptStart()">Start Experience</button>
+            <p style="color: var(--theme); letter-spacing: 5px; margin-bottom: 15px; font-weight: bold; font-family: 'Orbitron', sans-serif;">Calm · Anxiety · Happiness</p>
+            <h1 style="font-size: 4rem; letter-spacing: 2px;">Emotion Recognition System</h1>
+            <p style="font-size: 1.5rem; color: #fff; margin-bottom: 10px; font-family: 'Orbitron', sans-serif;">A motion-based emotion recognition interface</p>
+            <p style="letter-spacing: 2px; color: var(--theme); opacity: 0.8;">Determined by your body</p>
+            <div style="margin-top: 45px;">
+                <button class="btn-cyber btn-solid" style="padding: 20px 60px; font-size: 1.2rem;" onclick="attemptStart()">Start Experience</button>
+            </div>
         </div>
-        <div id="sentinel-viz"><canvas id="sentinel-canvas"></canvas></div>
+        
+        <div id="sentinel-viz">
+            <canvas id="sentinel-canvas"></canvas>
+            <div class="viz-label">SENTINEL_PROTOTYPE_v4</div>
+        </div>
+    </div>
+
+    <div id="about" class="page-content">
+        <h2>ABOUT US</h2>
+        <div class="tech-card" style="max-width: 1000px; margin-top: 20px;">
+            <p>We are creators from a background in visual and digital media, focusing on the relationship between technology and human perception. We attempt to observe and understand emotions not through language, but through bodily movement. This project is based on AI motion recognition, translating human gestures into emotional signals and exploring whether emotions can truly be "recognized."</p>
+            <p>By training and classifying three fundamental emotional states—Calm, Anxiety, and Happiness—we developed a system where users interact without words, relying solely on physical expression. Using accessible machine learning tools, we transform complex AI processes into an intuitive and perceptible experience.</p>
+            <p>In an era where artificial intelligence increasingly participates in interpretation and decision-making, we hope this project prompts reflection: are emotions truly understood, or merely identified and defined?</p>
+        </div>
+    </div>
+
+    <div id="project" class="page-content">
+        <h2>PROJECT DETAILS</h2>
+        <div class="tech-card" style="max-width: 1000px; margin-top: 20px;">
+            <p>In today's digital environment, artificial intelligence is increasingly involved in analyzing and interpreting human behavior and emotions. However, most emotion recognition systems rely heavily on facial expressions or voice input, which to some extent limits the diversity of emotional expression. Therefore, this project approaches the problem from a different perspective—using body movement as the primary basis for recognition, with facial expression as a secondary reference, to explore a more holistic way of perceiving human emotions.</p>
+            <p>This project is developed using Google's Teachable Machine platform. By collecting and training motion data, we built a model capable of recognizing three fundamental emotional states: Calm, Anxiety, and Happiness. In the interactive experience, users do not need to provide verbal input; instead, they express emotions through specific body movements, which the system recognizes and responds to in real time, creating an intuitive human–computer interaction process.</p>
+            <p>Through this approach, we aim to move beyond traditional face-centered emotion recognition and shift attention toward the expressive potential of the human body. At the same time, by leveraging accessible machine learning tools, we transform complex technical processes into participatory and experiential interactions, allowing users to understand the technology through engagement and reconsider how emotions are perceived and defined.</p>
+        </div>
+    </div>
+
+    <div id="guide" class="page-content">
+        <h2>CALIBRATION PROTOCOL</h2>
+        <p style="margin-bottom: 30px;">Operators must maintain a distance of 2-3 meters from the sensor. Match the kinetic references below to initiate state synchronization.</p>
+        <div class="grid-cards">
+            <div class="tech-card" style="border-top-color: #0088ff; text-align: center;">
+                <svg viewBox="0 0 100 100" width="100" height="100" stroke="#0088ff" stroke-width="4" stroke-linecap="round" fill="none" style="margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(0,136,255,0.5));">
+                    <circle cx="50" cy="20" r="10"/>
+                    <path d="M50 30 v35 M50 35 l-15 25 M50 35 l15 25 M50 65 l-12 30 M50 65 l12 30"/>
+                </svg>
+                <h3 style="color: #0088ff">[01] CALM (BASELINE)</h3>
+                <p style="text-align: left; font-size: 1rem;">Neutral, relaxed posture. Arms hang naturally at sides. Static or minimal movement. Mapped as biological homeostasis.</p>
+            </div>
+            <div class="tech-card" style="border-top-color: #ff0055; text-align: center;">
+                <svg viewBox="0 0 100 100" width="100" height="100" stroke="#ff0055" stroke-width="4" stroke-linecap="round" fill="none" style="margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(255,0,85,0.5));">
+                    <circle cx="50" cy="25" r="10"/>
+                    <path d="M50 35 v30 M50 40 l-18 -15 l 10 -15 M50 40 l18 -15 l -10 -15 M50 65 l-15 20 l 0 10 M50 65 l15 20 l 0 10"/>
+                </svg>
+                <h3 style="color: #ff0055">[02] ANXIOUS (STRESS)</h3>
+                <p style="text-align: left; font-size: 1rem;">Closed posture. Restless inward motions. Hands touching face or head. Leaning forward. Mapped as kinetic overload.</p>
+            </div>
+            <div class="tech-card" style="border-top-color: #00ffcc; text-align: center;">
+                <svg viewBox="0 0 100 100" width="100" height="100" stroke="#00ffcc" stroke-width="4" stroke-linecap="round" fill="none" style="margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(0,255,204,0.5));">
+                    <circle cx="50" cy="18" r="10"/>
+                    <path d="M50 28 v32 M50 35 l-25 -20 M50 35 l25 -20 M50 60 l-20 35 M50 60 l20 35"/>
+                </svg>
+                <h3 style="color: #00ffcc">[03] HAPPY (EUPHORIA)</h3>
+                <p style="text-align: left; font-size: 1rem;">Expansive, energetic motions. Arms raised high or dancing. Head tilted upward. Mapped as spatial expansion.</p>
+            </div>
+        </div>
     </div>
 
     <div id="auth" class="page-content">
         <div class="auth-box">
             
             <div id="auth-view-login" class="auth-view active">
-                <h2 style="text-align: center; margin-bottom: 30px; color: #fff;">SYSTEM LOGIN</h2>
+                <h2 style="text-align: center; margin-bottom: 30px; color: #fff; letter-spacing: 3px;">SYSTEM LOGIN</h2>
                 
-                <button type="button" class="btn-cyber" style="width: 100%; margin-bottom: 25px; border-color: #cbd5e1; color: #fff; background: rgba(255,255,255,0.05);" onclick="openGoogleAuth()">
-                    <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                <button type="button" class="btn-cyber" style="width: 100%; margin-bottom: 25px; border-color: #cbd5e1; color: #fff; background: rgba(255,255,255,0.05);" onclick="initiateGoogleAuth()">
+                    <svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                         <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                     </svg>
-                    Log in with Google
+                    LOGIN WITH GOOGLE
                 </button>
 
-                <div style="text-align: center; color: var(--theme); margin-bottom: 25px; font-size: 0.8rem;">--- OR LOCAL AUTH ---</div>
+                <div style="text-align: center; color: var(--theme); margin-bottom: 25px; font-size: 0.8rem; letter-spacing: 2px;">--- OR LOCAL AUTH ---</div>
 
-                <form onsubmit="handleLocalLogin(event)">
+                <form onsubmit="handleLogin(event)">
                     <div class="input-group">
-                        <label>Email Address</label>
-                        <input type="email" required placeholder="operator@domain.com">
+                        <label>OPERATOR_ID (EMAIL)</label>
+                        <input type="email" required placeholder="operator@core.os">
                     </div>
                     <div class="input-group">
-                        <label>Password</label>
+                        <label>ACCESS_CYPHER</label>
                         <input type="password" required placeholder="••••••••••••">
                     </div>
-                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; padding: 15px;">Log in</button>
+                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.1rem; padding: 18px;">ESTABLISH LINK</button>
                 </form>
                 
-                <div class="auth-switch-link" onclick="switchAuthView('signup')">> No account? Sign up <</div>
+                <div class="auth-switch-link" onclick="switchAuthView('signup')">> NO ACCOUNT? INITIALIZE REGISTRATION <</div>
             </div>
 
             <div id="auth-view-signup" class="auth-view">
-                <h2 style="text-align: center; margin-bottom: 30px; color: #fff;">REGISTRATION</h2>
+                <h2 style="text-align: center; margin-bottom: 30px; color: #fff; letter-spacing: 3px;">REGISTRATION</h2>
                 
-                <form id="signup-form" onsubmit="handleSignUpSubmit(event)">
-                    <div class="input-group">
-                        <label>Enter Email Address</label>
-                        <input type="email" id="reg-email" required placeholder="operator@domain.com">
+                <form onsubmit="handleSignUp(event)">
+                    <div class="input-group" style="margin-bottom: 20px;">
+                        <label>NEW OPERATOR_ID (EMAIL)</label>
+                        <input type="email" required placeholder="operator@core.os">
                     </div>
-                    <div class="input-group">
-                        <label>Set Password</label>
+                    <div class="input-group" style="margin-bottom: 20px;">
+                        <label>SET ACCESS_CYPHER</label>
                         <input type="password" required placeholder="••••••••••••">
                     </div>
                     
-                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; padding: 15px;">Send Verification Code</button>
+                    <div class="verification-warning">
+                        ⚠️ IDENTITY VERIFICATION REQUIRED FOR NEW REGISTRATIONS
+                    </div>
+
+                    <button type="submit" class="btn-cyber" style="width: 100%; font-size: 1.1rem; padding: 18px; font-weight: bold; color: #fff;">REGISTER IDENTITY</button>
                 </form>
                 
-                <div class="auth-switch-link" onclick="switchAuthView('login')">> Already have an account? Log in <</div>
+                <div class="auth-switch-link" onclick="switchAuthView('login')">> ALREADY VERIFIED? PROCEED TO LOGIN <</div>
             </div>
 
             <div id="auth-view-verify" class="auth-view">
-                <h2 style="text-align: center; margin-bottom: 10px; color: var(--theme);">VERIFY EMAIL</h2>
-                <p style="text-align: center; font-size: 0.85rem; margin-bottom: 25px; color: #94a3b8;">
-                    We sent a code to <span id="display-email" style="color:#fff;"></span>. Please check your inbox and enter it below.
-                </p>
+                <h2 style="text-align: center; margin-bottom: 10px; color: var(--theme); letter-spacing: 3px;">AWAITING VERIFICATION</h2>
+                <p style="text-align: center; font-size: 0.9rem; margin-bottom: 30px; color: #94a3b8;">A secure cypher has been transmitted to your email. Enter it below to complete authorization.</p>
                 
-                <form onsubmit="handleCodeVerification(event)">
+                <form onsubmit="handleVerification(event)">
                     <div class="input-group">
-                        <label>6-Digit Verification Code</label>
-                        <input type="text" id="verify-code-input" required placeholder="000000" style="text-align: center; letter-spacing: 5px; font-size: 1.5rem;" maxlength="6">
+                        <label>6-DIGIT CYPHER CODE</label>
+                        <input type="text" required placeholder="0 0 0 0 0 0" style="text-align: center; letter-spacing: 8px; font-size: 1.5rem;" maxlength="6">
                     </div>
-                    <p id="verify-error" style="color: #ef4444; font-size: 0.8rem; text-align: center; display: none; margin-top: -15px; margin-bottom: 15px;">❌ Invalid code. Please check your email.</p>
-                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; padding: 15px;">Confirm & Register</button>
+                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.1rem; padding: 18px;">VERIFY & ESTABLISH LINK</button>
                 </form>
                 
-                <div class="auth-switch-link" onclick="switchAuthView('signup')">< Change Email</div>
+                <div class="auth-switch-link" onclick="switchAuthView('signup')">< CANCEL OPERATION</div>
+            </div>
+
+            <div id="auth-view-google" class="auth-view">
+                <div class="google-loader">
+                    <div class="spinner"></div>
+                    <h3 style="color: #fff; letter-spacing: 2px;" id="google-status-text">REDIRECTING TO GOOGLE SECURE SERVERS<span class="blink">...</span></h3>
+                    <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 15px;">Awaiting personal verification via external OAuth protocol.</p>
+                </div>
             </div>
 
         </div>
     </div>
+
+    <div id="experience" class="page-content">
+        <div class="hud-layout">
+            <div id="video-core">
+                <div class="scanner"></div>
+                <canvas id="webcam-canvas"></canvas>
+                <div style="position: absolute; bottom: 20px; left: 20px; color: var(--theme); font-size: 0.85rem; background: rgba(0,0,0,0.6); padding: 8px 15px; font-family: 'Share Tech Mono'; border: 1px solid rgba(255,255,255,0.1);">
+                    LIVE BIOMETRIC FEED [ACTIVE_LINK]
+                </div>
+            </div>
+            
+            <div class="data-panel">
+                <div class="hud-box">
+                    <h3 style="font-size: 1.2rem; margin-bottom: 25px; color: #fff;">PROBABILITY MATRIX</h3>
+                    <div id="bars-container"></div>
+                </div>
+
+                <div class="hud-box" style="flex-grow: 1; display: flex; flex-direction: column; padding: 0; border-left: none; background: none;">
+                    <div id="ai-console">
+                        > AWAITING SKELETAL INPUT...<span class="blink">_</span>
+                    </div>
+                </div>
+
+                <button class="btn-cyber" style="border-color: #ef4444; color: #ef4444; width: 100%;" onclick="terminateSystem()">TERMINATE CONNECTION</button>
+            </div>
+        </div>
+    </div>
 </div>
 
-<script>
-    let isAuthenticated = false;
-    let actualVerificationCode = ""; // Will store the generated code to enforce exact matching
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
 
-    // Routing Logic
-    function route(pageId) {
-        document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
-        document.getElementById(pageId).classList.add('active');
+<script>
+    // --- Global State & Config ---
+    let isAuthenticated = false;
+    let systemRunning = false;
+    const modelURL_TM = "https://teachablemachine.withgoogle.com/models/sTBoNGgmv/";
+
+    const mouse = { x: null, y: null, radius: 150 };
+    window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
+    window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+
+    // --- 1. Background Particles ---
+    const bgCanvas = document.getElementById('bg-canvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    let particlesArray = [];
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * bgCanvas.width;
+            this.y = Math.random() * bgCanvas.height;
+            this.size = Math.random() * 2 + 0.5;
+            this.vy = (Math.random() * 0.5) + 0.2;
+            this.waveSpeed = Math.random() * 0.02 + 0.01;
+            this.waveOffset = Math.random() * Math.PI * 2;
+            this.density = (Math.random() * 30) + 1;
+        }
+        draw() {
+            bgCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+            bgCtx.globalAlpha = 0.6;
+            bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2); bgCtx.fill();
+            bgCtx.globalAlpha = 1.0;
+        }
+        update() {
+            this.y -= this.vy;
+            this.x += Math.sin(this.y * this.waveSpeed + this.waveOffset) * 0.5;
+            if(this.y < 0) { this.y = bgCanvas.height; this.x = Math.random() * bgCanvas.width; }
+            if(this.x > bgCanvas.width) this.x = 0;
+            if(this.x < 0) this.x = bgCanvas.width;
+
+            if (mouse.x != null && mouse.y != null) {
+                let dx = mouse.x - this.x; let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx*dx + dy*dy);
+                if (distance < mouse.radius) {
+                    let force = (mouse.radius - distance) / mouse.radius;
+                    this.x -= (dx / distance) * force * this.density; 
+                    this.y -= (dy / distance) * force * this.density;
+                }
+            }
+        }
     }
 
+    function initBgParticles() {
+        bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
+        particlesArray = [];
+        let numberOfParticles = (bgCanvas.width * bgCanvas.height) / 7000;
+        for(let i=0; i < numberOfParticles; i++) { particlesArray.push(new Particle()); }
+    }
+    
+    function animateBg() {
+        bgCtx.fillStyle = 'rgba(2, 2, 4, 0.2)'; 
+        bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+        for(let i=0; i < particlesArray.length; i++) { particlesArray[i].update(); particlesArray[i].draw(); }
+        requestAnimationFrame(animateBg);
+    }
+    window.addEventListener('resize', initBgParticles);
+    initBgParticles(); animateBg();
+
+
+    // --- 2. Sentinel Viz ---
+    const sentCanvas = document.getElementById('sentinel-canvas');
+    const sentCtx = sentCanvas.getContext('2d');
+    let sentinelAngle = 0;
+
+    const rawPoseModel = [
+        {id: 'nose', x: 0, y: -0.8, z: 0}, {id: 'lShoulder', x: -0.4, y: -0.5, z: 0}, {id: 'rShoulder', x: 0.4, y: -0.5, z: 0},
+        {id: 'lElbow', x: -0.6, y: -0.1, z: 0.2}, {id: 'rElbow', x: 0.6, y: -0.1, z: -0.2},
+        {id: 'lWrist', x: -0.5, y: 0.3, z: 0.4}, {id: 'rWrist', x: 0.5, y: 0.3, z: -0.4},
+        {id: 'lHip', x: -0.25, y: 0.1, z: 0}, {id: 'rHip', x: 0.25, y: 0.1, z: 0},
+        {id: 'lKnee', x: -0.3, y: 0.6, z: 0.1}, {id: 'rKnee', x: 0.3, y: 0.6, z: -0.1},
+        {id: 'lAnkle', x: -0.35, y: 0.9, z: 0.2}, {id: 'rAnkle', x: 0.35, y: 0.9, z: -0.2}
+    ];
+
+    const connections = [
+        ['lShoulder', 'rShoulder'], ['lShoulder', 'lElbow'], ['lElbow', 'lWrist'], ['rShoulder', 'rElbow'], ['rElbow', 'rWrist'],
+        ['lShoulder', 'lHip'], ['rShoulder', 'rHip'], ['lHip', 'rHip'], ['lHip', 'lKnee'], ['lKnee', 'lAnkle'], ['rHip', 'rKnee'], ['rKnee', 'rAnkle'],
+        ['nose', 'lShoulder'], ['nose', 'rShoulder']
+    ];
+
+    function project(point, angle, width, height) {
+        let x_rot = point.x * Math.cos(angle) - point.z * Math.sin(angle);
+        let z_rot = point.x * Math.sin(angle) + point.z * Math.cos(angle);
+        let perspective = 1 + (z_rot * 0.3);
+        return { x: (x_rot / perspective) * (width * 0.3) + (width/2), y: (point.y) * (height * 0.45) + (height/2), z: z_rot };
+    }
+
+    function initSentinel() {
+        const container = document.getElementById('sentinel-viz');
+        sentCanvas.width = container.offsetWidth; sentCanvas.height = container.offsetHeight;
+    }
+
+    function animateSentinel() {
+        if(document.getElementById('home').style.display === 'none') { requestAnimationFrame(animateSentinel); return; }
+        sentCtx.clearRect(0, 0, sentCanvas.width, sentCanvas.height);
+        sentinelAngle += 0.005; 
+        const currentTheme = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+
+        let projectedPoints = {};
+        rawPoseModel.forEach(p => { projectedPoints[p.id] = project(p, sentinelAngle, sentCanvas.width, sentCanvas.height); });
+
+        sentCtx.lineWidth = 1.5;
+        connections.forEach(([p1_id, p2_id]) => {
+            const p1 = projectedPoints[p1_id]; const p2 = projectedPoints[p2_id];
+            let opacity = 1 - (((p1.z + p2.z) / 2 + 1) / 2); 
+            sentCtx.strokeStyle = currentTheme.replace('rgb','rgba').replace(')', `, ${opacity * 0.4 + 0.1})`);
+            sentCtx.beginPath(); sentCtx.moveTo(p1.x, p1.y); sentCtx.lineTo(p2.x, p2.y); sentCtx.stroke();
+        });
+
+        rawPoseModel.forEach(p_raw => {
+            const p = projectedPoints[p_raw.id];
+            let opacity = 1 - ((p.z + 1) / 2);
+            sentCtx.fillStyle = currentTheme.replace('rgb','rgba').replace(')', `, ${opacity * 0.7 + 0.2})`);
+            sentCtx.beginPath(); sentCtx.arc(p.x, p.y, 3 * (opacity * 0.5 + 0.5), 0, Math.PI * 2); sentCtx.fill();
+        });
+        requestAnimationFrame(animateSentinel);
+    }
+    window.addEventListener('resize', initSentinel);
+    initSentinel(); animateSentinel();
+
+
+    // --- 3. Routing & AUTHENTICATION FLOW ---
+    function route(pageId) {
+        if(pageId !== 'experience' && systemRunning) terminateSystem(false); 
+        document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelectorAll('.nav-links li').forEach(item => {
+            if(item.innerText.toLowerCase().includes(pageId) || (pageId==='home' && item.innerText==='HOME')) item.classList.add('active');
+        });
+        if(pageId === 'home') initSentinel();
+    }
+
+    // AUTH UI Switcher
     function switchAuthView(viewName) {
         document.querySelectorAll('.auth-view').forEach(v => v.classList.remove('active'));
         document.getElementById('auth-view-' + viewName).classList.add('active');
-        document.getElementById('verify-error').style.display = 'none'; // reset error states
     }
 
+    // Direct nav button handlers
     function openAuth(viewName) {
         route('auth');
         switchAuthView(viewName);
@@ -317,109 +550,185 @@
 
     function attemptStart() {
         if (!isAuthenticated) openAuth('login');
-        else alert("System Started! (Core experience goes here)");
+        else { route('experience'); startSystem(); }
     }
 
-    // --- 1. MOCK GOOGLE LOGIN LOGIC ---
-    function openGoogleAuth() {
-        // Show the realistic Google popup over everything
-        document.getElementById('google-oauth-overlay').style.display = 'flex';
-    }
-
-    function closeGoogleAuth() {
-        document.getElementById('google-oauth-overlay').style.display = 'none';
-    }
-
-    function selectGoogleAccount(name, email) {
-        // Hide the popup
-        closeGoogleAuth();
-        
-        // Show a temporary loading state in the main auth box
-        const loginView = document.getElementById('auth-view-login');
-        const originalHTML = loginView.innerHTML;
-        loginView.innerHTML = `<h3 style="text-align:center; color:var(--theme); margin-top: 50px;">Authenticating via Google...</h3><p style="text-align:center; color:#fff;">Welcome back, ${name}</p>`;
-        
-        // Simulate network delay then log in
-        setTimeout(() => {
-            loginView.innerHTML = originalHTML; // restore for next time
-            completeLogin(email);
-        }, 1500);
-    }
-
-    // --- 2. STRICT SIGN UP & EMAIL VERIFICATION LOGIC ---
-    function handleSignUpSubmit(e) {
+    // Auth Form Handlers
+    function handleLogin(e) {
         e.preventDefault();
-        const email = document.getElementById('reg-email').value;
-        document.getElementById('display-email').innerText = email;
-        
-        // Generate a random 6-digit code
-        actualVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-        // SIMULATE THE EMAIL SENDING REALITY
-        // Because a frontend cannot send real emails, we must alert the user of what their "email" received.
-        // In a real application, you replace this alert with an AJAX/Fetch call to your backend.
-        alert(
-            "【SYSTEM NOTICE: Backend Simulation】\n\n" +
-            "Since this is a frontend HTML file, it cannot connect to an SMTP server to send a real email.\n\n" +
-            "However, the system has generated your code. Imagine you just opened your Gmail and received this:\n\n" +
-            "Your Verification Code is: [ " + actualVerificationCode + " ]\n\n" +
-            "You MUST enter this exact code in the next step."
-        );
-
-        // Switch to the strict verification screen
+        loginSuccess();
+    }
+    
+    function handleSignUp(e) {
+        e.preventDefault();
+        // Go to Email Verification step instead of direct login
         switchAuthView('verify');
     }
 
-    function handleCodeVerification(e) {
+    function handleVerification(e) {
         e.preventDefault();
-        const userInput = document.getElementById('verify-code-input').value;
+        // Verification success
+        loginSuccess();
+    }
+    
+    function initiateGoogleAuth() {
+        switchAuthView('google');
+        const textElem = document.getElementById('google-status-text');
         
-        // STRICT CHECK: The input MUST match the code generated in the previous step
-        if (userInput === actualVerificationCode) {
-            alert("✅ Verification successful! Account registered.");
-            completeLogin(document.getElementById('display-email').innerText);
-        } else {
-            // Fails if they type a random string
-            document.getElementById('verify-error').style.display = 'block';
-            document.getElementById('verify-code-input').value = ""; // Clear input
-        }
+        // Mocking the OAuth Redirect and Verification Flow
+        textElem.innerHTML = `CONNECTING TO GOOGLE SECURE HANDSHAKE<span class="blink">...</span>`;
+        
+        setTimeout(() => {
+            textElem.innerHTML = `AWAITING PERSONAL IDENTITY VERIFICATION<span class="blink">...</span>`;
+            // Change theme color temporarily to Google Blue to simulate external process
+            document.documentElement.style.setProperty('--theme', '#4285F4');
+            document.documentElement.style.setProperty('--theme-glow', 'rgba(66, 133, 244, 0.4)');
+            
+            setTimeout(() => {
+                textElem.innerHTML = `VERIFICATION SUCCESS. ESTABLISHING LINK<span class="blink">...</span>`;
+                document.documentElement.style.setProperty('--theme', '#34A853'); // Google Green for success
+                
+                setTimeout(() => {
+                    // Reset to system theme and login
+                    document.documentElement.style.setProperty('--theme', '#00f0ff');
+                    document.documentElement.style.setProperty('--theme-glow', 'rgba(0, 240, 255, 0.4)');
+                    loginSuccess();
+                }, 1000);
+            }, 2000);
+        }, 1500);
     }
 
-    function handleLocalLogin(e) {
-        e.preventDefault();
-        completeLogin("operator@local");
-    }
-
-    // --- POST-LOGIN SUCCESS STATE ---
-    function completeLogin(identifier) {
+    function loginSuccess() {
         isAuthenticated = true;
-        // Update top right nav
         document.getElementById('auth-ui').innerHTML = `
-            <span style="color: var(--theme); font-size: 0.9rem; margin-right: 15px;">[ ${identifier} ]</span>
-            <button class="btn-cyber" style="padding: 8px 15px; font-size: 0.8rem;" onclick="logout()">Log out</button>
+            <span style="color: var(--theme); font-size: 0.9rem; letter-spacing: 1px; font-weight:bold;">[ OPERATOR_ACTIVE ]</span>
+            <button class="btn-cyber" style="border-color: #475569; color: #94a3b8; padding: 10px 20px; font-size: 0.8rem;" onclick="logout()">LOGOUT</button>
         `;
-        route('home');
-        switchAuthView('login'); // reset for next time
-        document.getElementById('verify-code-input').value = "";
+        // Reset auth box to login for next time
+        switchAuthView('login');
+        route('experience');
+        startSystem();
     }
 
     function logout() {
         isAuthenticated = false;
+        terminateSystem(false);
         document.getElementById('auth-ui').innerHTML = `
-            <button class="btn-cyber" onclick="openAuth('login')">Log in</button>
-            <button class="btn-cyber btn-solid" onclick="openAuth('signup')">Sign up</button>
+            <button class="btn-cyber" onclick="openAuth('login')">LOGIN</button>
+            <button class="btn-cyber btn-solid" onclick="openAuth('signup')">SIGN UP</button>
         `;
         route('home');
     }
 
-    // Basic visual background initialization (from previous code)
-    const bgCanvas = document.getElementById('bg-canvas');
-    const bgCtx = bgCanvas.getContext('2d');
-    function initBg() {
-        bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
-        bgCtx.fillStyle = 'rgba(2, 2, 4, 1)'; bgCtx.fillRect(0,0,bgCanvas.width,bgCanvas.height);
+    // --- 4. Core AI Kinetic Logic ---
+    let model, webcam, webcamCtx, maxPredictions;
+    let currentState = ""; 
+    let loopFrame;
+
+    const EMOTION_LOGS = {
+        calm: "> SCANNING BIOMETRICS...\n> POSTURE: NOMINAL SYMMETRY.\n> BIOLOGICAL FLOW: STABLE.\n> SYSTEM STATUS: NOMINAL CRUISING.",
+        anxious: "> ALERT: IRREGULAR KINETIC CONTRACTIONS!\n> CORTISOL LEVELS: SURGING (ESTIMATED).\n> POSTURE: INWARD / DEFENSIVE.\n> SYSTEM STATUS: INSTABILITY WARNING.",
+        happy: "> DOPAMINE SURGE DETECTED.\n> ENERGY PATHWAY: HIGH-FREQUENCY EXPANSION.\n> PREDICATED STATE: EUPHORIA.\n> SYSTEM STATUS: POSITIVE FEEDBACK ACTIVE."
+    };
+
+    async function startSystem() {
+        if (systemRunning) return;
+        systemRunning = true;
+        
+        document.getElementById('ai-console').innerHTML = "> INITIALIZING NEURAL LINK...<span class='blink'>_</span>";
+
+        model = await tmPose.load(modelURL_TM + "model.json", modelURL_TM + "metadata.json");
+        maxPredictions = model.getTotalClasses();
+
+        webcam = new tmPose.Webcam(600, 600, true); 
+        await webcam.setup(); await webcam.play();
+        
+        const canvas = document.getElementById("webcam-canvas");
+        canvas.width = 600; canvas.height = 600;
+        webcamCtx = canvas.getContext("2d");
+
+        const container = document.getElementById("bars-container");
+        container.innerHTML = "";
+        for (let i = 0; i < maxPredictions; i++) {
+            container.innerHTML += `
+                <div class="bar-wrap">
+                    <div class="bar-label"><span>${model.getClassLabels()[i]}</span><span id="val-${i}">0%</span></div>
+                    <div class="bar-bg"><div id="fill-${i}" class="bar-fill"></div></div>
+                </div>`;
+        }
+        loopFrame = window.requestAnimationFrame(expLoop);
     }
-    window.addEventListener('resize', initBg); initBg();
+
+    async function expLoop() {
+        if(!systemRunning) return;
+        webcam.update(); await predict();
+        loopFrame = window.requestAnimationFrame(expLoop);
+    }
+
+    async function predict() {
+        const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+        const prediction = await model.predict(posenetOutput);
+
+        let topIndex = 0;
+        for (let i = 0; i < maxPredictions; i++) {
+            const prob = prediction[i].probability;
+            document.getElementById(`val-${i}`).innerText = (prob * 100).toFixed(0) + "%";
+            document.getElementById(`fill-${i}`).style.width = (prob * 100).toFixed(0) + "%";
+            if (prob > prediction[topIndex].probability) topIndex = i;
+        }
+
+        const topProb = prediction[topIndex].probability;
+        const topLabel = prediction[topIndex].className.toLowerCase();
+
+        if (topProb > 0.65) updateDynamicFX(topIndex, topLabel);
+        drawWebcamPose(pose);
+    }
+
+    function updateDynamicFX(index, label) {
+        let themeColor, themeGlow, fxClass, logText;
+
+        if (label.includes("anx") || label.includes("sad") || label.includes("stress") || index === 1) {
+            themeColor = "#ff0055"; themeGlow = "rgba(255, 0, 85, 0.5)"; fxClass = "fx-shake"; logText = EMOTION_LOGS.anxious;
+        } else if (label.includes("hap") || label.includes("joy") || label.includes("dance") || index === 2) {
+            themeColor = "#00ffcc"; themeGlow = "rgba(0, 255, 204, 0.5)"; fxClass = "fx-pulse"; logText = EMOTION_LOGS.happy;
+        } else {
+            themeColor = "#00f0ff"; themeGlow = "rgba(0, 240, 255, 0.4)"; fxClass = ""; logText = EMOTION_LOGS.calm;
+        }
+
+        if (currentState !== label) {
+            currentState = label;
+            document.documentElement.style.setProperty('--theme', themeColor);
+            document.documentElement.style.setProperty('--theme-glow', themeGlow);
+            document.getElementById('app-container').className = fxClass; 
+            document.getElementById('ai-console').innerHTML = logText.replace(/\n/g, '<br><br>') + '<br><br><span class="blink">_</span>';
+        }
+    }
+
+    function drawWebcamPose(pose) {
+        if (webcam.canvas) {
+            webcamCtx.drawImage(webcam.canvas, 0, 0);
+            if (pose) {
+                const min = 0.5;
+                const color = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+                webcamCtx.strokeStyle = color; webcamCtx.fillStyle = color; webcamCtx.lineWidth = 5; 
+                tmPose.drawKeypoints(pose.keypoints, min, webcamCtx);
+                tmPose.drawSkeleton(pose.keypoints, min, webcamCtx);
+            }
+        }
+    }
+
+    function terminateSystem(goHome = true) {
+        systemRunning = false;
+        if(webcam) webcam.stop();
+        if(loopFrame) window.cancelAnimationFrame(loopFrame);
+        
+        document.documentElement.style.setProperty('--theme', '#00f0ff');
+        document.documentElement.style.setProperty('--theme-glow', 'rgba(0, 240, 255, 0.4)');
+        document.getElementById('app-container').className = "";
+        currentState = "";
+        
+        if(goHome) route('home');
+    }
 </script>
 </body>
 </html>
