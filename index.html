@@ -14,7 +14,7 @@
             --bg-base: #020204;
             --text-main: #e2e8f0;
             --nav-bg: rgba(2, 2, 4, 0.85);
-            --card-bg: rgba(10, 15, 30, 0.65); /* 更深邃的玻璃卡片底色 */
+            --card-bg: rgba(10, 15, 30, 0.65);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; cursor: crosshair; user-select: none; }
@@ -22,7 +22,7 @@
         body, html {
             width: 100%; height: 100%;
             background-color: var(--bg-base); color: var(--text-main);
-            font-family: 'Rajdhani', sans-serif; /* 优化正文字体 */
+            font-family: 'Rajdhani', sans-serif;
             overflow: hidden;
         }
 
@@ -43,7 +43,7 @@
         }
         .intro-sub {
             font-family: 'Share Tech Mono', monospace; font-size: 1.2rem; color: var(--theme);
-            letter-spacing: 8px; margin-bottom: 50px; opacity: 0.8;
+            letter-spacing: 8px; margin-bottom: 50px; opacity: 0.8; text-transform: uppercase;
         }
         .btn-enter {
             background: rgba(0, 240, 255, 0.1); border: 1px solid var(--theme); color: var(--theme);
@@ -56,11 +56,24 @@
             transform: scale(1.05);
         }
 
+        /* --- 新增：核心体验过渡动画系统 (Warp) --- */
+        #warp-transition {
+            position: fixed; inset: 0; z-index: 99999; background: #020204;
+            display: none; opacity: 0; transition: opacity 0.5s;
+        }
+        #warp-canvas { width: 100%; height: 100%; pointer-events: none; }
+        #warp-text {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: var(--theme); font-family: 'Orbitron', sans-serif; font-size: 2rem;
+            letter-spacing: 10px; opacity: 0; transition: opacity 1s;
+            text-shadow: 0 0 20px var(--theme-glow); white-space: nowrap; font-weight: 700;
+        }
+
         #app-container {
             width: 100vw; height: 100vh; position: relative;
             background: radial-gradient(circle at center, #0a0a15 0%, var(--bg-base) 100%);
             display: flex; flex-direction: column; transition: all 0.5s ease-out;
-            opacity: 0; /* 初始隐藏，等开场结束显示 */
+            opacity: 0;
         }
 
         #bg-canvas { position: absolute; inset: 0; z-index: 1; opacity: 0.8; }
@@ -80,7 +93,6 @@
 
         .auth-cluster { display: flex; gap: 15px; align-items: center; }
 
-        /* 风格化几何切角按钮 */
         .btn-cyber {
             background: rgba(0, 0, 0, 0.5); border: 1px solid var(--theme); color: var(--theme);
             padding: 12px 30px; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; letter-spacing: 2px;
@@ -125,7 +137,6 @@
 
         .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px; margin-top: 40px; }
         
-        /* 风格化信息卡片 */
         .tech-card {
             background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05);
             border-top: 4px solid var(--theme); padding: 40px; backdrop-filter: blur(15px);
@@ -137,7 +148,6 @@
         .tech-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.6); border-color: rgba(0, 240, 255, 0.4); background: rgba(15, 20, 40, 0.8);}
         .tech-card h3 { color: #fff; font-size: 1.5rem; letter-spacing: 2px;}
 
-        /* --- Updated Auth Page Styling --- */
         #auth { justify-content: center; align-items: center; }
         .auth-box {
             width: 480px; padding: 50px; background: rgba(5, 5, 12, 0.85);
@@ -180,7 +190,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* --- Core Experience Page --- */
         #experience { padding: 30px 5vw; }
         .hud-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; height: 100%; align-items: stretch; }
         
@@ -221,7 +230,6 @@
         .blink { animation: textBlink 1s infinite; }
         @keyframes textBlink { 50% { opacity: 0; } }
 
-        /* === Advanced Dynamic FX (States) === */
         .fx-pulse #viewport-overlay {
             position: absolute; inset: 0; pointer-events: none; z-index: 2;
             background: radial-gradient(circle, transparent 30%, var(--theme-glow) 150%);
@@ -241,9 +249,14 @@
     <canvas id="intro-canvas"></canvas>
     <div class="intro-content">
         <div class="intro-title">MOTION EMOTION</div>
-        <div class="intro-sub">NEURAL KINETIC RECOGNITION V4.0</div>
+        <div class="intro-sub">MOTION-BASED EMOTION RECOGNITION V1.0</div>
         <button class="btn-enter" onclick="startApp()">INITIALIZE SYSTEM</button>
     </div>
+</div>
+
+<div id="warp-transition">
+    <canvas id="warp-canvas"></canvas>
+    <div id="warp-text">NEURAL LINKING...</div>
 </div>
 
 <div id="app-container">
@@ -332,64 +345,43 @@
 
     <div id="auth" class="page-content">
         <div class="auth-box">
-            
             <div id="auth-view-login" class="auth-view active">
-                <h2 style="text-align: center; margin-bottom: 35px; color: #fff; letter-spacing: 5px; font-size: 2rem;">SYSTEM LOGIN</h2>
-                
-                <button type="button" class="btn-cyber" style="width: 100%; margin-bottom: 30px; border-color: rgba(255,255,255,0.2); color: #fff; background: rgba(255,255,255,0.02);" onclick="initiateGoogleAuth()">
-                    <svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                    </svg>
-                    LOGIN WITH GOOGLE
-                </button>
-
-                <div style="text-align: center; color: var(--theme); margin-bottom: 30px; font-size: 0.9rem; letter-spacing: 3px; font-family: 'Share Tech Mono', monospace; opacity: 0.7;">--- OR LOCAL AUTH ---</div>
-
+                <h2 style="text-align: center; margin-bottom: 30px; color: #fff;">ESTABLISH LINK</h2>
                 <form onsubmit="handleLogin(event)">
                     <div class="input-group">
-                        <label>OPERATOR_ID (EMAIL)</label>
-                        <input type="email" required placeholder="operator@core.os">
+                        <label>OPERATOR ID (EMAIL)</label>
+                        <input type="email" required placeholder="operator@neural.net">
                     </div>
                     <div class="input-group">
-                        <label>ACCESS_CYPHER</label>
-                        <input type="password" required placeholder="••••••••••••">
+                        <label>SECURITY CYPHER</label>
+                        <input type="password" required placeholder="••••••••">
                     </div>
-                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.2rem; padding: 18px; text-transform: none;">Log in</button>
+                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.2rem; padding: 18px;">INITIALIZE LOGIN</button>
                 </form>
-                
-                <div class="auth-switch-link" onclick="switchAuthView('signup')">> NO ACCOUNT? INITIALIZE REGISTRATION <</div>
+                <div style="text-align: center; margin: 25px 0; color: #64748b; font-family: 'Share Tech Mono';">--- OR BYPASS VIA ---</div>
+                <button type="button" class="btn-cyber" style="width: 100%; padding: 15px;" onclick="initiateGoogleAuth()">
+                    <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                    GOOGLE SECURE PROTOCOL
+                </button>
+                <div class="auth-switch-link" onclick="switchAuthView('signup')">CREATE NEW OPERATOR PROFILE ></div>
             </div>
 
             <div id="auth-view-signup" class="auth-view">
-                <h2 style="text-align: center; margin-bottom: 35px; color: #fff; letter-spacing: 5px; font-size: 2rem;">REGISTRATION</h2>
-                
-                <form onsubmit="handleSignUp(event)">
-                    <div class="input-group" style="margin-bottom: 25px;">
-                        <label>NEW OPERATOR_ID (EMAIL)</label>
-                        <input type="email" required placeholder="operator@core.os">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #fff;">REGISTER LINK</h2>
+                <div class="verification-warning">WARNING: BIO-DATA COLLECTION REQUIRES VERIFICATION</div>
+                <form onsubmit="handleSignup(event)">
+                    <div class="input-group">
+                        <label>NEW OPERATOR ID (EMAIL)</label>
+                        <input type="email" required placeholder="operator@neural.net">
                     </div>
-                    <div class="input-group" style="margin-bottom: 25px;">
-                        <label>SET ACCESS_CYPHER</label>
-                        <input type="password" required placeholder="••••••••••••">
-                    </div>
-                    
-                    <div class="verification-warning">
-                        ⚠️ IDENTITY VERIFICATION REQUIRED
-                    </div>
-
-                    <button type="submit" class="btn-cyber" style="width: 100%; font-size: 1.2rem; padding: 18px; font-weight: bold; color: #fff; text-transform: none; background: rgba(0,240,255,0.1);">Sign up</button>
+                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.2rem; padding: 18px;">SEND CYPHER TO EMAIL</button>
                 </form>
-                
-                <div class="auth-switch-link" onclick="switchAuthView('login')">> ALREADY VERIFIED? PROCEED TO LOGIN <</div>
+                <div class="auth-switch-link" onclick="switchAuthView('login')">< RETURN TO LOGIN</div>
             </div>
 
             <div id="auth-view-verify" class="auth-view">
                 <h2 style="text-align: center; margin-bottom: 15px; color: var(--theme); letter-spacing: 4px; font-size: 1.8rem;">AWAITING VERIFICATION</h2>
                 <p style="text-align: center; font-size: 1rem; margin-bottom: 35px; color: #94a3b8; font-family: 'Share Tech Mono', monospace;">A secure cypher has been transmitted to your email.</p>
-                
                 <form onsubmit="handleVerification(event)">
                     <div class="input-group">
                         <label>6-DIGIT CYPHER CODE</label>
@@ -397,44 +389,49 @@
                     </div>
                     <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.2rem; padding: 18px;">VERIFY & ESTABLISH LINK</button>
                 </form>
-                
                 <div class="auth-switch-link" onclick="switchAuthView('signup')">< CANCEL OPERATION</div>
             </div>
 
             <div id="auth-view-google" class="auth-view">
                 <div class="google-loader">
                     <div class="spinner"></div>
-                    <h3 style="color: #fff; letter-spacing: 3px; font-size: 1.2rem; font-family: 'Share Tech Mono', monospace;" id="google-status-text">REDIRECTING TO GOOGLE<span class="blink">...</span></h3>
-                    <p style="font-size: 0.95rem; color: #94a3b8; margin-top: 20px; font-family: 'Share Tech Mono', monospace;">Awaiting external OAuth protocol.</p>
+                    <h3 id="google-status-text" style="color: #fff; letter-spacing: 3px; font-size: 1.2rem; font-family: 'Share Tech Mono', monospace;">CONNECTING...</h3>
                 </div>
             </div>
-
         </div>
     </div>
 
     <div id="experience" class="page-content">
+        <button class="btn-cyber" style="position: absolute; top: 20px; right: 8vw; z-index: 50;" onclick="terminateSystem()">TERMINATE CONNECTION</button>
         <div class="hud-layout">
             <div id="video-core">
                 <div class="scanner"></div>
                 <canvas id="webcam-canvas"></canvas>
-                <div style="position: absolute; bottom: 20px; left: 20px; color: var(--theme); font-size: 0.9rem; background: rgba(0,0,0,0.8); padding: 10px 20px; font-family: 'Share Tech Mono', monospace; border: 1px solid rgba(0,240,255,0.3); backdrop-filter: blur(5px);">
-                    > LIVE BIOMETRIC FEED [ACTIVE_LINK]
-                </div>
             </div>
             
             <div class="data-panel">
                 <div class="hud-box">
-                    <h3 style="font-size: 1.3rem; margin-bottom: 30px; color: #fff; letter-spacing: 3px;">PROBABILITY MATRIX</h3>
-                    <div id="bars-container"></div>
-                </div>
-
-                <div class="hud-box" style="flex-grow: 1; display: flex; flex-direction: column; padding: 0; background: none; clip-path: none;">
-                    <div id="ai-console">
-                        > AWAITING SKELETAL INPUT...<span class="blink">_</span>
+                    <h3 style="color: var(--theme); margin-bottom: 25px; border-bottom: 1px solid rgba(0, 240, 255, 0.2); padding-bottom: 10px;">NEURAL OUTPUT DATA</h3>
+                    
+                    <div class="bar-wrap">
+                        <div class="bar-label"><span>[01] CALM (BASELINE)</span> <span id="label-0">0%</span></div>
+                        <div class="bar-bg"><div class="bar-fill" id="fill-0"></div></div>
+                    </div>
+                    <div class="bar-wrap">
+                        <div class="bar-label"><span>[02] ANXIOUS (STRESS)</span> <span id="label-1">0%</span></div>
+                        <div class="bar-bg"><div class="bar-fill" id="fill-1"></div></div>
+                    </div>
+                    <div class="bar-wrap">
+                        <div class="bar-label"><span>[03] HAPPY (EUPHORIA)</span> <span id="label-2">0%</span></div>
+                        <div class="bar-bg"><div class="bar-fill" id="fill-2"></div></div>
                     </div>
                 </div>
 
-                <button class="btn-cyber" style="border-color: #ef4444; color: #ef4444; width: 100%; font-size: 1.1rem; padding: 18px; background: rgba(239, 68, 68, 0.05);" onclick="terminateSystem()">TERMINATE CONNECTION</button>
+                <div id="ai-console">
+                    [SYSTEM] Neural kinetic bridge established.<br>
+                    [SYSTEM] Awaiting bio-motion input...<br><br>
+                    <span class="blink">_</span>
+                </div>
             </div>
         </div>
     </div>
@@ -444,32 +441,123 @@
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
 
 <script>
-    // --- 0. Intro Point Cloud Animation ---
+    // === 核心变量定义 ===
+    const URL = "https://teachablemachine.withgoogle.com/models/b274q64aJ/";
+    let model, webcam, ctx, labelContainer, maxPredictions;
+    let systemRunning = false;
+    let webcamCtx;
+    let loopFrame;
+    let isAuthenticated = false;
+
+    // === 新增：核心体验区过渡动画 (Warp Speed) ===
+    const warpContainer = document.getElementById('warp-transition');
+    const warpCanvas = document.getElementById('warp-canvas');
+    let warpCtx = warpCanvas.getContext('2d');
+    let warpStars = [];
+    let warpAnimId;
+
+    function initWarp() {
+        warpCanvas.width = window.innerWidth;
+        warpCanvas.height = window.innerHeight;
+        warpStars = [];
+        for(let i=0; i<500; i++) {
+            warpStars.push({
+                x: Math.random() * warpCanvas.width - warpCanvas.width/2,
+                y: Math.random() * warpCanvas.height - warpCanvas.height/2,
+                z: Math.random() * warpCanvas.width,
+                pz: Math.random() * warpCanvas.width
+            });
+        }
+    }
+
+    function animateWarp() {
+        warpCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        warpCtx.fillRect(0, 0, warpCanvas.width, warpCanvas.height);
+        warpCtx.translate(warpCanvas.width/2, warpCanvas.height/2);
+
+        let speed = 40; // 酷炫的穿越速度
+
+        for(let i=0; i<warpStars.length; i++) {
+            let star = warpStars[i];
+            star.pz = star.z;
+            star.z -= speed;
+            if(star.z < 1) {
+                star.z = warpCanvas.width;
+                star.pz = star.z;
+                star.x = Math.random() * warpCanvas.width - warpCanvas.width/2;
+                star.y = Math.random() * warpCanvas.height - warpCanvas.height/2;
+            }
+
+            let sx = (star.x / star.z) * warpCanvas.width;
+            let sy = (star.y / star.z) * warpCanvas.height;
+            let px = (star.x / star.pz) * warpCanvas.width;
+            let py = (star.y / star.pz) * warpCanvas.height;
+
+            warpCtx.beginPath();
+            warpCtx.moveTo(px, py);
+            warpCtx.lineTo(sx, sy);
+            warpCtx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+            warpCtx.lineWidth = Math.max(0.1, (1 - star.z/warpCanvas.width) * 5);
+            warpCtx.stroke();
+        }
+        warpCtx.translate(-warpCanvas.width/2, -warpCanvas.height/2);
+        warpAnimId = requestAnimationFrame(animateWarp);
+    }
+
+    function triggerExperienceTransition() {
+        // 唤起 Warp 过渡层
+        warpContainer.style.display = 'block';
+        setTimeout(() => warpContainer.style.opacity = '1', 50);
+        initWarp();
+        animateWarp();
+        
+        const warpText = document.getElementById('warp-text');
+        setTimeout(() => warpText.style.opacity = '1', 300);
+
+        // 持续 2.5 秒后，真正进入体验界面并初始化摄像头
+        setTimeout(() => {
+            cancelAnimationFrame(warpAnimId);
+            warpContainer.style.opacity = '0';
+            initExperience(); // 调用原有的体验系统启动函数
+            setTimeout(() => {
+                warpContainer.style.display = 'none';
+                warpText.style.opacity = '0';
+            }, 500);
+        }, 2500);
+    }
+
+    // === Intro 动画系统 (优化：聚拢形成层次) ===
     const iCanvas = document.getElementById('intro-canvas');
     const iCtx = iCanvas.getContext('2d');
     let introPoints = [];
-    let introAngleX = 0;
-    let introAngleY = 0;
-    let introActive = true;
-    let explosionPhase = false;
+    let introAngleX = 0, introAngleY = 0;
     let introScale = 1;
+    let explosionPhase = false;
+    let introActive = true;
 
-    function initIntroCanvas() {
+    function initIntro() {
         iCanvas.width = window.innerWidth;
         iCanvas.height = window.innerHeight;
         introPoints = [];
-        // 生成一个球形点云结构，模拟数据核心
-        const numPoints = 600;
+        const numPoints = 800;
+        const radius = window.innerWidth < 768 ? 150 : 250;
         for (let i = 0; i < numPoints; i++) {
-            const phi = Math.acos(-1 + (2 * i) / numPoints);
-            const theta = Math.sqrt(numPoints * Math.PI) * phi;
-            // 球体半径分布
-            const r = 200 + Math.random() * 50; 
+            let phi = Math.acos(-1 + (2 * i) / numPoints);
+            let theta = Math.sqrt(numPoints * Math.PI) * phi;
+            // 最终要在球面上形成的目标位置
+            let tx = radius * Math.cos(theta) * Math.sin(phi);
+            let ty = radius * Math.sin(theta) * Math.sin(phi);
+            let tz = radius * Math.cos(phi);
+
+            // 【新层次】刚加载页面时，粒子散落在远处的混沌位置
+            let cx = (Math.random() - 0.5) * 4000;
+            let cy = (Math.random() - 0.5) * 4000;
+            let cz = (Math.random() - 0.5) * 4000;
+
             introPoints.push({
-                x: r * Math.cos(theta) * Math.sin(phi),
-                y: r * Math.sin(theta) * Math.sin(phi),
-                z: r * Math.cos(phi),
-                baseR: r, vx: 0, vy: 0, vz: 0 
+                x: cx, y: cy, z: cz,
+                tx: tx, ty: ty, tz: tz,
+                vx: 0, vy: 0, vz: 0
             });
         }
     }
@@ -477,21 +565,23 @@
     function drawIntro() {
         if (!introActive) return;
         iCtx.clearRect(0, 0, iCanvas.width, iCanvas.height);
-        
         const cx = iCanvas.width / 2;
         const cy = iCanvas.height / 2;
-        
         introAngleX += 0.002;
         introAngleY += 0.003;
-        
         const cosX = Math.cos(introAngleX), sinX = Math.sin(introAngleX);
         const cosY = Math.cos(introAngleY), sinY = Math.sin(introAngleY);
-
-        iCtx.fillStyle = '#00f0ff';
         
+        iCtx.fillStyle = '#00f0ff';
         introPoints.forEach(p => {
             if (explosionPhase) {
+                // 爆炸发散
                 p.x += p.vx; p.y += p.vy; p.z += p.vz;
+            } else {
+                // 【新层次】逐渐聚拢到目标球面上
+                p.x += (p.tx - p.x) * 0.03;
+                p.y += (p.ty - p.y) * 0.03;
+                p.z += (p.tz - p.z) * 0.03;
             }
 
             // 3D 旋转
@@ -505,73 +595,41 @@
             const zDepth = perspective / (perspective - z2);
             const px = cx + x2 * zDepth * introScale;
             const py = cy + y1 * zDepth * introScale;
-            
-            // 随深度变化的不透明度和大小
-            const alpha = Math.max(0.1, Math.min(1, (z2 + 250) / 500));
-            if (explosionPhase) {
-                iCtx.fillStyle = `rgba(0, 240, 255, ${alpha * (2 - introScale)})`;
-            } else {
-                iCtx.fillStyle = `rgba(0, 240, 255, ${alpha})`;
+
+            if (zDepth > 0) {
+                iCtx.beginPath();
+                iCtx.arc(px, py, Math.max(0.5, 1.5 * zDepth), 0, Math.PI * 2);
+                iCtx.fill();
             }
-
-            iCtx.beginPath();
-            iCtx.arc(px, py, Math.max(0.5, 2 * zDepth), 0, Math.PI * 2);
-            iCtx.fill();
         });
-
-        requestAnimationFrame(drawIntro);
+        if(introActive) requestAnimationFrame(drawIntro);
     }
 
     function startApp() {
         explosionPhase = true;
-        // 赋予爆炸初速度
         introPoints.forEach(p => {
-            const speed = 5 + Math.random() * 15;
-            const dist = Math.sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
-            p.vx = (p.x / dist) * speed;
-            p.vy = (p.y / dist) * speed;
-            p.vz = (p.z / dist) * speed;
+            p.vx = (Math.random() - 0.5) * 40;
+            p.vy = (Math.random() - 0.5) * 40;
+            p.vz = (Math.random() - 0.5) * 40;
         });
-
-        const introScreen = document.getElementById('intro-screen');
-        const appContainer = document.getElementById('app-container');
+        document.querySelector('.intro-content').style.opacity = '0';
         
-        introScreen.style.opacity = '0';
-        appContainer.style.opacity = '1';
-
         setTimeout(() => {
-            introActive = false;
-            introScreen.style.visibility = 'hidden';
-            initSentinel(); // 确保 Sentinel 画布尺寸在显示后正确
-        }, 1500);
+            document.getElementById('intro-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('intro-screen').style.visibility = 'hidden';
+                introActive = false;
+                document.getElementById('app-container').style.opacity = '1';
+                route('home');
+            }, 1500);
+        }, 800);
     }
 
-    window.addEventListener('resize', () => {
-        if(introActive) initIntroCanvas();
-        initBgParticles();
-        initSentinel();
-    });
-
-    // 初始化点云并启动动画
-    initIntroCanvas();
-    drawIntro();
-
-
-    // --- Global State & Config ---
-    let isAuthenticated = false;
-    let systemRunning = false;
-    let expectedVerificationCode = ""; 
-
-    const modelURL_TM = "https://teachablemachine.withgoogle.com/models/sTBoNGgmv/";
-
-    const mouse = { x: null, y: null, radius: 150 };
-    window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
-    window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
-
-    // --- 1. Background Particles ---
+    // === 背景粒子系统 ===
     const bgCanvas = document.getElementById('bg-canvas');
     const bgCtx = bgCanvas.getContext('2d');
-    let particlesArray = [];
+    let particles = [];
+    let mouse = {x: null, y: null};
 
     class Particle {
         constructor() {
@@ -586,161 +644,114 @@
         draw() {
             bgCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
             bgCtx.globalAlpha = 0.6;
-            bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2); bgCtx.fill();
+            bgCtx.beginPath();
+            bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            bgCtx.fill();
             bgCtx.globalAlpha = 1.0;
         }
         update() {
             this.y -= this.vy;
             this.x += Math.sin(this.y * this.waveSpeed + this.waveOffset) * 0.5;
-            if(this.y < 0) { this.y = bgCanvas.height; this.x = Math.random() * bgCanvas.width; }
+            
+            if(this.y < 0) {
+                this.y = bgCanvas.height;
+                this.x = Math.random() * bgCanvas.width;
+            }
             if(this.x > bgCanvas.width) this.x = 0;
             if(this.x < 0) this.x = bgCanvas.width;
 
             if (mouse.x != null && mouse.y != null) {
-                let dx = mouse.x - this.x; let dy = mouse.y - this.y;
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
                 let distance = Math.sqrt(dx*dx + dy*dy);
-                if (distance < mouse.radius) {
-                    let force = (mouse.radius - distance) / mouse.radius;
-                    this.x -= (dx / distance) * force * this.density; 
-                    this.y -= (dy / distance) * force * this.density;
+                if (distance < 100) {
+                    let forceDirectionX = dx / distance;
+                    let forceDirectionY = dy / distance;
+                    let force = (100 - distance) / 100;
+                    this.x -= forceDirectionX * force * this.density * 0.5;
+                    this.y -= forceDirectionY * force * this.density * 0.5;
                 }
             }
         }
     }
 
-    function initBgParticles() {
-        bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
-        particlesArray = [];
-        let numberOfParticles = (bgCanvas.width * bgCanvas.height) / 7000;
-        for(let i=0; i < numberOfParticles; i++) { particlesArray.push(new Particle()); }
+    function initBg() {
+        bgCanvas.width = window.innerWidth;
+        bgCanvas.height = window.innerHeight;
+        particles = [];
+        for(let i=0; i<150; i++) particles.push(new Particle());
     }
-    
+
     function animateBg() {
-        bgCtx.fillStyle = 'rgba(2, 2, 4, 0.2)'; 
-        bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
-        for(let i=0; i < particlesArray.length; i++) { particlesArray[i].update(); particlesArray[i].draw(); }
+        bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+        particles.forEach(p => { p.update(); p.draw(); });
         requestAnimationFrame(animateBg);
     }
-    initBgParticles(); animateBg();
 
+    window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
+    window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+    window.addEventListener('resize', () => {
+        if(introActive) initIntro();
+        initBg();
+        initSentinel();
+        if(warpContainer.style.display === 'block') initWarp();
+    });
 
-    // --- 2. Sentinel Viz ---
-    const sentCanvas = document.getElementById('sentinel-canvas');
-    const sentCtx = sentCanvas.getContext('2d');
-    let sentinelAngle = 0;
-
-    const rawPoseModel = [
-        {id: 'nose', x: 0, y: -0.8, z: 0}, {id: 'lShoulder', x: -0.4, y: -0.5, z: 0}, {id: 'rShoulder', x: 0.4, y: -0.5, z: 0},
-        {id: 'lElbow', x: -0.6, y: -0.1, z: 0.2}, {id: 'rElbow', x: 0.6, y: -0.1, z: -0.2},
-        {id: 'lWrist', x: -0.5, y: 0.3, z: 0.4}, {id: 'rWrist', x: 0.5, y: 0.3, z: -0.4},
-        {id: 'lHip', x: -0.25, y: 0.1, z: 0}, {id: 'rHip', x: 0.25, y: 0.1, z: 0},
-        {id: 'lKnee', x: -0.3, y: 0.6, z: 0.1}, {id: 'rKnee', x: 0.3, y: 0.6, z: -0.1},
-        {id: 'lAnkle', x: -0.35, y: 0.9, z: 0.2}, {id: 'rAnkle', x: 0.35, y: 0.9, z: -0.2}
-    ];
-
-    const connections = [
-        ['lShoulder', 'rShoulder'], ['lShoulder', 'lElbow'], ['lElbow', 'lWrist'], ['rShoulder', 'rElbow'], ['rElbow', 'rWrist'],
-        ['lShoulder', 'lHip'], ['rShoulder', 'rHip'], ['lHip', 'rHip'], ['lHip', 'lKnee'], ['lKnee', 'lAnkle'], ['rHip', 'rKnee'], ['rKnee', 'rAnkle'],
-        ['nose', 'lShoulder'], ['nose', 'rShoulder']
-    ];
-
-    function project(point, angle, width, height) {
-        let x_rot = point.x * Math.cos(angle) - point.z * Math.sin(angle);
-        let z_rot = point.x * Math.sin(angle) + point.z * Math.cos(angle);
-        let perspective = 1 + (z_rot * 0.3);
-        return { x: (x_rot / perspective) * (width * 0.3) + (width/2), y: (point.y) * (height * 0.45) + (height/2), z: z_rot };
-    }
-
-    function initSentinel() {
-        const container = document.getElementById('sentinel-viz');
-        if (container && container.offsetWidth > 0) {
-            sentCanvas.width = container.offsetWidth; 
-            sentCanvas.height = container.offsetHeight;
-        }
-    }
-
-    function animateSentinel() {
-        if(document.getElementById('home').style.display === 'none') { requestAnimationFrame(animateSentinel); return; }
-        sentCtx.clearRect(0, 0, sentCanvas.width, sentCanvas.height);
-        sentinelAngle += 0.005; 
-        const currentTheme = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
-
-        let projectedPoints = {};
-        rawPoseModel.forEach(p => { projectedPoints[p.id] = project(p, sentinelAngle, sentCanvas.width, sentCanvas.height); });
-
-        sentCtx.lineWidth = 2;
-        connections.forEach(([p1_id, p2_id]) => {
-            const p1 = projectedPoints[p1_id]; const p2 = projectedPoints[p2_id];
-            let opacity = 1 - (((p1.z + p2.z) / 2 + 1) / 2); 
-            sentCtx.strokeStyle = currentTheme.replace('rgb','rgba').replace(')', `, ${opacity * 0.5 + 0.1})`);
-            sentCtx.beginPath(); sentCtx.moveTo(p1.x, p1.y); sentCtx.lineTo(p2.x, p2.y); sentCtx.stroke();
-        });
-
-        rawPoseModel.forEach(p_raw => {
-            const p = projectedPoints[p_raw.id];
-            let opacity = 1 - ((p.z + 1) / 2);
-            sentCtx.fillStyle = currentTheme.replace('rgb','rgba').replace(')', `, ${opacity * 0.8 + 0.2})`);
-            sentCtx.beginPath(); sentCtx.arc(p.x, p.y, 4 * (opacity * 0.5 + 0.5), 0, Math.PI * 2); sentCtx.fill();
-        });
-        requestAnimationFrame(animateSentinel);
-    }
-    animateSentinel();
-
-
-    // --- 3. Routing & AUTHENTICATION FLOW ---
+    // === UI 路由 & 交互系统 ===
     function route(pageId) {
-        if(pageId !== 'experience' && systemRunning) terminateSystem(false); 
         document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
+        document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
         document.getElementById(pageId).classList.add('active');
-        document.querySelectorAll('.nav-links li').forEach(item => {
-            if(item.innerText.toLowerCase().includes(pageId) || (pageId==='home' && item.innerText==='HOME')) item.classList.add('active');
-        });
-        if(pageId === 'home') initSentinel();
+        
+        const navItems = document.querySelectorAll('.nav-links li');
+        if(pageId === 'home') navItems[0].classList.add('active');
+        else if(pageId === 'about') navItems[1].classList.add('active');
+        else if(pageId === 'project') navItems[2].classList.add('active');
+        else if(pageId === 'guide') navItems[3].classList.add('active');
     }
 
-    function switchAuthView(viewName) {
+    function openAuth(view) { route('auth'); switchAuthView(view); }
+
+    function switchAuthView(view) {
         document.querySelectorAll('.auth-view').forEach(v => v.classList.remove('active'));
-        document.getElementById('auth-view-' + viewName).classList.add('active');
+        document.getElementById(`auth-view-${view}`).classList.add('active');
     }
 
-    function openAuth(viewName) {
-        route('auth');
-        switchAuthView(viewName);
-    }
-
+    // 【修改点】：不再直接进入系统，而是调用动画过渡
     function attemptStart() {
-        if (!isAuthenticated) openAuth('login');
-        else { route('experience'); startSystem(); }
+        if(isAuthenticated) {
+            triggerExperienceTransition();
+        } else {
+            alert("[SYSTEM MSG] Authentication required to access core.");
+            route('auth');
+        }
     }
 
     function handleLogin(e) {
         e.preventDefault();
+        document.documentElement.style.setProperty('--theme', '#00f0ff');
         loginSuccess();
     }
-    
-    function handleSignUp(e) {
+
+    function handleSignup(e) {
         e.preventDefault();
-        expectedVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-        alert("[SYSTEM NOTIFICATION] A verification cypher has been transmitted to your email.\n\n(Simulation mode: direct cypher reveal)\nYour 6-digit access cypher is: " + expectedVerificationCode);
         switchAuthView('verify');
     }
 
     function handleVerification(e) {
         e.preventDefault();
-        const inputCode = e.target.querySelector('input').value;
-        if (inputCode === expectedVerificationCode) {
-            alert("[SUCCESS] Identity verified. Registration complete.");
+        const code = e.target.querySelector('input').value;
+        if(code === "000000" || code.length === 6) {
+            alert("Verification complete.");
             loginSuccess();
         } else {
-            alert("[ERROR] Invalid access cypher. Please enter the correct 6-digit code.");
+            alert("[ERROR] Invalid access cypher.");
         }
     }
-    
+
     function initiateGoogleAuth() {
         switchAuthView('google');
         const textElem = document.getElementById('google-status-text');
-        
         textElem.innerHTML = `CONNECTING TO GOOGLE SECURE HANDSHAKE<span class="blink">...</span>`;
         
         setTimeout(() => {
@@ -750,7 +761,7 @@
             
             setTimeout(() => {
                 textElem.innerHTML = `VERIFICATION SUCCESS. ESTABLISHING LINK<span class="blink">...</span>`;
-                document.documentElement.style.setProperty('--theme', '#34A853'); 
+                document.documentElement.style.setProperty('--theme', '#34A853');
                 
                 setTimeout(() => {
                     document.documentElement.style.setProperty('--theme', '#00f0ff');
@@ -764,68 +775,142 @@
     function loginSuccess() {
         isAuthenticated = true;
         document.getElementById('auth-ui').innerHTML = `
-            <span style="color: var(--theme); font-size: 0.95rem; letter-spacing: 2px; font-weight:bold; font-family: 'Share Tech Mono', monospace;">[ OPERATOR_ACTIVE ]</span>
-            <button class="btn-cyber" style="border-color: rgba(255,255,255,0.2); color: #94a3b8; padding: 10px 20px; font-size: 0.8rem;" onclick="logout()">LOGOUT</button>
+            <span style="color: var(--theme); font-size: 0.95rem; letter-spacing: 2px; font-weight:bold; font-family: 'Share Tech Mono', monospace;">LINK_ACTIVE // OPERATOR</span>
         `;
-        switchAuthView('login');
-        route('experience');
-        startSystem();
-    }
-
-    function logout() {
-        isAuthenticated = false;
-        terminateSystem(false);
-        document.getElementById('auth-ui').innerHTML = `
-            <button class="btn-cyber" onclick="openAuth('login')" style="text-transform: none;">Log in</button>
-            <button class="btn-cyber btn-solid" onclick="openAuth('signup')" style="text-transform: none;">Sign up</button>
-        `;
-        route('home');
-    }
-
-    // --- 4. Core AI Kinetic Logic ---
-    let model, webcam, webcamCtx, maxPredictions;
-    let currentState = ""; 
-    let loopFrame;
-
-    const EMOTION_LOGS = {
-        calm: "> SCANNING BIOMETRICS...\n> POSTURE: NOMINAL SYMMETRY.\n> BIOLOGICAL FLOW: STABLE.\n> SYSTEM STATUS: NOMINAL CRUISING.",
-        anxious: "> ALERT: IRREGULAR KINETIC CONTRACTIONS!\n> CORTISOL LEVELS: SURGING (ESTIMATED).\n> POSTURE: INWARD / DEFENSIVE.\n> SYSTEM STATUS: INSTABILITY WARNING.",
-        happy: "> DOPAMINE SURGE DETECTED.\n> ENERGY PATHWAY: HIGH-FREQUENCY EXPANSION.\n> PREDICATED STATE: EUPHORIA.\n> SYSTEM STATUS: POSITIVE FEEDBACK ACTIVE."
-    };
-
-    async function startSystem() {
-        if (systemRunning) return;
-        systemRunning = true;
-        
-        document.getElementById('ai-console').innerHTML = "> INITIALIZING NEURAL LINK...<span class='blink'>_</span>";
-
-        model = await tmPose.load(modelURL_TM + "model.json", modelURL_TM + "metadata.json");
-        maxPredictions = model.getTotalClasses();
-
-        webcam = new tmPose.Webcam(600, 600, true); 
-        await webcam.setup(); await webcam.play();
-        
-        const canvas = document.getElementById("webcam-canvas");
-        canvas.width = 600; canvas.height = 600;
-        webcamCtx = canvas.getContext("2d");
-
-        const container = document.getElementById("bars-container");
-        container.innerHTML = "";
-        for (let i = 0; i < maxPredictions; i++) {
-            container.innerHTML += `
-                <div class="bar-wrap">
-                    <div class="bar-label"><span>${model.getClassLabels()[i]}</span><span id="val-${i}">0%</span></div>
-                    <div class="bar-bg"><div id="fill-${i}" class="bar-fill"></div></div>
-                </div>`;
+        document.querySelector('#home .viz-label').innerText = "SENTINEL_PROTOTYPE_v4 // LINK_ESTABLISHED";
+        if(document.getElementById('auth').classList.contains('active')) {
+            route('home');
         }
-        loopFrame = window.requestAnimationFrame(expLoop);
     }
 
-    async function expLoop() {
-        if(!systemRunning) return;
-        webcam.update(); await predict();
-        loopFrame = window.requestAnimationFrame(expLoop);
+    // === Sentinel 3D 线框原型动画 (纯前端伪3D) ===
+    const sentCanvas = document.getElementById('sentinel-canvas');
+    const sentCtx = sentCanvas.getContext('2d');
+    let sentinelAngle = 0;
+    
+    const rawPoseModel = [
+        {id: 'nose', x: 0, y: -0.8, z: 0.2}, {id: 'lShoulder', x: -0.5, y: -0.4, z: 0}, {id: 'rShoulder', x: 0.5, y: -0.4, z: 0},
+        {id: 'lElbow', x: -0.7, y: 0.1, z: 0}, {id: 'rElbow', x: 0.7, y: 0.1, z: 0}, {id: 'lWrist', x: -0.6, y: 0.6, z: 0.2}, {id: 'rWrist', x: 0.6, y: 0.6, z: 0.2},
+        {id: 'lHip', x: -0.3, y: 0.5, z: 0}, {id: 'rHip', x: 0.3, y: 0.5, z: 0},
+        {id: 'lKnee', x: -0.3, y: 1.1, z: 0}, {id: 'rKnee', x: 0.3, y: 1.1, z: 0}, {id: 'lAnkle', x: -0.3, y: 1.7, z: 0}, {id: 'rAnkle', x: 0.3, y: 1.7, z: 0}
+    ];
+    const connections = [
+        ['lShoulder', 'rShoulder'], ['lShoulder', 'lElbow'], ['lElbow', 'lWrist'], ['rShoulder', 'rElbow'], ['rElbow', 'rWrist'],
+        ['lShoulder', 'lHip'], ['rShoulder', 'rHip'], ['lHip', 'rHip'],
+        ['lHip', 'lKnee'], ['lKnee', 'lAnkle'], ['rHip', 'rKnee'], ['rKnee', 'rAnkle'],
+        ['nose', 'lShoulder'], ['nose', 'rShoulder']
+    ];
+
+    function project(point, angle, width, height) {
+        let x_rot = point.x * Math.cos(angle) - point.z * Math.sin(angle);
+        let z_rot = point.x * Math.sin(angle) + point.z * Math.cos(angle);
+        let perspective = 1 + (z_rot * 0.3);
+        return {
+            x: (x_rot / perspective) * (width * 0.3) + (width/2),
+            y: (point.y) * (height * 0.45) + (height/2),
+            z: z_rot
+        };
     }
+
+    function initSentinel() {
+        const container = document.getElementById('sentinel-viz');
+        if (container && container.offsetWidth > 0) {
+            sentCanvas.width = container.offsetWidth;
+            sentCanvas.height = container.offsetHeight;
+        }
+    }
+
+    function animateSentinel() {
+        if(document.getElementById('home').style.display === 'none') {
+            requestAnimationFrame(animateSentinel);
+            return;
+        }
+        sentCtx.clearRect(0, 0, sentCanvas.width, sentCanvas.height);
+        sentinelAngle += 0.005;
+        const currentTheme = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+        
+        let projectedPoints = {};
+        rawPoseModel.forEach(p => {
+            projectedPoints[p.id] = project(p, sentinelAngle, sentCanvas.width, sentCanvas.height);
+        });
+
+        sentCtx.lineWidth = 2;
+        connections.forEach(([p1_id, p2_id]) => {
+            let p1 = projectedPoints[p1_id];
+            let p2 = projectedPoints[p2_id];
+            
+            let avgZ = (p1.z + p2.z) / 2;
+            let alpha = Math.max(0.1, 1 - (avgZ + 0.5));
+            
+            sentCtx.strokeStyle = currentTheme;
+            sentCtx.globalAlpha = alpha;
+            sentCtx.beginPath();
+            sentCtx.moveTo(p1.x, p1.y);
+            sentCtx.lineTo(p2.x, p2.y);
+            sentCtx.stroke();
+        });
+
+        sentCtx.globalAlpha = 1.0;
+        Object.values(projectedPoints).forEach(p => {
+            let alpha = Math.max(0.2, 1 - (p.z + 0.5));
+            sentCtx.fillStyle = '#fff';
+            sentCtx.globalAlpha = alpha;
+            sentCtx.beginPath();
+            sentCtx.arc(p.x, p.y, 3, 0, Math.PI*2);
+            sentCtx.fill();
+            
+            sentCtx.strokeStyle = currentTheme;
+            sentCtx.beginPath();
+            sentCtx.arc(p.x, p.y, 6, 0, Math.PI*2);
+            sentCtx.stroke();
+        });
+
+        requestAnimationFrame(animateSentinel);
+    }
+
+    // === Teachable Machine 核心系统逻辑 ===
+    async function initExperience() {
+        route('experience');
+        if(systemRunning) return;
+        
+        document.getElementById('ai-console').innerHTML = "[SYSTEM] Booting Neural Kinetic Core...<br><span class='blink'>_</span>";
+        
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+
+        try {
+            model = await tmPose.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
+            const size = 600;
+            const flip = true; 
+            webcam = new tmPose.Webcam(size, size, flip);
+            await webcam.setup(); 
+            await webcam.play();
+            
+            systemRunning = true;
+            window.requestAnimationFrame(runLoop);
+
+            const canvas = document.getElementById("webcam-canvas");
+            canvas.width = size; canvas.height = size;
+            webcamCtx = canvas.getContext("2d");
+            
+            document.getElementById('ai-console').innerHTML = "[SYSTEM] Core Online. Analyzing kinetic patterns...<br><span class='blink'>_</span>";
+
+        } catch(e) {
+            console.error(e);
+            document.getElementById('ai-console').innerHTML = `<span style="color:#ef4444">[ERROR] Neural Core boot failure. Sensor unlinked or model missing.</span><br><br><span class="blink">_</span>`;
+        }
+    }
+
+    async function runLoop(timestamp) {
+        if(!systemRunning) return;
+        webcam.update(); 
+        await predict();
+        loopFrame = window.requestAnimationFrame(runLoop);
+    }
+
+    let currentState = "";
 
     async function predict() {
         const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
@@ -834,30 +919,41 @@
         let topIndex = 0;
         for (let i = 0; i < maxPredictions; i++) {
             const prob = prediction[i].probability;
-            document.getElementById(`val-${i}`).innerText = (prob * 100).toFixed(0) + "%";
+            document.getElementById(`label-${i}`).innerText = (prob * 100).toFixed(0) + "%";
             document.getElementById(`fill-${i}`).style.width = (prob * 100).toFixed(0) + "%";
             if (prob > prediction[topIndex].probability) topIndex = i;
         }
 
         const topProb = prediction[topIndex].probability;
         const topLabel = prediction[topIndex].className.toLowerCase();
-
+        
         if (topProb > 0.65) updateDynamicFX(topIndex, topLabel);
+        
         drawWebcamPose(pose);
     }
 
     function updateDynamicFX(index, label) {
         let themeColor, themeGlow, fxClass, logText;
-
-        if (label.includes("anx") || label.includes("sad") || label.includes("stress") || index === 1) {
-            themeColor = "#ff0055"; themeGlow = "rgba(255, 0, 85, 0.5)"; fxClass = "fx-shake"; logText = EMOTION_LOGS.anxious;
-        } else if (label.includes("hap") || label.includes("joy") || label.includes("dance") || index === 2) {
-            themeColor = "#00ffcc"; themeGlow = "rgba(0, 255, 204, 0.5)"; fxClass = "fx-pulse"; logText = EMOTION_LOGS.happy;
+        
+        if (label.includes("calm")) {
+            themeColor = "#0088ff"; themeGlow = "rgba(0, 136, 255, 0.4)";
+            fxClass = "fx-pulse";
+            logText = "[ANALYSIS] Baseline homeostasis detected. Kinetic energy minimal.\n> STATE: CALM";
+        } else if (label.includes("anxious")) {
+            themeColor = "#ff0055"; themeGlow = "rgba(255, 0, 85, 0.4)";
+            fxClass = "fx-shake";
+            logText = "[WARNING] Erratic inward kinetics. Bio-rhythm accelerated.\n> STATE: ANXIOUS";
+        } else if (label.includes("happy")) {
+            themeColor = "#00ffcc"; themeGlow = "rgba(0, 255, 204, 0.4)";
+            fxClass = "";
+            logText = "[ANALYSIS] Expansive spatial mapping. High energetic output.\n> STATE: EUPHORIA (HAPPY)";
         } else {
-            themeColor = "#00f0ff"; themeGlow = "rgba(0, 240, 255, 0.4)"; fxClass = ""; logText = EMOTION_LOGS.calm;
+            themeColor = "#00f0ff"; themeGlow = "rgba(0, 240, 255, 0.4)";
+            fxClass = "";
+            logText = "[SYSTEM] Processing...";
         }
 
-        if (currentState !== label) {
+        if(currentState !== label) {
             currentState = label;
             document.documentElement.style.setProperty('--theme', themeColor);
             document.documentElement.style.setProperty('--theme-glow', themeGlow);
@@ -867,7 +963,7 @@
     }
 
     function drawWebcamPose(pose) {
-        if (webcam.canvas) {
+        if (webcam && webcam.canvas && webcamCtx) {
             webcamCtx.drawImage(webcam.canvas, 0, 0);
             if (pose) {
                 const min = 0.5;
@@ -891,6 +987,17 @@
         
         if(goHome) route('home');
     }
+
+    // === 初始化执行 ===
+    initIntro();
+    drawIntro();
+    initBg();
+    animateBg();
+    setTimeout(() => {
+        initSentinel();
+        animateSentinel();
+    }, 1000); // 延迟启动，确保 DOM 就绪
+
 </script>
 </body>
 </html>
