@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Motion Emotion System - Kinetic Interface</title>
     <style>
-        /* 引入了 Rajdhani 提升正文科技感与排版高级感 */
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
 
         :root {
@@ -26,7 +25,7 @@
             overflow: hidden;
         }
 
-        /* --- 新增：点云粒子开场动画系统 --- */
+        /* --- Intro 动画系统 --- */
         #intro-screen {
             position: fixed; inset: 0; z-index: 9999;
             background: #020204;
@@ -56,7 +55,7 @@
             transform: scale(1.05);
         }
 
-        /* --- 新增：核心体验过渡动画系统 (Warp) --- */
+        /* --- Warp 动画系统 --- */
         #warp-transition {
             position: fixed; inset: 0; z-index: 99999; background: #020204;
             display: none; opacity: 0; transition: opacity 0.5s;
@@ -103,6 +102,17 @@
         }
         .btn-cyber:hover { background: var(--theme); color: #000; box-shadow: 0 0 20px var(--theme-glow); font-weight: bold;}
         .btn-solid { background: var(--theme); color: #000; font-weight: bold; border: none; }
+
+        /* 专门为退出登录按钮加的样式 */
+        .btn-logout {
+            border-color: #ef4444 !important; 
+            color: #ef4444 !important;
+        }
+        .btn-logout:hover {
+            background: #ef4444 !important; 
+            color: #000 !important; 
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4) !important;
+        }
 
         .page-content {
             position: absolute; top: 70px; left: 0; right: 0; bottom: 0;
@@ -374,22 +384,13 @@
                         <label>NEW OPERATOR ID (EMAIL)</label>
                         <input type="email" required placeholder="operator@neural.net">
                     </div>
+                    <div class="input-group">
+                        <label>SECURITY CYPHER (PASSWORD)</label>
+                        <input type="password" required placeholder="••••••••">
+                    </div>
                     <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.2rem; padding: 18px;">SEND CYPHER TO EMAIL</button>
                 </form>
                 <div class="auth-switch-link" onclick="switchAuthView('login')">< RETURN TO LOGIN</div>
-            </div>
-
-            <div id="auth-view-verify" class="auth-view">
-                <h2 style="text-align: center; margin-bottom: 15px; color: var(--theme); letter-spacing: 4px; font-size: 1.8rem;">AWAITING VERIFICATION</h2>
-                <p style="text-align: center; font-size: 1rem; margin-bottom: 35px; color: #94a3b8; font-family: 'Share Tech Mono', monospace;">A secure cypher has been transmitted to your email.</p>
-                <form onsubmit="handleVerification(event)">
-                    <div class="input-group">
-                        <label>6-DIGIT CYPHER CODE</label>
-                        <input type="text" required placeholder="0 0 0 0 0 0" style="text-align: center; letter-spacing: 12px; font-size: 1.8rem;" maxlength="6">
-                    </div>
-                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.2rem; padding: 18px;">VERIFY & ESTABLISH LINK</button>
-                </form>
-                <div class="auth-switch-link" onclick="switchAuthView('signup')">< CANCEL OPERATION</div>
             </div>
 
             <div id="auth-view-google" class="auth-view">
@@ -449,7 +450,7 @@
     let loopFrame;
     let isAuthenticated = false;
 
-    // === 新增：核心体验区过渡动画 (Warp Speed) ===
+    // === 体验区过渡动画 (Warp Speed) ===
     const warpContainer = document.getElementById('warp-transition');
     const warpCanvas = document.getElementById('warp-canvas');
     let warpCtx = warpCanvas.getContext('2d');
@@ -475,7 +476,7 @@
         warpCtx.fillRect(0, 0, warpCanvas.width, warpCanvas.height);
         warpCtx.translate(warpCanvas.width/2, warpCanvas.height/2);
 
-        let speed = 40; // 酷炫的穿越速度
+        let speed = 40; 
 
         for(let i=0; i<warpStars.length; i++) {
             let star = warpStars[i];
@@ -505,7 +506,6 @@
     }
 
     function triggerExperienceTransition() {
-        // 唤起 Warp 过渡层
         warpContainer.style.display = 'block';
         setTimeout(() => warpContainer.style.opacity = '1', 50);
         initWarp();
@@ -514,11 +514,10 @@
         const warpText = document.getElementById('warp-text');
         setTimeout(() => warpText.style.opacity = '1', 300);
 
-        // 持续 2.5 秒后，真正进入体验界面并初始化摄像头
         setTimeout(() => {
             cancelAnimationFrame(warpAnimId);
             warpContainer.style.opacity = '0';
-            initExperience(); // 调用原有的体验系统启动函数
+            initExperience(); 
             setTimeout(() => {
                 warpContainer.style.display = 'none';
                 warpText.style.opacity = '0';
@@ -526,7 +525,7 @@
         }, 2500);
     }
 
-    // === Intro 动画系统 (优化：聚拢形成层次) ===
+    // === Intro 动画系统 ===
     const iCanvas = document.getElementById('intro-canvas');
     const iCtx = iCanvas.getContext('2d');
     let introPoints = [];
@@ -544,12 +543,10 @@
         for (let i = 0; i < numPoints; i++) {
             let phi = Math.acos(-1 + (2 * i) / numPoints);
             let theta = Math.sqrt(numPoints * Math.PI) * phi;
-            // 最终要在球面上形成的目标位置
             let tx = radius * Math.cos(theta) * Math.sin(phi);
             let ty = radius * Math.sin(theta) * Math.sin(phi);
             let tz = radius * Math.cos(phi);
 
-            // 【新层次】刚加载页面时，粒子散落在远处的混沌位置
             let cx = (Math.random() - 0.5) * 4000;
             let cy = (Math.random() - 0.5) * 4000;
             let cz = (Math.random() - 0.5) * 4000;
@@ -575,22 +572,18 @@
         iCtx.fillStyle = '#00f0ff';
         introPoints.forEach(p => {
             if (explosionPhase) {
-                // 爆炸发散
                 p.x += p.vx; p.y += p.vy; p.z += p.vz;
             } else {
-                // 【新层次】逐渐聚拢到目标球面上
                 p.x += (p.tx - p.x) * 0.03;
                 p.y += (p.ty - p.y) * 0.03;
                 p.z += (p.tz - p.z) * 0.03;
             }
 
-            // 3D 旋转
             let y1 = p.y * cosX - p.z * sinX;
             let z1 = p.y * sinX + p.z * cosX;
             let x2 = p.x * cosY + z1 * sinY;
             let z2 = -p.x * sinY + z1 * cosY;
 
-            // 透视投影
             const perspective = 600;
             const zDepth = perspective / (perspective - z2);
             const px = cx + x2 * zDepth * introScale;
@@ -717,7 +710,6 @@
         document.getElementById(`auth-view-${view}`).classList.add('active');
     }
 
-    // 【修改点】：不再直接进入系统，而是调用动画过渡
     function attemptStart() {
         if(isAuthenticated) {
             triggerExperienceTransition();
@@ -733,19 +725,17 @@
         loginSuccess();
     }
 
+    // 验证码弹框恢复
     function handleSignup(e) {
         e.preventDefault();
-        switchAuthView('verify');
-    }
-
-    function handleVerification(e) {
-        e.preventDefault();
-        const code = e.target.querySelector('input').value;
-        if(code === "000000" || code.length === 6) {
-            alert("Verification complete.");
+        alert("[SYSTEM MSG] A 6-digit verification cypher has been sent to your email.");
+        let code = prompt("Please enter the 6-digit verification code (e.g. 000000):", "");
+        
+        if (code === "000000" || (code && code.trim().length === 6)) {
+            alert("Verification complete. Registration successful.");
             loginSuccess();
-        } else {
-            alert("[ERROR] Invalid access cypher.");
+        } else if (code !== null) {
+            alert("[ERROR] Invalid access cypher. Registration aborted.");
         }
     }
 
@@ -774,8 +764,10 @@
 
     function loginSuccess() {
         isAuthenticated = true;
+        // 恢复退出登录按钮
         document.getElementById('auth-ui').innerHTML = `
-            <span style="color: var(--theme); font-size: 0.95rem; letter-spacing: 2px; font-weight:bold; font-family: 'Share Tech Mono', monospace;">LINK_ACTIVE // OPERATOR</span>
+            <span style="color: var(--theme); font-size: 0.95rem; letter-spacing: 2px; font-weight:bold; font-family: 'Share Tech Mono', monospace; margin-right: 10px;">LINK_ACTIVE</span>
+            <button class="btn-cyber btn-logout" onclick="handleLogout()" style="padding: 8px 15px; font-size: 0.8rem;">LOGOUT</button>
         `;
         document.querySelector('#home .viz-label').innerText = "SENTINEL_PROTOTYPE_v4 // LINK_ESTABLISHED";
         if(document.getElementById('auth').classList.contains('active')) {
@@ -783,7 +775,19 @@
         }
     }
 
-    // === Sentinel 3D 线框原型动画 (纯前端伪3D) ===
+    // 退出登录功能恢复
+    function handleLogout() {
+        isAuthenticated = false;
+        document.getElementById('auth-ui').innerHTML = `
+            <button class="btn-cyber" onclick="openAuth('login')" style="text-transform: none;">Log in</button>
+            <button class="btn-cyber btn-solid" onclick="openAuth('signup')" style="text-transform: none;">Sign up</button>
+        `;
+        document.querySelector('#home .viz-label').innerText = "SENTINEL_PROTOTYPE_v4 // BIOMETRIC_LINK_AWAITING";
+        alert("[SYSTEM] Operator logged out successfully.");
+        route('home');
+    }
+
+    // === Sentinel 3D 线框原型动画 ===
     const sentCanvas = document.getElementById('sentinel-canvas');
     const sentCtx = sentCanvas.getContext('2d');
     let sentinelAngle = 0;
@@ -996,7 +1000,7 @@
     setTimeout(() => {
         initSentinel();
         animateSentinel();
-    }, 1000); // 延迟启动，确保 DOM 就绪
+    }, 1000);
 
 </script>
 </body>
