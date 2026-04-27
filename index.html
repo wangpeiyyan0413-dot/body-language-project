@@ -441,7 +441,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
 
 <script>
-    // === Core Variables ===
     const URL = "https://teachablemachine.withgoogle.com/models/b274q64aJ/";
     let model, webcam, ctx, labelContainer, maxPredictions;
     let systemRunning = false;
@@ -449,7 +448,6 @@
     let loopFrame;
     let isAuthenticated = false;
 
-    // === Warp Speed Transition System ===
     const warpContainer = document.getElementById('warp-transition');
     const warpCanvas = document.getElementById('warp-canvas');
     let warpCtx = warpCanvas.getContext('2d');
@@ -514,14 +512,17 @@
         const warpText = document.getElementById('warp-text');
         setTimeout(() => warpText.style.opacity = '1', 300);
 
-        // Core Fix: Request camera immediately to preserve browser user gesture token
+        // Core Fix: Switch UI route IMMEDIATELY beneath the warp transition.
+        // This ensures the canvas is not display:none when webcam tries to draw.
+        route('experience'); 
+
+        // Start booting the camera immediately to respect browser gesture rules
         bootNeuralCore();
 
-        // After 2.5 seconds, reveal the actual experience interface
+        // Remove the warp transition cover after 2.5 seconds
         setTimeout(() => {
             cancelAnimationFrame(warpAnimId);
             warpContainer.style.opacity = '0';
-            route('experience'); 
             setTimeout(() => {
                 warpContainer.style.display = 'none';
                 warpText.style.opacity = '0';
@@ -529,7 +530,6 @@
         }, 2500);
     }
 
-    // === Intro Animation System ===
     const iCanvas = document.getElementById('intro-canvas');
     const iCtx = iCanvas.getContext('2d');
     let introPoints = [];
@@ -551,7 +551,6 @@
             let ty = radius * Math.sin(theta) * Math.sin(phi);
             let tz = radius * Math.cos(phi);
 
-            // Initial scattered particles
             let cx = (Math.random() - 0.5) * 4000;
             let cy = (Math.random() - 0.5) * 4000;
             let cz = (Math.random() - 0.5) * 4000;
@@ -577,22 +576,18 @@
         iCtx.fillStyle = '#00f0ff';
         introPoints.forEach(p => {
             if (explosionPhase) {
-                // Explosion phase
                 p.x += p.vx; p.y += p.vy; p.z += p.vz;
             } else {
-                // Converge to sphere
                 p.x += (p.tx - p.x) * 0.03;
                 p.y += (p.ty - p.y) * 0.03;
                 p.z += (p.tz - p.z) * 0.03;
             }
 
-            // 3D Rotation
             let y1 = p.y * cosX - p.z * sinX;
             let z1 = p.y * sinX + p.z * cosX;
             let x2 = p.x * cosY + z1 * sinY;
             let z2 = -p.x * sinY + z1 * cosY;
 
-            // Perspective projection
             const perspective = 600;
             const zDepth = perspective / (perspective - z2);
             const px = cx + x2 * zDepth * introScale;
@@ -627,7 +622,6 @@
         }, 800);
     }
 
-    // === Background Particle System ===
     const bgCanvas = document.getElementById('bg-canvas');
     const bgCtx = bgCanvas.getContext('2d');
     let particles = [];
@@ -699,7 +693,6 @@
         if(warpContainer.style.display === 'block') initWarp();
     });
 
-    // === UI Routing & Interaction ===
     function route(pageId) {
         document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
@@ -734,13 +727,11 @@
         loginSuccess();
     }
 
-    // === Random Verification Code & Strict Matching ===
     function handleSignup(e) {
         e.preventDefault();
         
         const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
         
-        // Simulated email prompt
         alert(`[SYSTEM MSG] A verification cypher has been sent to your email.\n\n[SIMULATED EMAIL]\nYour 6-digit verification code is: ${generatedCode}`);
         
         let code = prompt("Please enter the exact 6-digit verification code you received:", "");
@@ -778,7 +769,6 @@
 
     function loginSuccess() {
         isAuthenticated = true;
-        // Restore logout button
         document.getElementById('auth-ui').innerHTML = `
             <span style="color: var(--theme); font-size: 0.95rem; letter-spacing: 2px; font-weight:bold; font-family: 'Share Tech Mono', monospace; margin-right: 10px;">LINK_ACTIVE</span>
             <button class="btn-cyber btn-logout" onclick="handleLogout()" style="padding: 8px 15px; font-size: 0.8rem;">LOGOUT</button>
@@ -789,7 +779,6 @@
         }
     }
 
-    // Handle logout
     function handleLogout() {
         isAuthenticated = false;
         document.getElementById('auth-ui').innerHTML = `
@@ -801,7 +790,6 @@
         route('home');
     }
 
-    // === Sentinel 3D Wireframe Animation ===
     const sentCanvas = document.getElementById('sentinel-canvas');
     const sentCtx = sentCanvas.getContext('2d');
     let sentinelAngle = 0;
@@ -886,7 +874,7 @@
         requestAnimationFrame(animateSentinel);
     }
 
-    // === Teachable Machine Core System ===
+    // === Updated Camera Boot System ===
     async function bootNeuralCore() {
         if(systemRunning) return;
         
@@ -894,8 +882,6 @@
         consoleEl.innerHTML = "[SYSTEM] Booting Neural Kinetic Core...<br>Requesting optical sensor access...<br><span class='blink'>_</span>";
 
         try {
-            // STEP 1: Request camera immediately. 
-            // This prevents the browser from blocking the camera request due to the 2.5s animation delay.
             const size = 600;
             const flip = true; 
             webcam = new tmPose.Webcam(size, size, flip);
@@ -908,7 +894,6 @@
 
             consoleEl.innerHTML = "[SYSTEM] Optical sensor linked. Downloading Neural Model...<br><span class='blink'>_</span>";
 
-            // STEP 2: Load the model ONLY after camera access is secured.
             const modelURL = URL + "model.json";
             const metadataURL = URL + "metadata.json";
             model = await tmPose.load(modelURL, metadataURL);
@@ -920,8 +905,11 @@
             consoleEl.innerHTML = "[SYSTEM] Core Online. Analyzing kinetic patterns...<br><span class='blink'>_</span>";
 
         } catch(e) {
-            console.error(e);
-            consoleEl.innerHTML = `<span style="color:#ef4444">[ERROR] Neural Core boot failure. Sensor unlinked or permission denied.</span><br><br><span class="blink">_</span>`;
+            console.error("Camera Error:", e);
+            // 这里加入明显的报错提示，告诉你原因
+            consoleEl.innerHTML = `<span style="color:#ef4444">[ERROR] Sensor boot failure.<br><br>IF YOU SEE THIS:<br>1. Check camera permissions.<br>2. DO NOT open this file directly (file:///). Browsers block local camera access. Please use a local server (like VS Code Live Server) or host it online.</span><br><br><span class="blink">_</span>`;
+            
+            alert("CAMERA BLOCKED [ERROR]:\n\nIf you opened this file by simply double-clicking it (address bar shows 'file:///'), your browser will block the camera for security reasons.\n\nYou MUST run it through a local server (e.g., Live Server in VS Code) or upload it to a server.");
         }
     }
 
