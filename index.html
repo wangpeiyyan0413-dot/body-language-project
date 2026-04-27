@@ -369,6 +369,12 @@
                 </form>
                 <div style="text-align: center; margin: 20px 0; color: #64748b; font-family: 'Share Tech Mono', monospace;">[ OR ]</div>
                 <button class="btn-cyber" style="width: 100%; border-color: rgba(255,255,255,0.2); color: #fff;" onclick="initiateGoogleAuth()">
+                    <svg viewBox="0 0 48 48" width="20" height="20">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    </svg>
                     CONNECT VIA GOOGLE SECURE
                 </button>
                 <div class="auth-switch-link" onclick="switchAuthView('signup')">> REQUEST NEW ACCESS PROTOCOL</div>
@@ -742,7 +748,7 @@
         }, 800);
     }
 
-    // --- Sentinel Animation (UPGRADED) ---
+    // --- Sentinel Animation (ULTIMATE UPGRADE) ---
     const sentCanvas = document.getElementById('sentinel-canvas');
     const sentCtx = sentCanvas.getContext('2d');
     let sentinelAngle = 0;
@@ -799,120 +805,181 @@
         sentinelAngle += 0.005;
         
         const color = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
-        
-        // 1. Background Cybernetic Grid / Radar Rings
         const cx = sentCanvas.width / 2;
         const cy = sentCanvas.height / 2;
-        sentCtx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+
+        // --- 1. High-End Background HUD Elements ---
+        sentCtx.save();
+        sentCtx.translate(cx, cy);
+        
+        // Rotating Outer Ring
+        sentCtx.rotate(sentinelAngle * 0.5);
+        sentCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
         sentCtx.lineWidth = 1;
         sentCtx.beginPath();
-        sentCtx.arc(cx, cy, sentCanvas.width * 0.25, 0, Math.PI * 2);
+        sentCtx.arc(0, 0, sentCanvas.width * 0.38, 0, Math.PI * 2);
         sentCtx.stroke();
         
+        // Dashed Tech Ring
+        sentCtx.rotate(-sentinelAngle * 1.2);
         sentCtx.beginPath();
-        sentCtx.arc(cx, cy, sentCanvas.width * 0.35, 0, Math.PI * 2);
-        sentCtx.setLineDash([4, 8]);
+        sentCtx.arc(0, 0, sentCanvas.width * 0.35, 0, Math.PI * 2);
+        sentCtx.setLineDash([2, 6, 15, 6]);
+        sentCtx.strokeStyle = color;
+        sentCtx.globalAlpha = 0.2;
         sentCtx.stroke();
-        sentCtx.setLineDash([]); // reset line dash
 
+        // Inner Crosshair
+        sentCtx.setLineDash([]);
+        sentCtx.globalAlpha = 0.1;
+        sentCtx.beginPath();
+        sentCtx.moveTo(-sentCanvas.width * 0.4, 0);
+        sentCtx.lineTo(sentCanvas.width * 0.4, 0);
+        sentCtx.moveTo(0, -sentCanvas.height * 0.4);
+        sentCtx.lineTo(0, sentCanvas.height * 0.4);
+        sentCtx.stroke();
+        sentCtx.restore();
+
+        // --- 2. Projection and 3D Sorting ---
         const projected = {};
+        const nodesArr = [];
         wireframeBase.forEach(p => {
-            let offset = Math.sin(sentinelAngle * 2 + p.y) * 0.05;
+            // Add floating breath effect
+            let offset = Math.sin(sentinelAngle * 3 + p.y * 2) * 0.03;
             let tempP = {x: p.x, y: p.y + offset, z: p.z};
-            projected[p.id] = project(tempP, sentinelAngle, sentCanvas.width, sentCanvas.height);
+            let proj = project(tempP, sentinelAngle, sentCanvas.width, sentCanvas.height);
+            projected[p.id] = proj;
+            nodesArr.push({...proj, id: p.id});
         });
 
-        // 2. Geometric Facets (Low-Poly / Planar Style Overlay)
-        const pLS = projected['lShoulder'];
-        const pRS = projected['rShoulder'];
-        const pLH = projected['lHip'];
-        const pRH = projected['rHip'];
+        // Sort nodes by Z-index for fake 3D depth rendering
+        nodesArr.sort((a, b) => a.z - b.z);
+
+        // --- 3. Core Geometric Torso (Glass/Hologram Effect) ---
+        const pLS = projected['lShoulder'], pRS = projected['rShoulder'];
+        const pLH = projected['lHip'], pRH = projected['rHip'];
         const pN = projected['nose'];
 
         if(pLS && pRS && pLH && pRH && pN) {
+            // Core Center Point
+            const coreX = (pLS.x + pRS.x + pLH.x + pRH.x) / 4;
+            const coreY = (pLS.y + pRS.y + pLH.y + pRH.y) / 4;
+
+            // Glowing Arc Reactor in Chest
+            sentCtx.globalAlpha = 0.5 + Math.sin(Date.now()*0.005)*0.2;
             sentCtx.fillStyle = color;
-            
-            // Upper Torso Facet
-            sentCtx.globalAlpha = 0.08;
+            sentCtx.shadowBlur = 20;
+            sentCtx.shadowColor = color;
             sentCtx.beginPath();
-            sentCtx.moveTo(pN.x, pN.y);
-            sentCtx.lineTo(pLS.x, pLS.y);
-            sentCtx.lineTo(pRS.x, pRS.y);
-            sentCtx.closePath();
+            sentCtx.arc(coreX, coreY, 8, 0, Math.PI*2);
             sentCtx.fill();
+            sentCtx.shadowBlur = 0;
 
-            // Mid Torso Left Facet
-            sentCtx.globalAlpha = 0.05;
-            sentCtx.beginPath();
-            sentCtx.moveTo(pLS.x, pLS.y);
-            sentCtx.lineTo(pRH.x, pRH.y);
-            sentCtx.lineTo(pLH.x, pLH.y);
-            sentCtx.closePath();
-            sentCtx.fill();
+            // Draw Glass Facets connecting to Core
+            const drawFacet = (p1, p2, p3, alpha) => {
+                sentCtx.fillStyle = color;
+                sentCtx.globalAlpha = alpha;
+                sentCtx.beginPath();
+                sentCtx.moveTo(p1.x, p1.y);
+                sentCtx.lineTo(p2.x, p2.y);
+                sentCtx.lineTo(p3.x, p3.y);
+                sentCtx.closePath();
+                sentCtx.fill();
+                
+                // Wireframe edge
+                sentCtx.strokeStyle = '#fff';
+                sentCtx.globalAlpha = alpha * 1.5;
+                sentCtx.lineWidth = 0.5;
+                sentCtx.stroke();
+            };
 
-            // Mid Torso Right Facet
-            sentCtx.globalAlpha = 0.03;
-            sentCtx.beginPath();
-            sentCtx.moveTo(pRS.x, pRS.y);
-            sentCtx.lineTo(pRH.x, pRH.y);
-            sentCtx.lineTo(pLS.x, pLS.y);
-            sentCtx.closePath();
-            sentCtx.fill();
+            drawFacet(pLS, pRS, {x:coreX, y:coreY}, 0.08); // Top chest
+            drawFacet(pLS, pLH, {x:coreX, y:coreY}, 0.04); // Left rib
+            drawFacet(pRS, pRH, {x:coreX, y:coreY}, 0.02); // Right rib
+            drawFacet(pLH, pRH, {x:coreX, y:coreY}, 0.06); // Bottom abs
+            drawFacet(pN, pLS, pRS, 0.05); // Neck/head plane
         }
 
-        // 3. Cybernetic Connections (Glowing lines + Data Pulses)
+        // --- 4. Cybernetic Bones (Dual-line glow) ---
         connections.forEach(conn => {
             const p1 = projected[conn[0]];
             const p2 = projected[conn[1]];
             if(p1 && p2) {
-                // Core Line
+                // Calculate depth alpha
+                let depthAlpha = Math.max(0.1, 1 - ((p1.z + p2.z) / 2));
+                
+                // Thick glowing base
                 sentCtx.strokeStyle = color;
-                sentCtx.globalAlpha = 0.4;
-                sentCtx.lineWidth = 1.5;
+                sentCtx.globalAlpha = depthAlpha * 0.3;
+                sentCtx.lineWidth = 3;
                 sentCtx.beginPath();
                 sentCtx.moveTo(p1.x, p1.y);
                 sentCtx.lineTo(p2.x, p2.y);
                 sentCtx.stroke();
 
-                // Energy Pulse (Data streaming along the bones)
-                let timeOffset = (Date.now() / 1000 + conn[0].length * 0.1) % 1; 
+                // Thin core wire
+                sentCtx.strokeStyle = '#fff';
+                sentCtx.globalAlpha = depthAlpha * 0.8;
+                sentCtx.lineWidth = 1;
+                sentCtx.stroke();
+
+                // Data particles moving along the bone
+                let timeOffset = (Date.now() / 1500 + conn[0].length * 0.1) % 1; 
                 let dotX = p1.x + (p2.x - p1.x) * timeOffset;
                 let dotY = p1.y + (p2.y - p1.y) * timeOffset;
                 
-                sentCtx.fillStyle = '#fff';
-                sentCtx.globalAlpha = 0.9;
-                sentCtx.shadowBlur = 10;
-                sentCtx.shadowColor = color;
+                sentCtx.fillStyle = color;
+                sentCtx.globalAlpha = depthAlpha;
                 sentCtx.beginPath();
-                sentCtx.arc(dotX, dotY, 1.5, 0, Math.PI * 2);
+                sentCtx.arc(dotX, dotY, 2, 0, Math.PI * 2);
                 sentCtx.fill();
-                sentCtx.shadowBlur = 0; // reset
             }
         });
 
-        // 4. Advanced Geometric Nodes
-        Object.values(projected).forEach(p => {
-            // Outer Targeting Ring
+        // --- 5. High-End Nodes (Rendered back-to-front for depth) ---
+        nodesArr.forEach(p => {
+            let depthScale = Math.max(0.5, 1.2 - p.z * 0.5); // Closer = bigger
+            let alpha = Math.max(0.2, 1 - p.z);
+            
+            // Tech Node Ring
             sentCtx.strokeStyle = color;
-            sentCtx.globalAlpha = 0.3;
+            sentCtx.globalAlpha = alpha * 0.5;
             sentCtx.lineWidth = 1;
             sentCtx.beginPath();
-            sentCtx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+            sentCtx.arc(p.x, p.y, 8 * depthScale, 0, Math.PI * 2);
             sentCtx.stroke();
 
-            // Inner Diamond Core
-            sentCtx.fillStyle = '#020204';
-            sentCtx.globalAlpha = 1;
+            // Inner Cross
             sentCtx.beginPath();
-            sentCtx.moveTo(p.x, p.y - 3);
-            sentCtx.lineTo(p.x + 3, p.y);
-            sentCtx.lineTo(p.x, p.y + 3);
-            sentCtx.lineTo(p.x - 3, p.y);
-            sentCtx.closePath();
-            sentCtx.fill();
-            
-            sentCtx.globalAlpha = 0.9;
+            sentCtx.moveTo(p.x - 4*depthScale, p.y);
+            sentCtx.lineTo(p.x + 4*depthScale, p.y);
+            sentCtx.moveTo(p.x, p.y - 4*depthScale);
+            sentCtx.lineTo(p.x, p.y + 4*depthScale);
             sentCtx.stroke();
+
+            // Bright Core Dot
+            sentCtx.fillStyle = '#fff';
+            sentCtx.globalAlpha = alpha;
+            sentCtx.beginPath();
+            sentCtx.arc(p.x, p.y, 2 * depthScale, 0, Math.PI * 2);
+            sentCtx.fill();
+
+            // Add HUD text to specific nodes
+            if (['lWrist', 'rWrist', 'nose'].includes(p.id) && alpha > 0.5) {
+                sentCtx.fillStyle = color;
+                sentCtx.globalAlpha = alpha * 0.7;
+                sentCtx.font = "10px 'Share Tech Mono', monospace";
+                sentCtx.fillText(`[${p.id.substring(0,3).toUpperCase()}]`, p.x + 12*depthScale, p.y - 5);
+                sentCtx.fillText(`${(p.z).toFixed(2)}`, p.x + 12*depthScale, p.y + 5);
+                
+                // Leader line
+                sentCtx.beginPath();
+                sentCtx.moveTo(p.x + 4*depthScale, p.y - 4*depthScale);
+                sentCtx.lineTo(p.x + 10*depthScale, p.y - 10*depthScale);
+                sentCtx.lineTo(p.x + 25*depthScale, p.y - 10*depthScale);
+                sentCtx.globalAlpha = alpha * 0.3;
+                sentCtx.stroke();
+            }
         });
 
         requestAnimationFrame(animateSentinel);
