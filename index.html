@@ -444,10 +444,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
 <script>
-    // ==========================================
-    // 已在此为您替换上专属模型链接
     const URL = "https://teachablemachine.withgoogle.com/models/sTBoNGgmv/"; 
-    // ==========================================
 
     let model, webcam, webcamCtx, labelContainer, maxPredictions;
     let systemRunning = false;
@@ -745,7 +742,9 @@
         }, 800);
     }
 
-    // --- Sentinel Animation ---
+    // =========================================================================
+    // 【高级科幻 Sentinel 骨骼节点动画系统】 (唯一重写的部分)
+    // =========================================================================
     const sentCanvas = document.getElementById('sentinel-canvas');
     const sentCtx = sentCanvas.getContext('2d');
     let sentinelAngle = 0;
@@ -799,41 +798,125 @@
             return;
         }
         sentCtx.clearRect(0, 0, sentCanvas.width, sentCanvas.height);
+        
+        let time = Date.now() * 0.001; 
         sentinelAngle += 0.005;
         
         const color = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
-        sentCtx.strokeStyle = color;
-        sentCtx.fillStyle = color;
-        sentCtx.lineWidth = 2;
+        const cx = sentCanvas.width / 2;
+        const cy = sentCanvas.height / 2;
 
+        // 1. Draw High-Tech Radar Background (动态科技雷达背景)
+        sentCtx.save();
+        sentCtx.translate(cx, cy);
+        sentCtx.strokeStyle = color;
+        sentCtx.globalAlpha = 0.2;
+        sentCtx.lineWidth = 1;
+        
+        sentCtx.rotate(time * 0.5);
+        sentCtx.setLineDash([2, 6]);
+        sentCtx.beginPath();
+        sentCtx.arc(0, 0, sentCanvas.width * 0.25, 0, Math.PI * 2);
+        sentCtx.stroke();
+        
+        sentCtx.rotate(-time * 0.8);
+        sentCtx.setLineDash([15, 10, 5, 10]);
+        sentCtx.beginPath();
+        sentCtx.arc(0, 0, sentCanvas.width * 0.35, 0, Math.PI * 2);
+        sentCtx.stroke();
+        sentCtx.restore();
+
+        // 2. Project 3D Points
         const projected = {};
-        wireframeBase.forEach(p => {
+        wireframeBase.forEach((p, index) => {
             let offset = Math.sin(sentinelAngle * 2 + p.y) * 0.05;
             let tempP = {x: p.x, y: p.y + offset, z: p.z};
             projected[p.id] = project(tempP, sentinelAngle, sentCanvas.width, sentCanvas.height);
+            projected[p.id].index = index; 
         });
+
+        // 3. Draw Cyberpunk Bones (骨骼连线与能量流)
+        sentCtx.shadowBlur = 10;
+        sentCtx.shadowColor = color;
+        sentCtx.strokeStyle = color;
+        sentCtx.lineWidth = 1.5;
+        sentCtx.setLineDash([]); 
 
         connections.forEach(conn => {
             const p1 = projected[conn[0]];
             const p2 = projected[conn[1]];
             if(p1 && p2) {
+                sentCtx.globalAlpha = 0.5;
                 sentCtx.beginPath();
                 sentCtx.moveTo(p1.x, p1.y);
                 sentCtx.lineTo(p2.x, p2.y);
-                sentCtx.globalAlpha = 0.5;
                 sentCtx.stroke();
+                
+                // Energy Flow (在线条上移动的数据包)
+                let pulsePos = (time * 1.5 + (p1.x + p1.y) * 0.01) % 1; 
+                let lx = p1.x + (p2.x - p1.x) * pulsePos;
+                let ly = p1.y + (p2.y - p1.y) * pulsePos;
+                
+                sentCtx.shadowBlur = 0; 
+                sentCtx.fillStyle = '#ffffff';
+                sentCtx.globalAlpha = 0.9;
+                sentCtx.fillRect(lx - 1.5, ly - 1.5, 3, 3);
+                
+                sentCtx.shadowBlur = 10;
+                sentCtx.shadowColor = color;
             }
         });
 
+        // 4. Draw Advanced Stylized Nodes (高级复合式节点)
+        sentCtx.shadowBlur = 0; 
+        
         Object.values(projected).forEach(p => {
+            // Core node dot (核心圆点)
+            sentCtx.fillStyle = color;
+            sentCtx.globalAlpha = 1;
             sentCtx.beginPath();
-            sentCtx.arc(p.x, p.y, 3, 0, Math.PI*2);
-            sentCtx.globalAlpha = 0.9;
+            sentCtx.arc(p.x, p.y, 2, 0, Math.PI*2);
             sentCtx.fill();
+
+            // Breathing outer targeting ring (呼吸外环)
+            let breath = Math.sin(time * 3 + p.index) * 2;
+            sentCtx.strokeStyle = color;
+            sentCtx.lineWidth = 1;
+            sentCtx.globalAlpha = 0.6;
+            sentCtx.beginPath();
+            sentCtx.arc(p.x, p.y, 6 + breath, 0, Math.PI*2);
+            sentCtx.stroke();
+
+            // Tactical crosshairs (战术十字准星)
+            sentCtx.globalAlpha = 0.3;
+            sentCtx.beginPath();
+            sentCtx.moveTo(p.x - 12, p.y); sentCtx.lineTo(p.x + 12, p.y);
+            sentCtx.moveTo(p.x, p.y - 12); sentCtx.lineTo(p.x, p.y + 12);
+            sentCtx.stroke();
+
+            // Data readouts (节点附近的动态十六进制坐标折线UI)
+            if (p.index % 4 === 0 || p.id === 'nose') {
+                sentCtx.font = "10px 'Share Tech Mono'";
+                sentCtx.fillStyle = color;
+                sentCtx.globalAlpha = 0.8;
+                
+                let hexX = Math.abs(Math.floor(p.x)).toString(16).toUpperCase().padStart(3, '0');
+                let hexY = Math.abs(Math.floor(p.y)).toString(16).toUpperCase().padStart(3, '0');
+                let dataStr = `SYS_${p.index}[${hexX}:${hexY}]`;
+                
+                sentCtx.beginPath();
+                sentCtx.moveTo(p.x + 5, p.y - 5);
+                sentCtx.lineTo(p.x + 15, p.y - 15);
+                sentCtx.lineTo(p.x + 35, p.y - 15);
+                sentCtx.stroke();
+                
+                sentCtx.fillText(dataStr, p.x + 15, p.y - 18);
+            }
         });
 
         requestAnimationFrame(animateSentinel);
     }
+    // =========================================================================
 
     // --- Warp Speed Math ---
     const wCanvas = document.getElementById('warp-canvas');
@@ -933,9 +1016,6 @@
         const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
         const prediction = await model.predict(posenetOutput);
         
-        // ========================================================
-        // 关键调用：在这里渲染摄像头画面和人体骨骼
-        // ========================================================
         drawWebcamPose(pose);
 
         let topIndex = 0;
