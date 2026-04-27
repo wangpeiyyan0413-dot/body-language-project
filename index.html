@@ -3,10 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Motion Emotion System - Kinetic Interface</title>
+    <title>Motion Emotion System - Motion-Based Emotion Recognition v1.0</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
-
         :root {
             --theme: #00f0ff; 
             --theme-glow: rgba(0, 240, 255, 0.4);
@@ -25,7 +29,7 @@
             overflow: hidden;
         }
 
-        /* --- Intro Animation System --- */
+        /* --- Intro Animation --- */
         #intro-screen {
             position: fixed; inset: 0; z-index: 9999;
             background: #020204;
@@ -55,7 +59,7 @@
             transform: scale(1.05);
         }
 
-        /* --- Warp Animation System --- */
+        /* --- Warp Transition --- */
         #warp-transition {
             position: fixed; inset: 0; z-index: 99999; background: #020204;
             display: none; opacity: 0; transition: opacity 0.5s;
@@ -68,6 +72,7 @@
             text-shadow: 0 0 20px var(--theme-glow); white-space: nowrap; font-weight: 700;
         }
 
+        /* --- Main Layout --- */
         #app-container {
             width: 100vw; height: 100vh; position: relative;
             background: radial-gradient(circle at center, #0a0a15 0%, var(--bg-base) 100%);
@@ -75,7 +80,7 @@
             opacity: 0;
         }
 
-        #bg-canvas { position: absolute; inset: 0; z-index: 1; opacity: 0.8; }
+        #bg-canvas { position: absolute; inset: 0; z-index: 1; opacity: 0.8; pointer-events: none; }
 
         nav {
             position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
@@ -103,15 +108,8 @@
         .btn-cyber:hover { background: var(--theme); color: #000; box-shadow: 0 0 20px var(--theme-glow); font-weight: bold;}
         .btn-solid { background: var(--theme); color: #000; font-weight: bold; border: none; }
 
-        .btn-logout {
-            border-color: #ef4444 !important; 
-            color: #ef4444 !important;
-        }
-        .btn-logout:hover {
-            background: #ef4444 !important; 
-            color: #000 !important; 
-            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4) !important;
-        }
+        .btn-logout { border-color: #ef4444 !important; color: #ef4444 !important; }
+        .btn-logout:hover { background: #ef4444 !important; color: #000 !important; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4) !important; }
 
         .page-content {
             position: absolute; top: 70px; left: 0; right: 0; bottom: 0;
@@ -129,6 +127,7 @@
         h2 { font-size: 2.5rem; letter-spacing: 4px; color: var(--theme); text-shadow: 0 0 15px var(--theme-glow); border-bottom: 1px solid rgba(0, 240, 255, 0.2); padding-bottom: 10px; display: inline-block;}
         p { font-size: 1.2rem; line-height: 1.8; color: #94a3b8; margin-bottom: 25px; max-width: 900px; font-weight: 500;}
 
+        /* --- Home View --- */
         #home { flex-direction: row; align-items: center; justify-content: space-between; padding-top: 0; padding-bottom: 0;}
         #home .hero-text { flex: 1; max-width: 55%; z-index: 15; }
         
@@ -157,6 +156,7 @@
         .tech-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.6); border-color: rgba(0, 240, 255, 0.4); background: rgba(15, 20, 40, 0.8);}
         .tech-card h3 { color: #fff; font-size: 1.5rem; letter-spacing: 2px;}
 
+        /* --- Auth View --- */
         #auth { justify-content: center; align-items: center; }
         .auth-box {
             width: 480px; padding: 50px; background: rgba(5, 5, 12, 0.85);
@@ -199,6 +199,7 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* --- Experience/Testing View --- */
         #experience { padding: 30px 5vw; }
         .hud-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; height: 100%; align-items: stretch; }
         
@@ -206,8 +207,11 @@
             position: relative; background: #000; border: 1px solid rgba(255,255,255,0.1);
             overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.8);
             clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+            display: flex; justify-content: center; align-items: center;
         }
         #video-core::before { content:''; position: absolute; inset:0; border: 2px solid var(--theme); pointer-events: none; z-index: 10; clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);}
+        
+        /* Fixed Canvas Style for Display */
         canvas#webcam-canvas { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.1) brightness(1.1); }
         
         .scanner {
@@ -233,648 +237,547 @@
         #ai-console {
             flex-grow: 1; background: rgba(0,0,0,0.8); border: 1px solid rgba(0, 240, 255, 0.2); padding: 30px;
             font-size: 1.1rem; line-height: 1.8; color: var(--theme); overflow-y: auto;
-            font-family: 'Share Tech Mono', monospace; box-shadow: inset 0 0 40px rgba(0,0,0,0.9);
-            clip-path: polygon(20px 0, 100% 0, 100% 100%, 0 100%, 0 20px);
+            font-family: 'Share Tech Mono', monospace; box-shadow: inset 0 0 40px rgba(0,240,255,0.05);
         }
-        .blink { animation: textBlink 1s infinite; }
-        @keyframes textBlink { 50% { opacity: 0; } }
-
-        .fx-pulse #viewport-overlay {
-            position: absolute; inset: 0; pointer-events: none; z-index: 2;
-            background: radial-gradient(circle, transparent 30%, var(--theme-glow) 150%);
-            animation: pulseGlow 2s infinite alternate;
-        }
-        @keyframes pulseGlow { from { opacity: 0.1; } to { opacity: 0.4; } }
-
-        .fx-shake .hud-box, .fx-shake #video-core { animation: shakeFrame 0.2s infinite; }
-        @keyframes shakeFrame { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -1px); } 100% { transform: translate(-1px, 1px); } }
-        .fx-shake canvas#webcam-canvas { filter: contrast(1.4) brightness(1.1) saturate(1.5) hue-rotate(-10deg); }
-
+        
+        .blink { animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
 
-<div id="intro-screen">
-    <canvas id="intro-canvas"></canvas>
-    <div class="intro-content">
-        <div class="intro-title">MOTION EMOTION</div>
-        <div class="intro-sub">MOTION-BASED EMOTION RECOGNITION V1.0</div>
-        <button class="btn-enter" onclick="startApp()">INITIALIZE SYSTEM</button>
-    </div>
-</div>
-
-<div id="warp-transition">
-    <canvas id="warp-canvas"></canvas>
-    <div id="warp-text">NEURAL LINKING...</div>
-</div>
-
-<div id="app-container">
-    <canvas id="bg-canvas"></canvas>
-    <div id="viewport-overlay"></div>
-
-    <nav>
-        <div class="logo">Motion Emotion System</div>
-        <ul class="nav-links">
-            <li class="active" onclick="route('home')">HOME</li>
-            <li onclick="route('about')">ABOUT US</li>
-            <li onclick="route('project')">PROJECT</li>
-            <li onclick="route('guide')">GUIDE</li>
-        </ul>
-        <div class="auth-cluster" id="auth-ui">
-            <button class="btn-cyber" onclick="openAuth('login')" style="text-transform: none;">Log in</button>
-            <button class="btn-cyber btn-solid" onclick="openAuth('signup')" style="text-transform: none;">Sign up</button>
-        </div>
-    </nav>
-
-    <div id="home" class="page-content active">
-        <div class="hero-text">
-            <p style="color: var(--theme); letter-spacing: 6px; margin-bottom: 20px; font-weight: 700; font-family: 'Share Tech Mono', monospace;">[ CALM · ANXIETY · HAPPINESS ]</p>
-            <h1>Emotion Recognition System</h1>
-            <p style="font-size: 1.6rem; color: #fff; margin-bottom: 10px; font-family: 'Rajdhani', sans-serif; font-weight: 600;">A motion-based emotion recognition interface.</p>
-            <p style="letter-spacing: 3px; color: var(--theme); opacity: 0.8; font-family: 'Share Tech Mono', monospace;">DETERMINED BY YOUR BODY</p>
-            <div style="margin-top: 50px;">
-                <button class="btn-cyber btn-solid" style="padding: 22px 65px; font-size: 1.3rem;" onclick="attemptStart()">START EXPERIENCE</button>
-            </div>
-        </div>
-        
-        <div id="sentinel-viz">
-            <canvas id="sentinel-canvas"></canvas>
-            <div class="viz-label">SENTINEL_PROTOTYPE_v4 // BIOMETRIC_LINK_AWAITING</div>
+    <div id="intro-screen">
+        <canvas id="intro-canvas"></canvas>
+        <div class="intro-content">
+            <div class="intro-title">SYSTEM INIT</div>
+            <div class="intro-sub">Motion-Based Emotion Recognition v1.0</div>
+            <button class="btn-enter" onclick="startApp()">INITIALIZE</button>
         </div>
     </div>
 
-    <div id="about" class="page-content">
-        <h2>ABOUT US</h2>
-        <div class="tech-card" style="max-width: 1100px; margin-top: 30px;">
-            <p>We are creators from a background in visual and digital media, focusing on the relationship between technology and human perception. We attempt to observe and understand emotions not through language, but through bodily movement. This project is based on AI motion recognition, translating human gestures into emotional signals and exploring whether emotions can truly be "recognized."</p>
-            <p>By training and classifying three fundamental emotional states—Calm, Anxiety, and Happiness—we developed a system where users interact without words, relying solely on physical expression. Using accessible machine learning tools, we transform complex AI processes into an intuitive and perceptible experience.</p>
-            <p>In an era where artificial intelligence increasingly participates in interpretation and decision-making, we hope this project prompts reflection: are emotions truly understood, or merely identified and defined?</p>
-        </div>
+    <div id="warp-transition">
+        <canvas id="warp-canvas"></canvas>
+        <div id="warp-text">ESTABLISHING UPLINK...</div>
     </div>
 
-    <div id="project" class="page-content">
-        <h2>PROJECT DETAILS</h2>
-        <div class="tech-card" style="max-width: 1100px; margin-top: 30px;">
-            <p>In today's digital environment, artificial intelligence is increasingly involved in analyzing and interpreting human behavior and emotions. However, most emotion recognition systems rely heavily on facial expressions or voice input, which to some extent limits the diversity of emotional expression. Therefore, this project approaches the problem from a different perspective—using body movement as the primary basis for recognition, with facial expression as a secondary reference, to explore a more holistic way of perceiving human emotions.</p>
-            <p>This project is developed using Google's Teachable Machine platform. By collecting and training motion data, we built a model capable of recognizing three fundamental emotional states: Calm, Anxiety, and Happiness. In the interactive experience, users do not need to provide verbal input; instead, they express emotions through specific body movements, which the system recognizes and responds to in real time, creating an intuitive human–computer interaction process.</p>
-            <p>Through this approach, we aim to move beyond traditional face-centered emotion recognition and shift attention toward the expressive potential of the human body. At the same time, by leveraging accessible machine learning tools, we transform complex technical processes into participatory and experiential interactions, allowing users to understand the technology through engagement and reconsider how emotions are perceived and defined.</p>
-        </div>
-    </div>
+    <div id="app-container">
+        <canvas id="bg-canvas"></canvas>
 
-    <div id="guide" class="page-content">
-        <h2>CALIBRATION PROTOCOL</h2>
-        <p style="margin-bottom: 40px; font-family: 'Share Tech Mono', monospace;">> OPERATORS MUST MAINTAIN A DISTANCE OF 2-3 METERS FROM SENSOR. MATCH KINETIC REFERENCES BELOW.</p>
-        <div class="grid-cards">
-            <div class="tech-card" style="border-top-color: #0088ff; text-align: center;">
-                <svg viewBox="0 0 100 100" width="100" height="100" stroke="#0088ff" stroke-width="4" stroke-linecap="round" fill="none" style="margin-bottom: 25px; filter: drop-shadow(0 0 15px rgba(0,136,255,0.6));">
-                    <circle cx="50" cy="20" r="10"/>
-                    <path d="M50 30 v35 M50 35 l-15 25 M50 35 l15 25 M50 65 l-12 30 M50 65 l12 30"/>
-                </svg>
-                <h3 style="color: #0088ff">[01] CALM (BASELINE)</h3>
-                <p style="text-align: left; font-size: 1.1rem; color: #94a3b8;">Neutral, relaxed posture. Arms hang naturally at sides. Static or minimal movement. Mapped as biological homeostasis.</p>
+        <nav>
+            <div class="logo">MOTION EMOTION SYSTEM</div>
+            <ul class="nav-links">
+                <li id="nav-home" class="active" onclick="route('home')">OVERVIEW</li>
+                <li id="nav-about" onclick="route('about')">DATABASE</li>
+                <li id="nav-project" onclick="route('project')">DOCUMENTATION</li>
+            </ul>
+            <div class="auth-cluster" id="auth-cluster-ui">
+                <button class="btn-cyber" onclick="route('auth', 'login')">LOG IN</button>
+                <button class="btn-cyber btn-solid" onclick="route('auth', 'signup')">SIGN UP</button>
             </div>
-            <div class="tech-card" style="border-top-color: #ff0055; text-align: center;">
-                <svg viewBox="0 0 100 100" width="100" height="100" stroke="#ff0055" stroke-width="4" stroke-linecap="round" fill="none" style="margin-bottom: 25px; filter: drop-shadow(0 0 15px rgba(255,0,85,0.6));">
-                    <circle cx="50" cy="25" r="10"/>
-                    <path d="M50 35 v30 M50 40 l-18 -15 l 10 -15 M50 40 l18 -15 l -10 -15 M50 65 l-15 20 l 0 10 M50 65 l15 20 l 0 10"/>
-                </svg>
-                <h3 style="color: #ff0055">[02] ANXIOUS (STRESS)</h3>
-                <p style="text-align: left; font-size: 1.1rem; color: #94a3b8;">Closed posture. Restless inward motions. Hands touching face or head. Leaning forward. Mapped as kinetic overload.</p>
+        </nav>
+
+        <div id="home" class="page-content active">
+            <div class="hero-text">
+                <h1>KINETIC<br>EMOTION<br>ENGINE</h1>
+                <p>Motion-Based Emotion Recognition v1.0 interprets your skeletal structure and kinetic data in real-time. Engage the optical sensors to initiate behavioral mapping sequence.</p>
+                <br>
+                <button class="btn-cyber btn-solid" style="padding: 18px 40px; font-size: 1.2rem;" onclick="checkAuthAndTest()">INITIATE TESTING PROTOCOL</button>
             </div>
-            <div class="tech-card" style="border-top-color: #00ffcc; text-align: center;">
-                <svg viewBox="0 0 100 100" width="100" height="100" stroke="#00ffcc" stroke-width="4" stroke-linecap="round" fill="none" style="margin-bottom: 25px; filter: drop-shadow(0 0 15px rgba(0,255,204,0.6));">
-                    <circle cx="50" cy="20" r="10"/>
-                    <path d="M50 30 v30 M50 35 l-20 -15 M50 35 l20 -15 M50 60 l-15 30 M50 60 l15 30"/>
-                </svg>
-                <h3 style="color: #00ffcc">[03] HAPPY (ENERGY)</h3>
-                <p style="text-align: left; font-size: 1.1rem; color: #94a3b8;">Open, expansive posture. Arms raised or spread wide. Dynamic and fluid movement. Mapped as endorphin release.</p>
+            <div id="sentinel-viz">
+                <canvas id="sentinel-canvas"></canvas>
+                <div class="viz-label">BIOMETRIC TRACKING ACTIVE // NODE 01</div>
             </div>
         </div>
-    </div>
 
-    <div id="auth" class="page-content">
-        <div class="auth-box">
-            <div id="auth-view-login" class="auth-view active">
-                <h2 style="font-size: 1.8rem; margin-bottom: 30px;">SYSTEM LOGIN</h2>
-                <button class="btn-cyber btn-solid" style="width: 100%; margin-bottom: 20px; font-size: 1.1rem; padding: 15px; background: #fff;" onclick="initiateGoogleAuth()">
-                    <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                    SIGN IN WITH GOOGLE
-                </button>
-                <div style="text-align: center; color: #64748b; margin-bottom: 20px; font-family: 'Share Tech Mono', monospace;">- OR ACCESS DIRECTLY -</div>
-                <form onsubmit="handleLogin(event)">
-                    <div class="input-group">
-                        <label>OPERATOR ID (EMAIL)</label>
-                        <input type="email" required placeholder="operator@core.net">
-                    </div>
-                    <div class="input-group">
-                        <label>SECURITY CYPHER (PASSWORD)</label>
-                        <input type="password" required placeholder="••••••••">
-                    </div>
-                    <button type="submit" class="btn-cyber" style="width: 100%; font-size: 1.2rem; padding: 18px;">INITIATE LOGIN</button>
-                </form>
-                <div class="auth-switch-link" onclick="switchAuthView('signup')">REQUEST NEW ACCESS CREDENTIALS ></div>
-            </div>
-
-            <div id="auth-view-signup" class="auth-view">
-                <h2 style="font-size: 1.8rem; margin-bottom: 30px;">NEW REGISTRATION</h2>
-                <div class="verification-warning">>>> REAL VERIFICATION CYPHER REQUIRED <<<</div>
-                <form onsubmit="handleSignup(event)">
-                    <div class="input-group">
-                        <label>REGISTER ID (EMAIL)</label>
-                        <input type="email" required placeholder="new_operator@core.net">
-                    </div>
-                    <div class="input-group">
-                        <label>SECURITY CYPHER (PASSWORD)</label>
-                        <input type="password" required placeholder="••••••••">
-                    </div>
-                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.2rem; padding: 18px;">SEND CYPHER TO EMAIL</button>
-                </form>
-                <div class="auth-switch-link" onclick="switchAuthView('login')">< RETURN TO LOGIN</div>
-            </div>
-
-            <div id="auth-view-google" class="auth-view">
-                <div class="google-loader">
-                    <div class="spinner"></div>
-                    <h3 id="google-status-text" style="color: #fff; letter-spacing: 3px; font-size: 1.2rem; font-family: 'Share Tech Mono', monospace;">CONNECTING...</h3>
+        <div id="about" class="page-content">
+            <h2>EMOTION DATABASE</h2>
+            <p>Accessing the structural classification parameters mapped by the neural network.</p>
+            <div class="grid-cards">
+                <div class="tech-card" style="border-top-color: #00f0ff;">
+                    <h3>NEUTRAL</h3>
+                    <p style="margin-top:15px; font-size:0.95rem;">Baseline physical state. Arms hang naturally at sides. Static or minimal movement. Mapped as biological homeostasis.</p>
+                </div>
+                <div class="tech-card" style="border-top-color: #ff0055;">
+                    <h3>AGGRESSIVE</h3>
+                    <p style="margin-top:15px; font-size:0.95rem;">Elevated kinetic energy. Rapid positional shifts. Defensive or striking postures detected in upper skeletal nodes.</p>
+                </div>
+                <div class="tech-card" style="border-top-color: #bb00ff;">
+                    <h3>EUPHORIC</h3>
+                    <p style="margin-top:15px; font-size:0.95rem;">Expansive poses. Upward trajectory of arm extremities. High frequency rhythmic micro-movements indicating positive excitation.</p>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div id="experience" class="page-content">
-        <button class="btn-cyber btn-logout" style="position: absolute; top: 20px; right: 8vw; z-index: 50;" onclick="terminateSystem()">TERMINATE CONNECTION</button>
-        <div class="hud-layout">
-            <div id="video-core">
-                <div class="scanner"></div>
-                <canvas id="webcam-canvas"></canvas>
-            </div>
-            <div class="data-panel">
-                <div class="hud-box">
-                    <h3 style="color: var(--theme); margin-bottom: 25px; border-bottom: 1px solid rgba(0, 240, 255, 0.2); padding-bottom: 10px;">NEURAL OUTPUT DATA</h3>
-                    <div class="bar-wrap"><div class="bar-label"><span>[01] CALM (BASELINE)</span></div><div class="bar-bg"><div class="bar-fill" id="bar-0"></div></div></div>
-                    <div class="bar-wrap"><div class="bar-label"><span>[02] ANXIOUS (STRESS)</span></div><div class="bar-bg"><div class="bar-fill" id="bar-1"></div></div></div>
-                    <div class="bar-wrap"><div class="bar-label"><span>[03] HAPPY (ENERGY)</span></div><div class="bar-bg"><div class="bar-fill" id="bar-2"></div></div></div>
-                </div>
-                <div id="ai-console">
-                    Awaiting connection...<br><span class="blink">_</span>
-                </div>
+        <div id="project" class="page-content">
+            <h2>SYSTEM DOCUMENTATION</h2>
+            <p>Motion-Based Emotion Recognition v1.0 Architecture Overview.</p>
+            <div class="hud-box" style="margin-top: 30px;">
+                <p><strong>CORE ENGINE:</strong> TensorFlow.js Neural Framework</p>
+                <p><strong>INPUT PROTOCOL:</strong> Standard RGB Optical Sensor (Webcam) at 30 FPS</p>
+                <p><strong>LATENCY:</strong> Sub-50ms skeletal node generation</p>
+                <p><strong>OUTPUT FEEDBACK:</strong> Dynamic UI injection and color-coded environment shifts.</p>
             </div>
         </div>
-    </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
-<script>
-    // Global variables
-    let model, webcam, webcamCtx, ctx, labelContainer, maxPredictions, loopFrame;
-    let systemRunning = false;
-    let isAuthenticated = false;
-    const URL = "https://teachablemachine.withgoogle.com/models/YOUR_MODEL_ID/"; // NOTE: Keep your original Model URL here
+        <div id="auth" class="page-content">
+            <div class="auth-box" id="auth-box-container">
+                
+                <div class="auth-view active" id="view-login">
+                    <h2 style="font-size: 2rem; margin-bottom: 40px;">SECURE LOGIN</h2>
+                    <div class="input-group">
+                        <label>IDENTIFIER [EMAIL]</label>
+                        <input type="email" id="login-email" placeholder="user@network.com">
+                    </div>
+                    <div class="input-group">
+                        <label>ACCESS KEY [PASSWORD]</label>
+                        <input type="password" id="login-pass" placeholder="••••••••">
+                    </div>
+                    <button class="btn-cyber btn-solid" style="width: 100%; margin-top: 10px;" onclick="handleLogin()">AUTHENTICATE</button>
+                    <div class="auth-switch-link" onclick="toggleAuth('signup')">NO CLEARANCE? INITIALIZE REGISTRATION</div>
+                </div>
 
-    // --- App Routing ---
-    function route(pageId) {
-        if(pageId === 'experience' && !isAuthenticated) {
-            alert("[SYSTEM MSG] Authentication required.");
-            return route('auth');
-        }
-        document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
-        document.getElementById(pageId).classList.add('active');
-        
-        const navItems = document.querySelectorAll('.nav-links li');
-        navItems.forEach(item => item.classList.remove('active'));
-        if(pageId === 'home') navItems[0].classList.add('active');
-        else if(pageId === 'about') navItems[1].classList.add('active');
-        else if(pageId === 'project') navItems[2].classList.add('active');
-        else if(pageId === 'guide') navItems[3].classList.add('active');
-    }
+                <div class="auth-view" id="view-signup">
+                    <h2 style="font-size: 2rem; margin-bottom: 30px;">REGISTRATION</h2>
+                    <div class="input-group">
+                        <label>IDENTIFIER [EMAIL]</label>
+                        <input type="email" id="signup-email" placeholder="user@network.com">
+                    </div>
+                    <button class="btn-cyber" style="width: 100%; margin-bottom: 20px;" onclick="sendCode()">TRANSMIT VERIFICATION CODE</button>
+                    <div class="input-group">
+                        <label>SECURITY CODE</label>
+                        <input type="text" id="signup-code" placeholder="ENTER 6-DIGIT CODE">
+                    </div>
+                    <div class="input-group">
+                        <label>CREATE ACCESS KEY</label>
+                        <input type="password" id="signup-pass" placeholder="••••••••">
+                    </div>
+                    <button class="btn-cyber btn-solid" style="width: 100%; margin-top: 10px;" onclick="handleSignup()">CREATE PROFILE</button>
+                    <div class="auth-switch-link" onclick="toggleAuth('login')">EXISTING OPERATOR? RETURN TO LOGIN</div>
+                </div>
 
-    // --- Authentication ---
-    function openAuth(view) {
-        route('auth');
-        switchAuthView(view);
-    }
+            </div>
+        </div>
 
-    function switchAuthView(view) {
-        document.querySelectorAll('.auth-view').forEach(v => v.classList.remove('active'));
-        document.getElementById(`auth-view-${view}`).classList.add('active');
-    }
-
-    function attemptStart() {
-        if(isAuthenticated) {
-            triggerExperienceTransition();
-        } else {
-            alert("[SYSTEM MSG] Authentication required to access core.");
-            route('auth');
-        }
-    }
-
-    function handleLogin(e) {
-        e.preventDefault();
-        document.documentElement.style.setProperty('--theme', '#00f0ff');
-        loginSuccess();
-    }
-
-    function handleSignup(e) {
-        e.preventDefault();
-        const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
-        alert(`[SYSTEM MSG] A verification cypher has been sent to your email.\n\n[SIMULATED EMAIL]\nYour 6-digit verification code is: ${generatedCode}`);
-        let code = prompt("Please enter the exact 6-digit verification code you received:", "");
-        if (code === generatedCode) {
-            alert("Verification complete. Registration successful.");
-            loginSuccess();
-        } else if (code !== null) {
-            alert("[ERROR] Invalid access cypher. Registration aborted.");
-        }
-    }
-
-    function initiateGoogleAuth() {
-        switchAuthView('google');
-        const textElem = document.getElementById('google-status-text');
-        textElem.innerText = "CONNECTING...";
-        setTimeout(() => textElem.innerText = "VERIFYING CREDENTIALS...", 1000);
-        setTimeout(() => textElem.innerText = "ESTABLISHING SECURE LINK...", 2000);
-        setTimeout(() => {
-            document.documentElement.style.setProperty('--theme', '#00f0ff');
-            loginSuccess();
-        }, 3000);
-    }
-
-    function loginSuccess() {
-        isAuthenticated = true;
-        document.getElementById('auth-ui').innerHTML = `<button class="btn-cyber btn-logout" onclick="logout()">LOGOUT</button>`;
-        alert("[SYSTEM MSG] Access Granted. Operator verified.");
-        triggerExperienceTransition();
-    }
-
-    function logout() {
-        isAuthenticated = false;
-        terminateSystem(false);
-        document.getElementById('auth-ui').innerHTML = `
-            <button class="btn-cyber" onclick="openAuth('login')" style="text-transform: none;">Log in</button>
-            <button class="btn-cyber btn-solid" onclick="openAuth('signup')" style="text-transform: none;">Sign up</button>
-        `;
-        route('home');
-        alert("[SYSTEM MSG] Disconnected. Operator logged out.");
-    }
-
-    // --- Transitions ---
-    let warpAnimId;
-    function triggerExperienceTransition() {
-        const warpContainer = document.getElementById('warp-transition');
-        warpContainer.style.display = 'block';
-        setTimeout(() => warpContainer.style.opacity = '1', 50);
-        
-        initWarp();
-        animateWarp();
-        
-        const warpText = document.getElementById('warp-text');
-        setTimeout(() => warpText.style.opacity = '1', 300);
-
-        setTimeout(() => {
-            cancelAnimationFrame(warpAnimId);
-            warpContainer.style.opacity = '0';
-            initExperience();
-            setTimeout(() => {
-                warpContainer.style.display = 'none';
-                warpText.style.opacity = '0';
-            }, 500);
-        }, 2500);
-    }
-
-    // --- Core Web App Functions ---
-    async function initExperience() {
-        route('experience');
-        systemRunning = true;
-        try {
-            document.getElementById('ai-console').innerHTML = "Initializing Neural Core...<br>Loading kinetic weights...<br><span class='blink'>_</span>";
+        <div id="experience" class="page-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                <h2>TESTING PROTOCOL ACTIVE</h2>
+                <button class="btn-cyber btn-logout" onclick="terminateSystem()">TERMINATE CONNECTION</button>
+            </div>
             
-            const modelURL = URL + "model.json";
-            const metadataURL = URL + "metadata.json";
-            model = await tmPose.load(modelURL, metadataURL);
-            maxPredictions = model.getTotalClasses();
+            <div class="hud-layout">
+                <div id="video-core">
+                    <canvas id="webcam-canvas"></canvas>
+                    <div class="scanner"></div>
+                </div>
 
-            const size = 400; 
-            const flip = true;
-            webcam = new tmPose.Webcam(size, size, flip); 
-            await webcam.setup(); 
-            await webcam.play();
+                <div class="data-panel">
+                    <div class="hud-box">
+                        <h3 style="font-size: 1.2rem; color: #fff; margin-bottom: 20px;">PROBABILITY MATRIX</h3>
+                        <div id="bars-container">
+                            </div>
+                    </div>
+                    <div id="ai-console">
+                        SYSTEM READY.<br>AWAITING CONNECTION...<br><span class="blink">_</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Core Variables ---
+        let isLoggedIn = false;
+        let systemRunning = false;
+        let model, webcam, webcamCtx, maxPredictions;
+        let loopFrame;
+        let introActive = true;
+        let currentAuthView = 'login';
+
+        // NOTE: Please replace this URL with your trained model's URL
+        const MODEL_URL = "https://teachablemachine.withgoogle.com/models/H-mJ9sZlQ/"; 
+
+        // --- Routing & UI Logic ---
+        function route(pageId, subView = null) {
+            document.querySelectorAll('.page-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
             
-            // Connect the video stream to the visual canvas
-            const canvas = document.getElementById("webcam-canvas");
-            canvas.width = size;
-            canvas.height = size;
-            webcamCtx = canvas.getContext("2d");
+            if(pageId === 'home') document.getElementById('nav-home').classList.add('active');
+            else if(pageId === 'about') document.getElementById('nav-about').classList.add('active');
+            else if(pageId === 'project') document.getElementById('nav-project').classList.add('active');
 
-            window.requestAnimationFrame(runLoop);
-
-            document.getElementById('ai-console').innerHTML += "<br>Core online.<br>Sensor linked.<br>Awaiting kinetic patterns...<br><span class='blink'>_</span>";
-        } catch(e) {
-            console.error(e);
-            document.getElementById('ai-console').innerHTML = `<span style="color:#ef4444">[ERROR] Neural Core boot failure. Sensor unlinked or model missing.</span><br><br><span class="blink">_</span>`;
-        }
-    }
-
-    async function runLoop(timestamp) {
-        if(!systemRunning) return;
-        webcam.update(); 
-        await predict();
-        loopFrame = window.requestAnimationFrame(runLoop);
-    }
-
-    let currentState = "";
-
-    async function predict() {
-        const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
-        const prediction = await model.predict(posenetOutput);
-
-        let topIndex = 0;
-        for (let i = 0; i < maxPredictions; i++) {
-            const prob = prediction[i].probability.toFixed(2);
-            document.getElementById('bar-' + i).style.width = (prob * 100) + '%';
-            if(prob > prediction[topIndex].probability) topIndex = i;
-        }
-
-        const predictedClass = prediction[topIndex].className;
-        
-        if (predictedClass !== currentState && prediction[topIndex].probability > 0.8) {
-            currentState = predictedClass;
-            let themeHex = '#00f0ff';
-            let themeGlow = 'rgba(0, 240, 255, 0.4)';
-            let fxClass = '';
-            let logText = `[SYS] State altered: ${currentState.toUpperCase()}\n`;
-
-            if(currentState === 'Calm') {
-                themeHex = '#0088ff'; themeGlow = 'rgba(0, 136, 255, 0.4)';
-                logText += ">> Baseline normalized. Kinetic stasis achieved.";
-            } else if(currentState === 'Anxious') {
-                themeHex = '#ff0055'; themeGlow = 'rgba(255, 0, 85, 0.4)';
-                fxClass = 'fx-shake fx-pulse';
-                logText += ">> WARNING: Kinetic overload. Stress signatures detected.";
-            } else if(currentState === 'Happy') {
-                themeHex = '#00ffcc'; themeGlow = 'rgba(0, 255, 204, 0.4)';
-                fxClass = 'fx-pulse';
-                logText += ">> Endorphin proxy active. Expanding energy output.";
+            if(pageId === 'auth' && subView) {
+                toggleAuth(subView);
             }
 
-            document.documentElement.style.setProperty('--theme', themeHex);
-            document.documentElement.style.setProperty('--theme-glow', themeGlow);
-            document.getElementById('app-container').className = fxClass; 
-            document.getElementById('ai-console').innerHTML = logText.replace(/\n/g, '<br><br>') + '<br><br><span class="blink">_</span>';
+            document.getElementById(pageId).classList.add('active');
         }
 
-        // Render the visual feed and kinetic skeleton structure
-        drawWebcamPose(pose);
-    }
+        function toggleAuth(view) {
+            document.querySelectorAll('.auth-view').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-' + view).classList.add('active');
+            currentAuthView = view;
+        }
 
-    function drawWebcamPose(pose) {
-        if (webcam && webcam.canvas && webcamCtx) {
-            webcamCtx.drawImage(webcam.canvas, 0, 0);
-            if (pose) {
-                const min = 0.5;
-                const color = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
-                webcamCtx.strokeStyle = color; 
-                webcamCtx.fillStyle = color; 
-                webcamCtx.lineWidth = 5; 
-                tmPose.drawKeypoints(pose.keypoints, min, webcamCtx);
-                tmPose.drawSkeleton(pose.keypoints, min, webcamCtx);
+        function checkAuthAndTest() {
+            if(isLoggedIn) {
+                route('experience');
+                if(!systemRunning) triggerWarpAndInit();
+            } else {
+                route('auth', 'login');
             }
         }
-    }
 
-    function terminateSystem(goHome = true) {
-        systemRunning = false;
-        if(webcam) webcam.stop();
-        if(loopFrame) window.cancelAnimationFrame(loopFrame);
-        
-        document.documentElement.style.setProperty('--theme', '#00f0ff');
-        document.documentElement.style.setProperty('--theme-glow', 'rgba(0, 240, 255, 0.4)');
-        document.getElementById('app-container').className = "";
-        currentState = "";
-        
-        if(goHome) route('home');
-    }
-
-    // --- Background Animations (Home / Sentinel / Warp) ---
-    // (This part maintains your visual aesthetics for the canvas animations)
-    const iCanvas = document.getElementById('intro-canvas');
-    const iCtx = iCanvas.getContext('2d');
-    let introPoints = [];
-    let introAngleX = 0, introAngleY = 0;
-    let introScale = 1;
-    let explosionPhase = false;
-    let introActive = true;
-
-    function initIntro() {
-        iCanvas.width = window.innerWidth; iCanvas.height = window.innerHeight;
-        introPoints = [];
-        const numPoints = 800;
-        const radius = window.innerWidth < 768 ? 150 : 250;
-        for (let i = 0; i < numPoints; i++) {
-            let phi = Math.acos(-1 + (2 * i) / numPoints);
-            let theta = Math.sqrt(numPoints * Math.PI) * phi;
-            let tx = radius * Math.cos(theta) * Math.sin(phi);
-            let ty = radius * Math.sin(theta) * Math.sin(phi);
-            let tz = radius * Math.cos(phi);
-            introPoints.push({x: tx, y: ty, z: tz, vx: 0, vy: 0, vz: 0});
-        }
-    }
-
-    function drawIntro() {
-        if(!introActive) return;
-        iCtx.clearRect(0, 0, iCanvas.width, iCanvas.height);
-        const cx = iCanvas.width / 2; const cy = iCanvas.height / 2;
-        
-        if (!explosionPhase) {
-            introAngleX += 0.005; introAngleY += 0.007;
-            introScale = 1 + Math.sin(Date.now() * 0.002) * 0.05;
+        function updateAuthUI() {
+            const cluster = document.getElementById('auth-cluster-ui');
+            if(isLoggedIn) {
+                cluster.innerHTML = `<button class="btn-cyber btn-logout" onclick="logout()">LOG OUT</button>`;
+            } else {
+                cluster.innerHTML = `
+                    <button class="btn-cyber" onclick="route('auth', 'login')">LOG IN</button>
+                    <button class="btn-cyber btn-solid" onclick="route('auth', 'signup')">SIGN UP</button>
+                `;
+            }
         }
 
-        introPoints.forEach(p => {
-            if (explosionPhase) { p.x += p.vx; p.y += p.vy; p.z += p.vz; }
+        function handleLogin() {
+            // Fake authentication logic
+            isLoggedIn = true;
+            updateAuthUI();
+            checkAuthAndTest();
+        }
+
+        function handleSignup() {
+            alert("VERIFICATION COMPLETE. PROFILE CREATED.");
+            toggleAuth('login');
+        }
+
+        function sendCode() {
+            alert("SECURITY CODE TRANSMITTED TO IDENTIFIER.");
+        }
+
+        function logout() {
+            isLoggedIn = false;
+            terminateSystem(false);
+            updateAuthUI();
+            route('home');
+        }
+
+        // --- Intro & Background Animations ---
+        const introCanvas = document.getElementById('intro-canvas');
+        const iCtx = introCanvas.getContext('2d');
+        let introPoints = [];
+        let explosionPhase = false;
+
+        function initIntro() {
+            introCanvas.width = window.innerWidth;
+            introCanvas.height = window.innerHeight;
+            for(let i=0; i<150; i++) {
+                introPoints.push({
+                    x: Math.random() * introCanvas.width,
+                    y: Math.random() * introCanvas.height,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    z: Math.random() * 2
+                });
+            }
+        }
+
+        function drawIntro() {
+            if(!introActive) return;
+            iCtx.fillStyle = 'rgba(2, 2, 4, 0.2)';
+            iCtx.fillRect(0, 0, introCanvas.width, introCanvas.height);
             
-            let x1 = p.x * Math.cos(introAngleY) - p.z * Math.sin(introAngleY);
-            let z1 = p.x * Math.sin(introAngleY) + p.z * Math.cos(introAngleY);
-            let y2 = p.y * Math.cos(introAngleX) - z1 * Math.sin(introAngleX);
-            let z2 = p.y * Math.sin(introAngleX) + z1 * Math.cos(introAngleX);
-
-            let perspective = 800 / (800 + z2);
-            let px = cx + x1 * perspective * introScale;
-            let py = cy + y2 * perspective * introScale;
-            let zDepth = (z2 + 300) / 600; 
-
-            if (px > 0 && px < iCanvas.width && py > 0 && py < iCanvas.height) {
-                iCtx.fillStyle = `rgba(0, 240, 255, ${Math.max(0.1, zDepth)})`;
+            iCtx.fillStyle = '#00f0ff';
+            introPoints.forEach(p => {
+                p.x += p.vx; p.y += p.vy;
+                if(!explosionPhase) {
+                    if(p.x < 0 || p.x > introCanvas.width) p.vx *= -1;
+                    if(p.y < 0 || p.y > introCanvas.height) p.vy *= -1;
+                }
                 iCtx.beginPath();
-                iCtx.arc(px, py, Math.max(0.5, 1.5 * zDepth), 0, Math.PI * 2);
+                iCtx.arc(p.x, p.y, p.z, 0, Math.PI * 2);
                 iCtx.fill();
-            }
-        });
-        if(introActive) requestAnimationFrame(drawIntro);
-    }
-
-    function startApp() {
-        explosionPhase = true;
-        introPoints.forEach(p => {
-            p.vx = (Math.random() - 0.5) * 40; p.vy = (Math.random() - 0.5) * 40; p.vz = (Math.random() - 0.5) * 40;
-        });
-        document.querySelector('.intro-content').style.opacity = '0';
-        setTimeout(() => {
-            document.getElementById('intro-screen').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('intro-screen').style.visibility = 'hidden';
-                introActive = false;
-                document.getElementById('app-container').style.opacity = '1';
-                route('home');
-            }, 1500);
-        }, 800);
-    }
-
-    const bgCanvas = document.getElementById('bg-canvas');
-    const bgCtx = bgCanvas.getContext('2d');
-    let particles = [];
-    let mouse = {x: null, y: null};
-
-    class Particle {
-        constructor() {
-            this.x = Math.random() * window.innerWidth;
-            this.y = Math.random() * window.innerHeight;
-            this.size = Math.random() * 2 + 0.5;
-            this.vy = (Math.random() * 0.5) + 0.2;
-            this.waveSpeed = Math.random() * 0.02 + 0.01;
-            this.waveOffset = Math.random() * Math.PI * 2;
-            this.density = (Math.random() * 30) + 1;
-        }
-        draw() {
-            bgCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
-            bgCtx.globalAlpha = 0.5;
-            bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2); bgCtx.closePath(); bgCtx.fill();
-        }
-        update() {
-            this.y -= this.vy;
-            this.x += Math.sin(Date.now() * 0.001 * this.waveSpeed + this.waveOffset) * 0.5;
-            if (this.y < 0 - this.size) {
-                this.y = window.innerHeight + this.size;
-                this.x = Math.random() * window.innerWidth;
-            }
-        }
-    }
-
-    function initBg() {
-        bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
-        particles = [];
-        for (let i = 0; i < 150; i++) particles.push(new Particle());
-    }
-
-    function animateBg() {
-        bgCtx.clearRect(0, 0, innerWidth, innerHeight);
-        particles.forEach(p => { p.update(); p.draw(); });
-        requestAnimationFrame(animateBg);
-    }
-
-    const sCanvas = document.getElementById('sentinel-canvas');
-    const sCtx = sCanvas.getContext('2d');
-    let sAngle = 0;
-
-    const keypoints = [
-        {id: 'nose', x: 0, y: -1.5, z: 0.2}, {id: 'lEye', x: -0.2, y: -1.7, z: 0.2}, {id: 'rEye', x: 0.2, y: -1.7, z: 0.2},
-        {id: 'lEar', x: -0.4, y: -1.6, z: 0}, {id: 'rEar', x: 0.4, y: -1.6, z: 0},
-        {id: 'lShoulder', x: -0.8, y: -0.5, z: 0}, {id: 'rShoulder', x: 0.8, y: -0.5, z: 0},
-        {id: 'lElbow', x: -1.2, y: 0.2, z: 0}, {id: 'rElbow', x: 1.2, y: 0.2, z: 0},
-        {id: 'lWrist', x: -1.5, y: 0.8, z: 0}, {id: 'rWrist', x: 1.5, y: 0.8, z: 0},
-        {id: 'lHip', x: -0.3, y: 0.5, z: 0}, {id: 'rHip', x: 0.3, y: 0.5, z: 0},
-        {id: 'lKnee', x: -0.3, y: 1.1, z: 0}, {id: 'rKnee', x: 0.3, y: 1.1, z: 0},
-        {id: 'lAnkle', x: -0.3, y: 1.7, z: 0}, {id: 'rAnkle', x: 0.3, y: 1.7, z: 0}
-    ];
-
-    const connections = [
-        ['lShoulder', 'rShoulder'], ['lShoulder', 'lElbow'], ['lElbow', 'lWrist'],
-        ['rShoulder', 'rElbow'], ['rElbow', 'rWrist'], ['lShoulder', 'lHip'], ['rShoulder', 'rHip'],
-        ['lHip', 'rHip'], ['lHip', 'lKnee'], ['lKnee', 'lAnkle'], ['rHip', 'rKnee'], ['rKnee', 'rAnkle'],
-        ['nose', 'lShoulder'], ['nose', 'rShoulder']
-    ];
-
-    function project(point, angle, width, height) {
-        let x_rot = point.x * Math.cos(angle) - point.z * Math.sin(angle);
-        let z_rot = point.x * Math.sin(angle) + point.z * Math.cos(angle);
-        let perspective = 1 + (z_rot * 0.2);
-        const scaleFactor = Math.min(width, height) * 0.18; 
-        return {
-            x: width / 2 + x_rot * scaleFactor * perspective,
-            y: height / 2 + point.y * scaleFactor * perspective + (height * 0.1),
-            z: z_rot
-        };
-    }
-
-    function animateSentinel() {
-        if(sCanvas.offsetParent === null) { requestAnimationFrame(animateSentinel); return; }
-        sCanvas.width = sCanvas.clientWidth; sCanvas.height = sCanvas.clientHeight;
-        sCtx.clearRect(0, 0, sCanvas.width, sCanvas.height);
-        
-        sAngle += 0.01;
-        const color = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
-        const projected = {};
-
-        keypoints.forEach(kp => { projected[kp.id] = project(kp, sAngle, sCanvas.width, sCanvas.height); });
-
-        sCtx.strokeStyle = color; sCtx.lineWidth = 2; sCtx.globalAlpha = 0.6;
-        connections.forEach(([idA, idB]) => {
-            const pA = projected[idA]; const pB = projected[idB];
-            if (pA && pB) { sCtx.beginPath(); sCtx.moveTo(pA.x, pA.y); sCtx.lineTo(pB.x, pB.y); sCtx.stroke(); }
-        });
-
-        sCtx.fillStyle = color; sCtx.globalAlpha = 1;
-        for (let id in projected) {
-            const p = projected[id];
-            sCtx.beginPath(); sCtx.arc(p.x, p.y, 3, 0, Math.PI * 2); sCtx.fill();
-            if (Math.random() > 0.95) {
-                sCtx.font = "10px Share Tech Mono"; sCtx.fillText(id.toUpperCase(), p.x + 5, p.y - 5);
-            }
-        }
-        requestAnimationFrame(animateSentinel);
-    }
-
-    const wCanvas = document.getElementById('warp-canvas');
-    const wCtx = wCanvas.getContext('2d');
-    let stars = [];
-
-    function initWarp() {
-        wCanvas.width = window.innerWidth; wCanvas.height = window.innerHeight;
-        stars = [];
-        for(let i=0; i<400; i++) {
-            stars.push({
-                x: Math.random() * wCanvas.width - wCanvas.width/2,
-                y: Math.random() * wCanvas.height - wCanvas.height/2,
-                z: Math.random() * wCanvas.width
             });
+            requestAnimationFrame(drawIntro);
         }
-    }
 
-    function animateWarp() {
-        wCtx.fillStyle = 'rgba(2, 2, 4, 0.2)'; wCtx.fillRect(0, 0, wCanvas.width, wCanvas.height);
-        const cx = wCanvas.width / 2; const cy = wCanvas.height / 2;
-        const color = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
-        wCtx.fillStyle = color;
+        function startApp() {
+            explosionPhase = true;
+            introPoints.forEach(p => {
+                p.vx = (Math.random() - 0.5) * 40;
+                p.vy = (Math.random() - 0.5) * 40;
+            });
+            
+            document.querySelector('.intro-content').style.opacity = '0';
+            
+            setTimeout(() => {
+                introActive = false;
+                document.getElementById('intro-screen').style.opacity = '0';
+                document.getElementById('intro-screen').style.visibility = 'hidden';
+                document.getElementById('app-container').style.opacity = '1';
+            }, 800);
+        }
 
-        stars.forEach(star => {
-            star.z -= 15;
-            if (star.z <= 0) { star.z = wCanvas.width; star.x = Math.random() * wCanvas.width - cx; star.y = Math.random() * wCanvas.height - cy; }
-            const sx = (star.x / star.z) * wCanvas.width + cx;
-            const sy = (star.y / star.z) * wCanvas.height + cy;
-            const size = (1 - star.z / wCanvas.width) * 3;
-            wCtx.beginPath(); wCtx.arc(sx, sy, size, 0, Math.PI*2); wCtx.fill();
-        });
-        warpAnimId = requestAnimationFrame(animateWarp);
-    }
+        // --- Background Matrix/Node Effect ---
+        const bgCanvas = document.getElementById('bg-canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        let bgNodes = [];
 
-    // Startup Execution
-    initIntro();
-    drawIntro();
-    initBg();
-    animateBg();
-    setTimeout(() => { if(sCanvas.offsetParent !== null) animateSentinel(); }, 500);
-    window.addEventListener('resize', () => { initBg(); if(sCanvas.offsetParent !== null) { sCanvas.width = sCanvas.clientWidth; sCanvas.height = sCanvas.clientHeight; } });
+        function initBg() {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+            for(let i=0; i<80; i++) {
+                bgNodes.push({
+                    x: Math.random() * bgCanvas.width,
+                    y: Math.random() * bgCanvas.height,
+                    vx: (Math.random() - 0.5) * 0.5,
+                    vy: (Math.random() - 0.5) * 0.5
+                });
+            }
+        }
 
-</script>
+        function animateBg() {
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            bgCtx.strokeStyle = 'rgba(0, 240, 255, 0.05)';
+            bgCtx.lineWidth = 1;
+            
+            bgNodes.forEach((node, i) => {
+                node.x += node.vx; node.y += node.vy;
+                if(node.x < 0 || node.x > bgCanvas.width) node.vx *= -1;
+                if(node.y < 0 || node.y > bgCanvas.height) node.vy *= -1;
+                
+                bgCtx.fillStyle = 'rgba(0, 240, 255, 0.2)';
+                bgCtx.beginPath();
+                bgCtx.arc(node.x, node.y, 2, 0, Math.PI * 2);
+                bgCtx.fill();
+
+                for(let j=i+1; j<bgNodes.length; j++) {
+                    const dx = node.x - bgNodes[j].x;
+                    const dy = node.y - bgNodes[j].y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if(dist < 150) {
+                        bgCtx.beginPath();
+                        bgCtx.moveTo(node.x, node.y);
+                        bgCtx.lineTo(bgNodes[j].x, bgNodes[j].y);
+                        bgCtx.stroke();
+                    }
+                }
+            });
+            requestAnimationFrame(animateBg);
+        }
+
+        // --- Warp Sequence ---
+        const warpContainer = document.getElementById('warp-transition');
+        const warpCanvas = document.getElementById('warp-canvas');
+        const wCtx = warpCanvas.getContext('2d');
+        let warpAnimId;
+
+        function triggerWarpAndInit() {
+            warpContainer.style.display = 'block';
+            setTimeout(() => warpContainer.style.opacity = '1', 50);
+            
+            warpCanvas.width = window.innerWidth;
+            warpCanvas.height = window.innerHeight;
+            
+            let stars = [];
+            for(let i=0; i<300; i++) {
+                stars.push({
+                    x: (Math.random() - 0.5) * warpCanvas.width * 2,
+                    y: (Math.random() - 0.5) * warpCanvas.height * 2,
+                    z: Math.random() * 1000
+                });
+            }
+
+            function animateWarp() {
+                wCtx.fillStyle = 'rgba(2, 2, 4, 0.4)';
+                wCtx.fillRect(0, 0, warpCanvas.width, warpCanvas.height);
+                
+                const cx = warpCanvas.width / 2;
+                const cy = warpCanvas.height / 2;
+                
+                wCtx.fillStyle = '#fff';
+                stars.forEach(star => {
+                    star.z -= 20;
+                    if(star.z <= 0) {
+                        star.z = 1000;
+                        star.x = (Math.random() - 0.5) * warpCanvas.width * 2;
+                        star.y = (Math.random() - 0.5) * warpCanvas.height * 2;
+                    }
+                    const px = cx + (star.x / star.z) * 500;
+                    const py = cy + (star.y / star.z) * 500;
+                    const s = Math.max(0.5, 400 / star.z);
+                    
+                    wCtx.beginPath();
+                    wCtx.arc(px, py, s, 0, Math.PI*2);
+                    wCtx.fill();
+                });
+                warpAnimId = requestAnimationFrame(animateWarp);
+            }
+            animateWarp();
+
+            const warpText = document.getElementById('warp-text');
+            setTimeout(() => warpText.style.opacity = '1', 300);
+            
+            setTimeout(() => {
+                cancelAnimationFrame(warpAnimId);
+                warpContainer.style.opacity = '0';
+                setTimeout(() => {
+                    warpContainer.style.display = 'none';
+                    warpText.style.opacity = '0';
+                    initSystem(); // Boot TM Model
+                }, 500);
+            }, 2500);
+        }
+
+        // --- Teachable Machine & Logic ---
+        async function initSystem() {
+            const modelURL = MODEL_URL + "model.json";
+            const metadataURL = MODEL_URL + "metadata.json";
+            const consoleEl = document.getElementById('ai-console');
+
+            consoleEl.innerHTML = "SYSTEM BOOT SEQUENCE INITIATED...<br>DOWNLOADING NEURAL WEIGHTS...<br><span class='blink'>_</span>";
+
+            try {
+                // Load the model and metadata
+                model = await tmPose.load(modelURL, metadataURL);
+                maxPredictions = model.getTotalClasses();
+
+                // Setup bars UI dynamically
+                const barsContainer = document.getElementById('bars-container');
+                barsContainer.innerHTML = '';
+                for (let i = 0; i < maxPredictions; i++) {
+                    barsContainer.innerHTML += `
+                        <div class="bar-wrap">
+                            <div class="bar-label">
+                                <span id="label-name-${i}">${model.getClassLabels()[i].toUpperCase()}</span>
+                                <span id="label-val-${i}">0%</span>
+                            </div>
+                            <div class="bar-bg"><div class="bar-fill" id="bar-fill-${i}"></div></div>
+                        </div>
+                    `;
+                }
+
+                // Setup Webcam
+                const size = 500;
+                const flip = true; 
+                webcam = new tmPose.Webcam(size, size, flip); 
+                
+                consoleEl.innerHTML += "<br>REQUESTING OPTICAL SENSOR ACCESS...<br>";
+                await webcam.setup(); // request access to the webcam
+                await webcam.play();
+                
+                systemRunning = true;
+
+                // ==========================================
+                // FIX: MATCH CANVAS SIZE TO WEBCAM EXACTLY
+                // ==========================================
+                const canvasEl = document.getElementById('webcam-canvas');
+                canvasEl.width = size;
+                canvasEl.height = size;
+                webcamCtx = canvasEl.getContext('2d');
+
+                loopFrame = window.requestAnimationFrame(systemLoop);
+                
+                consoleEl.innerHTML += "<br><span style='color: #00f0ff;'>CONNECTION ESTABLISHED. KINETIC TRACKING ACTIVE.</span><br><br><span class='blink'>_</span>";
+
+            } catch (error) {
+                console.error(error);
+                consoleEl.innerHTML += `<br><span style="color: #ef4444; font-weight:bold;">ERROR: SENSOR CONNECTION FAILED OR MODEL NOT FOUND. PLEASE ALLOW CAMERA ACCESS.</span><br><span class='blink'>_</span>`;
+            }
+        }
+
+        async function systemLoop(timestamp) {
+            if(!systemRunning) return;
+            webcam.update(); // update the webcam frame
+            await predict();
+            loopFrame = window.requestAnimationFrame(systemLoop);
+        }
+
+        async function predict() {
+            // estimate pose and predict
+            const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+            const prediction = await model.predict(posenetOutput);
+
+            let highestProb = 0;
+            let currentEmotion = "";
+            let logText = "";
+
+            for (let i = 0; i < maxPredictions; i++) {
+                const prob = prediction[i].probability.toFixed(2);
+                const probPct = Math.round(prob * 100);
+                const className = prediction[i].className;
+
+                document.getElementById(`label-val-${i}`).innerText = probPct + "%";
+                document.getElementById(`bar-fill-${i}`).style.width = probPct + "%";
+                
+                logText += `ANALYZING NODE [${className.toUpperCase()}]: ${probPct}%\n`;
+
+                if(prob > highestProb) {
+                    highestProb = prob;
+                    currentEmotion = className.toLowerCase();
+                }
+            }
+
+            // UI Theme switching based on emotion (Requires specific class names in TM model)
+            if (highestProb > 0.7) {
+                let themeColor = '#00f0ff';
+                let themeGlow = 'rgba(0, 240, 255, 0.4)';
+                
+                if (currentEmotion.includes('aggressive')) {
+                    themeColor = '#ff0055'; themeGlow = 'rgba(255, 0, 85, 0.4)';
+                    logText += "\n! WARNING: ELEVATED KINETIC AGGRESSION DETECTED !\n";
+                } else if (currentEmotion.includes('euphoric')) {
+                    themeColor = '#bb00ff'; themeGlow = 'rgba(187, 0, 255, 0.4)';
+                    logText += "\n> EXCITATION LEVELS NOMINAL. EUPHORIA IDENTIFIED.\n";
+                } else {
+                    logText += "\n> BIOLOGICAL HOMEOSTASIS STABLE.\n";
+                }
+
+                document.documentElement.style.setProperty('--theme', themeColor);
+                document.documentElement.style.setProperty('--theme-glow', themeGlow);
+            }
+
+            document.getElementById('ai-console').innerHTML = logText.replace(/\n/g, '<br>') + '<br><span class="blink">_</span>';
+
+            drawWebcamPose(pose);
+        }
+
+        function drawWebcamPose(pose) {
+            if (webcam && webcam.canvas && webcamCtx) {
+                // Draw camera image
+                webcamCtx.drawImage(webcam.canvas, 0, 0);
+                
+                // Draw skeletal overlay
+                if (pose) {
+                    const minPartConfidence = 0.5;
+                    const color = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+                    webcamCtx.strokeStyle = color; 
+                    webcamCtx.fillStyle = color; 
+                    webcamCtx.lineWidth = 4; 
+                    tmPose.drawKeypoints(pose.keypoints, minPartConfidence, webcamCtx);
+                    tmPose.drawSkeleton(pose.keypoints, minPartConfidence, webcamCtx);
+                }
+            }
+        }
+
+        function terminateSystem(goHome = true) {
+            systemRunning = false;
+            if(webcam) webcam.stop();
+            if(loopFrame) window.cancelAnimationFrame(loopFrame);
+            
+            // Reset Theme
+            document.documentElement.style.setProperty('--theme', '#00f0ff');
+            document.documentElement.style.setProperty('--theme-glow', 'rgba(0, 240, 255, 0.4)');
+            
+            if(goHome) route('home');
+        }
+
+        // --- Start Scripts ---
+        initIntro();
+        drawIntro();
+        initBg();
+        animateBg();
+        window.addEventListener('resize', () => { initBg(); initIntro(); });
+    </script>
 </body>
 </html>
