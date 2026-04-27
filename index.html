@@ -369,6 +369,9 @@
                 </form>
                 <div style="text-align: center; margin: 20px 0; color: #64748b; font-family: 'Share Tech Mono', monospace;">[ OR ]</div>
                 <button class="btn-cyber" style="width: 100%; border-color: rgba(255,255,255,0.2); color: #fff;" onclick="initiateGoogleAuth()">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                        <path d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73 12.2,4.73C15.29,4.73 17.1,6.7 17.1,6.7L19,4.72C19,4.72 16.56,2 12.1,2C6.42,2 2.03,6.8 2.03,12C2.03,17.05 6.16,22 12.25,22C17.6,22 21.5,18.33 21.5,12.91C21.5,11.76 21.35,11.1 21.35,11.1Z" />
+                    </svg>
                     CONNECT VIA GOOGLE SECURE
                 </button>
                 <div class="auth-switch-link" onclick="switchAuthView('signup')">> REQUEST NEW ACCESS PROTOCOL</div>
@@ -742,9 +745,7 @@
         }, 800);
     }
 
-    // =========================================================================
-    // 【高级科幻 Sentinel 骨骼节点动画系统】 (唯一重写的部分)
-    // =========================================================================
+    // --- Sentinel Animation (UPGRADED) ---
     const sentCanvas = document.getElementById('sentinel-canvas');
     const sentCtx = sentCanvas.getContext('2d');
     let sentinelAngle = 0;
@@ -798,125 +799,127 @@
             return;
         }
         sentCtx.clearRect(0, 0, sentCanvas.width, sentCanvas.height);
-        
-        let time = Date.now() * 0.001; 
         sentinelAngle += 0.005;
         
         const color = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+        
+        // 1. Background Cybernetic Grid / Radar Rings
         const cx = sentCanvas.width / 2;
         const cy = sentCanvas.height / 2;
-
-        // 1. Draw High-Tech Radar Background (动态科技雷达背景)
-        sentCtx.save();
-        sentCtx.translate(cx, cy);
-        sentCtx.strokeStyle = color;
-        sentCtx.globalAlpha = 0.2;
+        sentCtx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
         sentCtx.lineWidth = 1;
-        
-        sentCtx.rotate(time * 0.5);
-        sentCtx.setLineDash([2, 6]);
         sentCtx.beginPath();
-        sentCtx.arc(0, 0, sentCanvas.width * 0.25, 0, Math.PI * 2);
+        sentCtx.arc(cx, cy, sentCanvas.width * 0.25, 0, Math.PI * 2);
         sentCtx.stroke();
         
-        sentCtx.rotate(-time * 0.8);
-        sentCtx.setLineDash([15, 10, 5, 10]);
         sentCtx.beginPath();
-        sentCtx.arc(0, 0, sentCanvas.width * 0.35, 0, Math.PI * 2);
+        sentCtx.arc(cx, cy, sentCanvas.width * 0.35, 0, Math.PI * 2);
+        sentCtx.setLineDash([4, 8]);
         sentCtx.stroke();
-        sentCtx.restore();
+        sentCtx.setLineDash([]); // reset line dash
 
-        // 2. Project 3D Points
         const projected = {};
-        wireframeBase.forEach((p, index) => {
+        wireframeBase.forEach(p => {
             let offset = Math.sin(sentinelAngle * 2 + p.y) * 0.05;
             let tempP = {x: p.x, y: p.y + offset, z: p.z};
             projected[p.id] = project(tempP, sentinelAngle, sentCanvas.width, sentCanvas.height);
-            projected[p.id].index = index; 
         });
 
-        // 3. Draw Cyberpunk Bones (骨骼连线与能量流)
-        sentCtx.shadowBlur = 10;
-        sentCtx.shadowColor = color;
-        sentCtx.strokeStyle = color;
-        sentCtx.lineWidth = 1.5;
-        sentCtx.setLineDash([]); 
+        // 2. Geometric Facets (Low-Poly / Planar Style Overlay)
+        const pLS = projected['lShoulder'];
+        const pRS = projected['rShoulder'];
+        const pLH = projected['lHip'];
+        const pRH = projected['rHip'];
+        const pN = projected['nose'];
 
+        if(pLS && pRS && pLH && pRH && pN) {
+            sentCtx.fillStyle = color;
+            
+            // Upper Torso Facet
+            sentCtx.globalAlpha = 0.08;
+            sentCtx.beginPath();
+            sentCtx.moveTo(pN.x, pN.y);
+            sentCtx.lineTo(pLS.x, pLS.y);
+            sentCtx.lineTo(pRS.x, pRS.y);
+            sentCtx.closePath();
+            sentCtx.fill();
+
+            // Mid Torso Left Facet
+            sentCtx.globalAlpha = 0.05;
+            sentCtx.beginPath();
+            sentCtx.moveTo(pLS.x, pLS.y);
+            sentCtx.lineTo(pRH.x, pRH.y);
+            sentCtx.lineTo(pLH.x, pLH.y);
+            sentCtx.closePath();
+            sentCtx.fill();
+
+            // Mid Torso Right Facet
+            sentCtx.globalAlpha = 0.03;
+            sentCtx.beginPath();
+            sentCtx.moveTo(pRS.x, pRS.y);
+            sentCtx.lineTo(pRH.x, pRH.y);
+            sentCtx.lineTo(pLS.x, pLS.y);
+            sentCtx.closePath();
+            sentCtx.fill();
+        }
+
+        // 3. Cybernetic Connections (Glowing lines + Data Pulses)
         connections.forEach(conn => {
             const p1 = projected[conn[0]];
             const p2 = projected[conn[1]];
             if(p1 && p2) {
-                sentCtx.globalAlpha = 0.5;
+                // Core Line
+                sentCtx.strokeStyle = color;
+                sentCtx.globalAlpha = 0.4;
+                sentCtx.lineWidth = 1.5;
                 sentCtx.beginPath();
                 sentCtx.moveTo(p1.x, p1.y);
                 sentCtx.lineTo(p2.x, p2.y);
                 sentCtx.stroke();
+
+                // Energy Pulse (Data streaming along the bones)
+                let timeOffset = (Date.now() / 1000 + conn[0].length * 0.1) % 1; 
+                let dotX = p1.x + (p2.x - p1.x) * timeOffset;
+                let dotY = p1.y + (p2.y - p1.y) * timeOffset;
                 
-                // Energy Flow (在线条上移动的数据包)
-                let pulsePos = (time * 1.5 + (p1.x + p1.y) * 0.01) % 1; 
-                let lx = p1.x + (p2.x - p1.x) * pulsePos;
-                let ly = p1.y + (p2.y - p1.y) * pulsePos;
-                
-                sentCtx.shadowBlur = 0; 
-                sentCtx.fillStyle = '#ffffff';
+                sentCtx.fillStyle = '#fff';
                 sentCtx.globalAlpha = 0.9;
-                sentCtx.fillRect(lx - 1.5, ly - 1.5, 3, 3);
-                
                 sentCtx.shadowBlur = 10;
                 sentCtx.shadowColor = color;
+                sentCtx.beginPath();
+                sentCtx.arc(dotX, dotY, 1.5, 0, Math.PI * 2);
+                sentCtx.fill();
+                sentCtx.shadowBlur = 0; // reset
             }
         });
 
-        // 4. Draw Advanced Stylized Nodes (高级复合式节点)
-        sentCtx.shadowBlur = 0; 
-        
+        // 4. Advanced Geometric Nodes
         Object.values(projected).forEach(p => {
-            // Core node dot (核心圆点)
-            sentCtx.fillStyle = color;
+            // Outer Targeting Ring
+            sentCtx.strokeStyle = color;
+            sentCtx.globalAlpha = 0.3;
+            sentCtx.lineWidth = 1;
+            sentCtx.beginPath();
+            sentCtx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+            sentCtx.stroke();
+
+            // Inner Diamond Core
+            sentCtx.fillStyle = '#020204';
             sentCtx.globalAlpha = 1;
             sentCtx.beginPath();
-            sentCtx.arc(p.x, p.y, 2, 0, Math.PI*2);
+            sentCtx.moveTo(p.x, p.y - 3);
+            sentCtx.lineTo(p.x + 3, p.y);
+            sentCtx.lineTo(p.x, p.y + 3);
+            sentCtx.lineTo(p.x - 3, p.y);
+            sentCtx.closePath();
             sentCtx.fill();
-
-            // Breathing outer targeting ring (呼吸外环)
-            let breath = Math.sin(time * 3 + p.index) * 2;
-            sentCtx.strokeStyle = color;
-            sentCtx.lineWidth = 1;
-            sentCtx.globalAlpha = 0.6;
-            sentCtx.beginPath();
-            sentCtx.arc(p.x, p.y, 6 + breath, 0, Math.PI*2);
+            
+            sentCtx.globalAlpha = 0.9;
             sentCtx.stroke();
-
-            // Tactical crosshairs (战术十字准星)
-            sentCtx.globalAlpha = 0.3;
-            sentCtx.beginPath();
-            sentCtx.moveTo(p.x - 12, p.y); sentCtx.lineTo(p.x + 12, p.y);
-            sentCtx.moveTo(p.x, p.y - 12); sentCtx.lineTo(p.x, p.y + 12);
-            sentCtx.stroke();
-
-            // Data readouts (节点附近的动态十六进制坐标折线UI)
-            if (p.index % 4 === 0 || p.id === 'nose') {
-                sentCtx.font = "10px 'Share Tech Mono'";
-                sentCtx.fillStyle = color;
-                sentCtx.globalAlpha = 0.8;
-                
-                let hexX = Math.abs(Math.floor(p.x)).toString(16).toUpperCase().padStart(3, '0');
-                let hexY = Math.abs(Math.floor(p.y)).toString(16).toUpperCase().padStart(3, '0');
-                let dataStr = `SYS_${p.index}[${hexX}:${hexY}]`;
-                
-                sentCtx.beginPath();
-                sentCtx.moveTo(p.x + 5, p.y - 5);
-                sentCtx.lineTo(p.x + 15, p.y - 15);
-                sentCtx.lineTo(p.x + 35, p.y - 15);
-                sentCtx.stroke();
-                
-                sentCtx.fillText(dataStr, p.x + 15, p.y - 18);
-            }
         });
 
         requestAnimationFrame(animateSentinel);
     }
-    // =========================================================================
 
     // --- Warp Speed Math ---
     const wCanvas = document.getElementById('warp-canvas');
