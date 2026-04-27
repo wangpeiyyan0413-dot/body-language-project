@@ -25,7 +25,7 @@
             overflow: hidden;
         }
 
-        /* --- Intro Animation System --- */
+        /* --- Intro 动画系统 --- */
         #intro-screen {
             position: fixed; inset: 0; z-index: 9999;
             background: #020204;
@@ -55,7 +55,7 @@
             transform: scale(1.05);
         }
 
-        /* --- Warp Speed Transition --- */
+        /* --- Warp 动画系统 --- */
         #warp-transition {
             position: fixed; inset: 0; z-index: 99999; background: #020204;
             display: none; opacity: 0; transition: opacity 0.5s;
@@ -103,6 +103,7 @@
         .btn-cyber:hover { background: var(--theme); color: #000; box-shadow: 0 0 20px var(--theme-glow); font-weight: bold;}
         .btn-solid { background: var(--theme); color: #000; font-weight: bold; border: none; }
 
+        /* 专门为退出登录按钮加的样式 */
         .btn-logout {
             border-color: #ef4444 !important; 
             color: #ef4444 !important;
@@ -441,6 +442,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
 
 <script>
+    // === 核心变量定义 ===
     const URL = "https://teachablemachine.withgoogle.com/models/b274q64aJ/";
     let model, webcam, ctx, labelContainer, maxPredictions;
     let systemRunning = false;
@@ -448,6 +450,7 @@
     let loopFrame;
     let isAuthenticated = false;
 
+    // === 体验区过渡动画 (Warp Speed) ===
     const warpContainer = document.getElementById('warp-transition');
     const warpCanvas = document.getElementById('warp-canvas');
     let warpCtx = warpCanvas.getContext('2d');
@@ -503,7 +506,6 @@
     }
 
     function triggerExperienceTransition() {
-        // Start animation visually
         warpContainer.style.display = 'block';
         setTimeout(() => warpContainer.style.opacity = '1', 50);
         initWarp();
@@ -512,17 +514,10 @@
         const warpText = document.getElementById('warp-text');
         setTimeout(() => warpText.style.opacity = '1', 300);
 
-        // Core Fix: Switch UI route IMMEDIATELY beneath the warp transition.
-        // This ensures the canvas is not display:none when webcam tries to draw.
-        route('experience'); 
-
-        // Start booting the camera immediately to respect browser gesture rules
-        bootNeuralCore();
-
-        // Remove the warp transition cover after 2.5 seconds
         setTimeout(() => {
             cancelAnimationFrame(warpAnimId);
             warpContainer.style.opacity = '0';
+            initExperience(); 
             setTimeout(() => {
                 warpContainer.style.display = 'none';
                 warpText.style.opacity = '0';
@@ -530,6 +525,7 @@
         }, 2500);
     }
 
+    // === Intro 动画系统 ===
     const iCanvas = document.getElementById('intro-canvas');
     const iCtx = iCanvas.getContext('2d');
     let introPoints = [];
@@ -622,6 +618,7 @@
         }, 800);
     }
 
+    // === 背景粒子系统 ===
     const bgCanvas = document.getElementById('bg-canvas');
     const bgCtx = bgCanvas.getContext('2d');
     let particles = [];
@@ -693,6 +690,7 @@
         if(warpContainer.style.display === 'block') initWarp();
     });
 
+    // === UI 路由 & 交互系统 ===
     function route(pageId) {
         document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
@@ -727,16 +725,13 @@
         loginSuccess();
     }
 
+    // 验证码弹框恢复
     function handleSignup(e) {
         e.preventDefault();
+        alert("[SYSTEM MSG] A 6-digit verification cypher has been sent to your email.");
+        let code = prompt("Please enter the 6-digit verification code (e.g. 000000):", "");
         
-        const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
-        
-        alert(`[SYSTEM MSG] A verification cypher has been sent to your email.\n\n[SIMULATED EMAIL]\nYour 6-digit verification code is: ${generatedCode}`);
-        
-        let code = prompt("Please enter the exact 6-digit verification code you received:", "");
-        
-        if (code === generatedCode) {
+        if (code === "000000" || (code && code.trim().length === 6)) {
             alert("Verification complete. Registration successful.");
             loginSuccess();
         } else if (code !== null) {
@@ -769,6 +764,7 @@
 
     function loginSuccess() {
         isAuthenticated = true;
+        // 恢复退出登录按钮
         document.getElementById('auth-ui').innerHTML = `
             <span style="color: var(--theme); font-size: 0.95rem; letter-spacing: 2px; font-weight:bold; font-family: 'Share Tech Mono', monospace; margin-right: 10px;">LINK_ACTIVE</span>
             <button class="btn-cyber btn-logout" onclick="handleLogout()" style="padding: 8px 15px; font-size: 0.8rem;">LOGOUT</button>
@@ -779,6 +775,7 @@
         }
     }
 
+    // 退出登录功能恢复
     function handleLogout() {
         isAuthenticated = false;
         document.getElementById('auth-ui').innerHTML = `
@@ -790,6 +787,7 @@
         route('home');
     }
 
+    // === Sentinel 3D 线框原型动画 ===
     const sentCanvas = document.getElementById('sentinel-canvas');
     const sentCtx = sentCanvas.getContext('2d');
     let sentinelAngle = 0;
@@ -874,48 +872,44 @@
         requestAnimationFrame(animateSentinel);
     }
 
-    // === Updated Camera Boot System ===
-    async function bootNeuralCore() {
+    // === Teachable Machine 核心系统逻辑 ===
+    async function initExperience() {
+        route('experience');
         if(systemRunning) return;
         
-        const consoleEl = document.getElementById('ai-console');
-        consoleEl.innerHTML = "[SYSTEM] Booting Neural Kinetic Core...<br>Requesting optical sensor access...<br><span class='blink'>_</span>";
+        document.getElementById('ai-console').innerHTML = "[SYSTEM] Booting Neural Kinetic Core...<br><span class='blink'>_</span>";
+        
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
 
         try {
+            model = await tmPose.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
             const size = 600;
             const flip = true; 
             webcam = new tmPose.Webcam(size, size, flip);
             await webcam.setup(); 
             await webcam.play();
             
+            systemRunning = true;
+            window.requestAnimationFrame(runLoop);
+
             const canvas = document.getElementById("webcam-canvas");
             canvas.width = size; canvas.height = size;
             webcamCtx = canvas.getContext("2d");
-
-            consoleEl.innerHTML = "[SYSTEM] Optical sensor linked. Downloading Neural Model...<br><span class='blink'>_</span>";
-
-            const modelURL = URL + "model.json";
-            const metadataURL = URL + "metadata.json";
-            model = await tmPose.load(modelURL, metadataURL);
-            maxPredictions = model.getTotalClasses();
-
-            systemRunning = true;
-            window.requestAnimationFrame(runLoop);
             
-            consoleEl.innerHTML = "[SYSTEM] Core Online. Analyzing kinetic patterns...<br><span class='blink'>_</span>";
+            document.getElementById('ai-console').innerHTML = "[SYSTEM] Core Online. Analyzing kinetic patterns...<br><span class='blink'>_</span>";
 
         } catch(e) {
-            console.error("Camera Error:", e);
-            // 这里加入明显的报错提示，告诉你原因
-            consoleEl.innerHTML = `<span style="color:#ef4444">[ERROR] Sensor boot failure.<br><br>IF YOU SEE THIS:<br>1. Check camera permissions.<br>2. DO NOT open this file directly (file:///). Browsers block local camera access. Please use a local server (like VS Code Live Server) or host it online.</span><br><br><span class="blink">_</span>`;
-            
-            alert("CAMERA BLOCKED [ERROR]:\n\nIf you opened this file by simply double-clicking it (address bar shows 'file:///'), your browser will block the camera for security reasons.\n\nYou MUST run it through a local server (e.g., Live Server in VS Code) or upload it to a server.");
+            console.error(e);
+            document.getElementById('ai-console').innerHTML = `<span style="color:#ef4444">[ERROR] Neural Core boot failure. Sensor unlinked or model missing.</span><br><br><span class="blink">_</span>`;
         }
     }
 
     async function runLoop(timestamp) {
         if(!systemRunning) return;
-        if(webcam) webcam.update(); 
+        webcam.update(); 
         await predict();
         loopFrame = window.requestAnimationFrame(runLoop);
     }
@@ -923,7 +917,6 @@
     let currentState = "";
 
     async function predict() {
-        if(!webcam || !webcam.canvas) return;
         const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
         const prediction = await model.predict(posenetOutput);
 
@@ -999,6 +992,7 @@
         if(goHome) route('home');
     }
 
+    // === 初始化执行 ===
     initIntro();
     drawIntro();
     initBg();
