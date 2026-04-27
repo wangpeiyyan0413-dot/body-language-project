@@ -4,12 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Motion Emotion System - Kinetic Interface</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
-
     <style>
-        /* 引入了 Rajdhani 提升正文科技感与排版高级感 */
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
 
         :root {
@@ -30,27 +25,15 @@
             overflow: hidden;
         }
 
-        /* --- 开场动画系统 (新增进场动效) --- */
+        /* --- Intro Animation System --- */
         #intro-screen {
             position: fixed; inset: 0; z-index: 9999;
             background: #020204;
             display: flex; justify-content: center; align-items: center; flex-direction: column;
             transition: opacity 1.5s cubic-bezier(0.165, 0.84, 0.44, 1), visibility 1.5s;
         }
-        #intro-canvas { 
-            position: absolute; inset: 0; z-index: 1; pointer-events: none;
-            opacity: 0; animation: fadeInCanvas 2s forwards; 
-        }
-        @keyframes fadeInCanvas { to { opacity: 1; } }
-
-        .intro-content { 
-            position: relative; z-index: 2; text-align: center;
-            opacity: 0; transform: scale(0.9); 
-            animation: introPop 1.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards; 
-            animation-delay: 0.3s; 
-        }
-        @keyframes introPop { to { opacity: 1; transform: scale(1); } }
-
+        #intro-canvas { position: absolute; inset: 0; z-index: 1; pointer-events: none;}
+        .intro-content { position: relative; z-index: 2; text-align: center; }
         .intro-title {
             font-family: 'Orbitron', sans-serif; font-size: 3.5rem; font-weight: 900;
             color: #fff; letter-spacing: 12px; margin-bottom: 10px;
@@ -59,7 +42,7 @@
         }
         .intro-sub {
             font-family: 'Share Tech Mono', monospace; font-size: 1.2rem; color: var(--theme);
-            letter-spacing: 8px; margin-bottom: 50px; opacity: 0.8;
+            letter-spacing: 8px; margin-bottom: 50px; opacity: 0.8; text-transform: uppercase;
         }
         .btn-enter {
             background: rgba(0, 240, 255, 0.1); border: 1px solid var(--theme); color: var(--theme);
@@ -72,27 +55,24 @@
             transform: scale(1.05);
         }
 
-        /* --- 高级酷炫的过渡粒子动画层 (Warp Transition) --- */
+        /* --- Warp Animation System --- */
         #warp-transition {
-            position: fixed; inset: 0; z-index: 10000; background: #020204;
-            display: none; justify-content: center; align-items: center; flex-direction: column;
-            opacity: 0; transition: opacity 0.5s;
+            position: fixed; inset: 0; z-index: 99999; background: #020204;
+            display: none; opacity: 0; transition: opacity 0.5s;
         }
-        #warp-canvas { position: absolute; inset: 0; z-index: 1; pointer-events: none;}
-        .warp-text {
-            position: relative; z-index: 2; font-family: 'Orbitron', sans-serif;
-            font-size: 2.5rem; color: #fff; letter-spacing: 10px;
-            text-shadow: 0 0 20px var(--theme-glow), 2px 2px 0px rgba(0,240,255,0.5);
-            font-weight: 900; text-align: center;
-            animation: pulseText 1s infinite alternate;
+        #warp-canvas { width: 100%; height: 100%; pointer-events: none; }
+        #warp-text {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: var(--theme); font-family: 'Orbitron', sans-serif; font-size: 2rem;
+            letter-spacing: 10px; opacity: 0; transition: opacity 1s;
+            text-shadow: 0 0 20px var(--theme-glow); white-space: nowrap; font-weight: 700;
         }
-        @keyframes pulseText { from { opacity: 0.8; transform: scale(0.98); } to { opacity: 1; transform: scale(1.02); } }
 
         #app-container {
             width: 100vw; height: 100vh; position: relative;
             background: radial-gradient(circle at center, #0a0a15 0%, var(--bg-base) 100%);
             display: flex; flex-direction: column; transition: all 0.5s ease-out;
-            opacity: 0; 
+            opacity: 0;
         }
 
         #bg-canvas { position: absolute; inset: 0; z-index: 1; opacity: 0.8; }
@@ -122,6 +102,16 @@
         }
         .btn-cyber:hover { background: var(--theme); color: #000; box-shadow: 0 0 20px var(--theme-glow); font-weight: bold;}
         .btn-solid { background: var(--theme); color: #000; font-weight: bold; border: none; }
+
+        .btn-logout {
+            border-color: #ef4444 !important; 
+            color: #ef4444 !important;
+        }
+        .btn-logout:hover {
+            background: #ef4444 !important; 
+            color: #000 !important; 
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4) !important;
+        }
 
         .page-content {
             position: absolute; top: 70px; left: 0; right: 0; bottom: 0;
@@ -275,7 +265,7 @@
 
 <div id="warp-transition">
     <canvas id="warp-canvas"></canvas>
-    <div class="warp-text" id="warp-text">ESTABLISHING KINETIC LINK...</div>
+    <div id="warp-text">NEURAL LINKING...</div>
 </div>
 
 <div id="app-container">
@@ -365,106 +355,85 @@
     <div id="auth" class="page-content">
         <div class="auth-box">
             <div id="auth-view-login" class="auth-view active">
-                <h2 style="text-align: center; margin-bottom: 35px; color: #fff; letter-spacing: 5px; font-size: 2rem;">SYSTEM LOGIN</h2>
-                <button type="button" class="btn-cyber" style="width: 100%; margin-bottom: 30px; border-color: rgba(255,255,255,0.2); color: #fff; background: rgba(255,255,255,0.02);" onclick="initiateGoogleAuth()">
-                    <svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                    </svg>
-                    CONTINUE WITH GOOGLE
-                </button>
-                <div style="text-align: center; color: #64748b; margin-bottom: 30px; font-family: 'Share Tech Mono', monospace; font-size: 0.9rem;">- OR USE SECURE CYPHER -</div>
-                <form onsubmit="handleAuth(event, 'login')">
+                <h2 style="text-align: center; margin-bottom: 30px;">AUTHORIZE</h2>
+                <form onsubmit="handleLogin(event)">
                     <div class="input-group">
-                        <label>OPERATOR ID (EMAIL)</label>
-                        <input type="email" required placeholder="sys.op@network.local">
+                        <label>OPERATOR ID</label>
+                        <input type="text" required placeholder="USER_NAME">
                     </div>
                     <div class="input-group">
-                        <label>ACCESS CYPHER</label>
+                        <label>SECURITY CYPHER</label>
                         <input type="password" required placeholder="••••••••">
                     </div>
-                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.2rem; padding: 18px;">INITIALIZE LINK</button>
+                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.2rem; padding: 18px;">INITIATE LINK</button>
                 </form>
-                <div class="auth-switch-link" onclick="switchAuthView('signup')">REQUEST NEW BIOMETRIC PROFILE ></div>
+                <div style="text-align: center; margin: 20px 0; color: #64748b; font-family: 'Share Tech Mono', monospace;">[ OR ]</div>
+                <button class="btn-cyber" style="width: 100%; border-color: rgba(255,255,255,0.2); color: #fff;" onclick="initiateGoogleAuth()">
+                    CONNECT VIA GOOGLE SECURE
+                </button>
+                <div class="auth-switch-link" onclick="switchAuthView('signup')">> REQUEST NEW ACCESS PROTOCOL</div>
             </div>
 
             <div id="auth-view-signup" class="auth-view">
-                <h2 style="text-align: center; margin-bottom: 35px; color: #fff; letter-spacing: 5px; font-size: 2rem;">REGISTER PROFILE</h2>
-                <form onsubmit="handleAuth(event, 'signup')">
+                <h2 style="text-align: center; margin-bottom: 30px;">REGISTER</h2>
+                <form onsubmit="handleSignup(event)">
                     <div class="input-group">
-                        <label>DESIGNATION (NAME)</label>
-                        <input type="text" required placeholder="Agent X">
+                        <label>NEW OPERATOR ID</label>
+                        <input type="text" required placeholder="CHOOSE_NAME">
                     </div>
                     <div class="input-group">
-                        <label>COMMUNICATION LINK (EMAIL)</label>
-                        <input type="email" required placeholder="sys.op@network.local">
+                        <label>EMAIL DATALINK</label>
+                        <input type="email" required placeholder="ENTER@EMAIL.COM">
                     </div>
-                    <div class="input-group" style="margin-bottom: 40px;">
-                        <label>SECURE CYPHER (PASSWORD)</label>
+                    <div class="input-group">
+                        <label>SECURITY CYPHER (PASSWORD)</label>
                         <input type="password" required placeholder="••••••••">
                     </div>
-                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.2rem; padding: 18px;">GENERATE PROFILE</button>
+                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.2rem; padding: 18px;">SEND CYPHER TO EMAIL</button>
                 </form>
                 <div class="auth-switch-link" onclick="switchAuthView('login')">< RETURN TO LOGIN</div>
-            </div>
-
-            <div id="auth-view-verify" class="auth-view">
-                <h2 style="text-align: center; margin-bottom: 15px; color: var(--theme); letter-spacing: 4px; font-size: 1.8rem;">AWAITING VERIFICATION</h2>
-                <p style="text-align: center; font-size: 1rem; margin-bottom: 35px; color: #94a3b8; font-family: 'Share Tech Mono', monospace;">A secure cypher has been transmitted to your email.</p>
-                <form onsubmit="handleVerification(event)">
-                    <div class="input-group">
-                        <label>6-DIGIT CYPHER CODE</label>
-                        <input type="text" required placeholder="0 0 0 0 0 0" style="text-align: center; letter-spacing: 12px; font-size: 1.8rem;" maxlength="6">
-                    </div>
-                    <button type="submit" class="btn-cyber btn-solid" style="width: 100%; font-size: 1.2rem; padding: 18px;">VERIFY & ESTABLISH LINK</button>
-                </form>
-                <div class="auth-switch-link" onclick="switchAuthView('signup')">< CANCEL OPERATION</div>
             </div>
 
             <div id="auth-view-google" class="auth-view">
                 <div class="google-loader">
                     <div class="spinner"></div>
-                    <h3 style="color: #fff; letter-spacing: 3px; font-size: 1.2rem; font-family: 'Share Tech Mono', monospace;" id="google-status-text">REDIRECTING TO GOOGLE<span class="blink">...</span></h3>
-                    <p style="font-size: 0.95rem; color: #94a3b8; margin-top: 20px; font-family: 'Share Tech Mono', monospace;">Awaiting external OAuth protocol.</p>
+                    <h3 id="google-status-text" style="color: #fff; letter-spacing: 3px; font-size: 1.2rem; font-family: 'Share Tech Mono', monospace;">CONNECTING...</h3>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="experience" class="page-content">
+        <button class="btn-cyber" style="position: absolute; top: 20px; right: 8vw; z-index: 50;" onclick="terminateSystem()">TERMINATE CONNECTION</button>
+        
         <div class="hud-layout">
             <div id="video-core">
                 <div class="scanner"></div>
                 <canvas id="webcam-canvas"></canvas>
-                <div style="position: absolute; bottom: 20px; left: 20px; color: var(--theme); font-size: 0.9rem; background: rgba(0,0,0,0.8); padding: 10px; font-family: 'Share Tech Mono', monospace; border-left: 2px solid var(--theme);">
-                    REC // KINETIC_FEED_ACTIVE
-                </div>
             </div>
             
             <div class="data-panel">
                 <div class="hud-box">
-                    <h3 style="font-size: 1.1rem; color: #64748b; margin-bottom: 25px;">REAL-TIME NEURAL CLASSIFICATION</h3>
-                    <div id="bars-container">
-                        <div class="bar-wrap">
-                            <div class="bar-label"><span>[01] CALM</span><span id="val-0">0%</span></div>
-                            <div class="bar-bg"><div class="bar-fill" id="fill-0"></div></div>
-                        </div>
-                        <div class="bar-wrap">
-                            <div class="bar-label"><span>[02] ANXIOUS</span><span id="val-1">0%</span></div>
-                            <div class="bar-bg"><div class="bar-fill" id="fill-1"></div></div>
-                        </div>
-                        <div class="bar-wrap">
-                            <div class="bar-label"><span>[03] HAPPY</span><span id="val-2">0%</span></div>
-                            <div class="bar-bg"><div class="bar-fill" id="fill-2"></div></div>
-                        </div>
+                    <h3 style="color: var(--theme); margin-bottom: 25px; border-bottom: 1px solid rgba(0, 240, 255, 0.2); padding-bottom: 10px;">NEURAL OUTPUT DATA</h3>
+                    
+                    <div class="bar-wrap">
+                        <div class="bar-label"><span>[01] CALM (BASELINE)</span> <span id="label-0">0%</span></div>
+                        <div class="bar-bg"><div class="bar-fill" id="fill-0"></div></div>
+                    </div>
+                    
+                    <div class="bar-wrap">
+                        <div class="bar-label"><span>[02] ANXIOUS (STRESS)</span> <span id="label-1">0%</span></div>
+                        <div class="bar-bg"><div class="bar-fill" id="fill-1"></div></div>
+                    </div>
+                    
+                    <div class="bar-wrap">
+                        <div class="bar-label"><span>[03] HAPPY (EUPHORIA)</span> <span id="label-2">0%</span></div>
+                        <div class="bar-bg"><div class="bar-fill" id="fill-2"></div></div>
                     </div>
                 </div>
-
+                
                 <div id="ai-console">
-                    > SYSTEM INITIALIZED...<br><br>
-                    > AWAITING KINETIC INPUT...<br><br>
+                    [SYSTEM] Awaiting Core Activation...<br><br>
                     <span class="blink">_</span>
                 </div>
             </div>
@@ -472,17 +441,142 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
 <script>
     // ==========================================
-    // 核心 UI 与背景粒子逻辑
+    // 已在此为您替换上专属模型链接
+    const URL = "https://teachablemachine.withgoogle.com/models/sTBoNGgmv/"; 
     // ==========================================
+
+    let model, webcam, webcamCtx, labelContainer, maxPredictions;
+    let systemRunning = false;
+    let loopFrame;
+    let isAuthenticated = false;
+
+    // --- Routing System ---
+    function route(pageId) {
+        document.querySelectorAll('.page-content').forEach(el => el.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
+        
+        const navItems = document.querySelectorAll('.nav-links li');
+        if(pageId === 'home') navItems[0].classList.add('active');
+        else if(pageId === 'about') navItems[1].classList.add('active');
+        else if(pageId === 'project') navItems[2].classList.add('active');
+        else if(pageId === 'guide') navItems[3].classList.add('active');
+    }
+
+    // --- Authentication UI & Logic ---
+    function openAuth(view) {
+        route('auth');
+        switchAuthView(view);
+    }
+
+    function switchAuthView(view) {
+        document.querySelectorAll('.auth-view').forEach(v => v.classList.remove('active'));
+        document.getElementById(`auth-view-${view}`).classList.add('active');
+    }
+
+    function attemptStart() {
+        if(isAuthenticated) {
+            triggerExperienceTransition();
+        } else {
+            alert("[SYSTEM MSG] Authentication required to access core.");
+            route('auth');
+        }
+    }
+
+    function loginSuccess() {
+        isAuthenticated = true;
+        document.getElementById('auth-ui').innerHTML = `
+            <span style="font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; color: var(--theme); letter-spacing: 2px; margin-right: 15px;">OPERATOR_ACTIVE</span>
+            <button class="btn-cyber btn-logout" onclick="logout()" style="text-transform: none;">Log out</button>
+        `;
+        route('home');
+    }
+
+    function logout() {
+        isAuthenticated = false;
+        document.getElementById('auth-ui').innerHTML = `
+            <button class="btn-cyber" onclick="openAuth('login')" style="text-transform: none;">Log in</button>
+            <button class="btn-cyber btn-solid" onclick="openAuth('signup')" style="text-transform: none;">Sign up</button>
+        `;
+        terminateSystem();
+        route('home');
+    }
+
+    function handleLogin(e) {
+        e.preventDefault();
+        document.documentElement.style.setProperty('--theme', '#00f0ff');
+        loginSuccess();
+    }
+
+    function handleSignup(e) {
+        e.preventDefault();
+        const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+        alert(`[SYSTEM MSG] A verification cypher has been sent to your email.\n\n[SIMULATED EMAIL]\nYour 6-digit verification code is: ${generatedCode}`);
+        let code = prompt("Please enter the exact 6-digit verification code you received:", "");
+        if (code === generatedCode) {
+            alert("Verification complete. Registration successful.");
+            loginSuccess();
+        } else if (code !== null) {
+            alert("[ERROR] Invalid access cypher. Registration aborted.");
+        }
+    }
+
+    function initiateGoogleAuth() {
+        switchAuthView('google');
+        const textElem = document.getElementById('google-status-text');
+        textElem.innerHTML = `CONNECTING TO GOOGLE SECURE HANDSHAKE<span class="blink">...</span>`;
+        
+        setTimeout(() => {
+            textElem.innerHTML = `AWAITING PERSONAL IDENTITY VERIFICATION<span class="blink">...</span>`;
+            document.documentElement.style.setProperty('--theme', '#4285F4');
+            document.documentElement.style.setProperty('--theme-glow', 'rgba(66, 133, 244, 0.4)');
+            
+            setTimeout(() => {
+                textElem.innerHTML = `VERIFICATION SUCCESS. ESTABLISHING LINK<span class="blink">...</span>`;
+                document.documentElement.style.setProperty('--theme', '#34A853');
+                
+                setTimeout(() => {
+                    document.documentElement.style.setProperty('--theme', '#00f0ff');
+                    document.documentElement.style.setProperty('--theme-glow', 'rgba(0, 240, 255, 0.4)');
+                    loginSuccess();
+                }, 1500);
+            }, 2000);
+        }, 2000);
+    }
+
+    // --- Transitions & Background ---
+    let warpAnimId;
+    function triggerExperienceTransition() {
+        const warpContainer = document.getElementById('warp-transition');
+        warpContainer.style.display = 'block';
+        setTimeout(() => warpContainer.style.opacity = '1', 50);
+        
+        initWarp();
+        animateWarp();
+        
+        const warpText = document.getElementById('warp-text');
+        setTimeout(() => warpText.style.opacity = '1', 300);
+        
+        setTimeout(() => {
+            cancelAnimationFrame(warpAnimId);
+            warpContainer.style.opacity = '0';
+            initExperience();
+            setTimeout(() => {
+                warpContainer.style.display = 'none';
+                warpText.style.opacity = '0';
+            }, 500);
+        }, 2500);
+    }
+
     const bgCanvas = document.getElementById('bg-canvas');
     const bgCtx = bgCanvas.getContext('2d');
-    let particlesArray;
-
-    let mouse = { x: null, y: null, radius: 150 };
-    window.addEventListener('mousemove', (event) => { mouse.x = event.x; mouse.y = event.y; });
-
+    let particles = [];
+    let mouse = {x: null, y: null};
+    
     class Particle {
         constructor() {
             this.x = Math.random() * window.innerWidth;
@@ -504,240 +598,180 @@
         update() {
             this.y -= this.vy;
             this.x += Math.sin(this.y * this.waveSpeed + this.waveOffset) * 0.5;
-            if(this.y < 0) { this.y = bgCanvas.height; this.x = Math.random() * bgCanvas.width; }
+            if(this.y < 0) {
+                this.y = bgCanvas.height;
+                this.x = Math.random() * bgCanvas.width;
+            }
             if(this.x > bgCanvas.width) this.x = 0;
             if(this.x < 0) this.x = bgCanvas.width;
             
             if (mouse.x != null && mouse.y != null) {
                 let dx = mouse.x - this.x;
                 let dy = mouse.y - this.y;
-                let distance = Math.sqrt(dx*dx + dy*dy);
-                if (distance < mouse.radius) {
-                    let force = (mouse.radius - distance) / mouse.radius;
-                    this.x -= (dx / distance) * force * this.density;
-                    this.y -= (dy / distance) * force * this.density;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                let forceDirectionX = dx / distance;
+                let forceDirectionY = dy / distance;
+                let maxDistance = 150;
+                let force = (maxDistance - distance) / maxDistance;
+                let directionX = forceDirectionX * force * this.density;
+                let directionY = forceDirectionY * force * this.density;
+
+                if (distance < maxDistance) {
+                    this.x -= directionX;
+                    this.y -= directionY;
                 }
             }
         }
     }
 
-    function initBgParticles() {
+    function initBg() {
         bgCanvas.width = window.innerWidth;
         bgCanvas.height = window.innerHeight;
-        particlesArray = [];
-        let numberOfParticles = (bgCanvas.width * bgCanvas.height) / 7000;
-        for(let i=0; i < numberOfParticles; i++) {
-            particlesArray.push(new Particle());
-        }
+        particles = [];
+        let numParticles = window.innerWidth < 768 ? 50 : 150;
+        for(let i=0; i<numParticles; i++) particles.push(new Particle());
     }
 
     function animateBg() {
-        bgCtx.fillStyle = 'rgba(2, 2, 4, 0.2)';
-        bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
-        for(let i=0; i < particlesArray.length; i++) {
-            particlesArray[i].update();
-            particlesArray[i].draw();
-        }
         requestAnimationFrame(animateBg);
+        bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+        particles.forEach(p => { p.update(); p.draw(); });
     }
 
-    window.addEventListener('resize', () => {
-        initBgParticles();
+    window.addEventListener('mousemove', function(event) {
+        mouse.x = event.x; mouse.y = event.y;
+    });
+
+    window.addEventListener('resize', function() {
+        initBg();
         initSentinel();
     });
 
-    initBgParticles();
-    animateBg();
-
-    // ==========================================
-    // 第一层：开场 3D 进场粒子动画
-    // ==========================================
+    // --- Intro System ---
     const iCanvas = document.getElementById('intro-canvas');
     const iCtx = iCanvas.getContext('2d');
-    let introActive = true;
     let introPoints = [];
     let introAngleX = 0, introAngleY = 0;
+    let introScale = 1;
     let explosionPhase = false;
-    let introScaleCurrent = 0.1;
-    let introScaleTarget = 1;
+    let introActive = true;
 
     function initIntro() {
-        iCanvas.width = window.innerWidth; iCanvas.height = window.innerHeight;
-        const radius = 180;
-        for(let i=0; i<400; i++) {
-            const phi = Math.acos(-1 + (2 * i) / 400);
-            const theta = Math.sqrt(400 * Math.PI) * phi;
-            introPoints.push({
-                x: radius * Math.cos(theta) * Math.sin(phi),
-                y: radius * Math.sin(theta) * Math.sin(phi),
-                z: radius * Math.cos(phi),
-                vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, vz: (Math.random()-0.5)*15
-            });
+        iCanvas.width = window.innerWidth;
+        iCanvas.height = window.innerHeight;
+        introPoints = [];
+        const numPoints = 800;
+        const radius = window.innerWidth < 768 ? 150 : 250;
+        for (let i = 0; i < numPoints; i++) {
+            let phi = Math.acos(-1 + (2 * i) / numPoints);
+            let theta = Math.sqrt(numPoints * Math.PI) * phi;
+            let tx = radius * Math.cos(theta) * Math.sin(phi);
+            let ty = radius * Math.sin(theta) * Math.sin(phi);
+            let tz = radius * Math.cos(phi);
+            
+            let cx = (Math.random() - 0.5) * 4000;
+            let cy = (Math.random() - 0.5) * 4000;
+            let cz = (Math.random() - 0.5) * 4000;
+            
+            introPoints.push({ x: cx, y: cy, z: cz, tx: tx, ty: ty, tz: tz, vx: 0, vy: 0, vz: 0 });
         }
-        drawIntro();
     }
 
     function drawIntro() {
         if (!introActive) return;
         iCtx.clearRect(0, 0, iCanvas.width, iCanvas.height);
-        const cx = iCanvas.width / 2; const cy = iCanvas.height / 2;
-        introAngleX += 0.002; introAngleY += 0.003;
         
         if (!explosionPhase) {
-            introScaleCurrent += (introScaleTarget - introScaleCurrent) * 0.05;
+            introAngleY += 0.005;
+            introAngleX += 0.002;
         }
 
-        const cosX = Math.cos(introAngleX), sinX = Math.sin(introAngleX);
-        const cosY = Math.cos(introAngleY), sinY = Math.sin(introAngleY);
-        iCtx.fillStyle = '#00f0ff';
+        const color = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+        iCtx.fillStyle = color;
         
+        let cx = iCanvas.width / 2;
+        let cy = iCanvas.height / 2;
+
         introPoints.forEach(p => {
-            if (explosionPhase) { p.x += p.vx; p.y += p.vy; p.z += p.vz; }
-            let y1 = p.y * cosX - p.z * sinX;
-            let z1 = p.y * sinX + p.z * cosX;
-            let x2 = p.x * cosY + z1 * sinY;
-            let z2 = -p.x * sinY + z1 * cosY;
-
-            const perspective = 600;
-            const zDepth = perspective / (perspective - z2);
-            const px = cx + x2 * zDepth * introScaleCurrent;
-            const py = cy + y1 * zDepth * introScaleCurrent;
-
-            const alpha = Math.max(0.1, Math.min(1, (z2 + 250) / 500));
-            if (explosionPhase) {
-                iCtx.fillStyle = `rgba(0, 240, 255, ${alpha * (2 - introScaleCurrent)})`;
+            if (!explosionPhase) {
+                p.x += (p.tx - p.x) * 0.05;
+                p.y += (p.ty - p.y) * 0.05;
+                p.z += (p.tz - p.z) * 0.05;
             } else {
-                iCtx.fillStyle = `rgba(0, 240, 255, ${alpha})`;
+                p.x += p.vx;
+                p.y += p.vy;
+                p.z += p.vz;
             }
-            iCtx.beginPath();
-            iCtx.arc(px, py, Math.max(0.5, 2 * zDepth), 0, Math.PI * 2);
-            iCtx.fill();
+
+            let cosY = Math.cos(introAngleY), sinY = Math.sin(introAngleY);
+            let x1 = p.x * cosY - p.z * sinY;
+            let z1 = p.x * sinY + p.z * cosY;
+            
+            let cosX = Math.cos(introAngleX), sinX = Math.sin(introAngleX);
+            let y1 = p.y * cosX - z1 * sinX;
+            let z2 = p.y * sinX + z1 * cosX;
+
+            let scaleProject = 600 / (600 + z2);
+            let xProject = cx + x1 * scaleProject * introScale;
+            let yProject = cy + y1 * scaleProject * introScale;
+
+            if (scaleProject > 0) {
+                iCtx.globalAlpha = Math.min(1, Math.max(0.1, scaleProject));
+                iCtx.beginPath();
+                iCtx.arc(xProject, yProject, Math.max(0.5, 1.5 * scaleProject), 0, Math.PI * 2);
+                iCtx.fill();
+            }
         });
-        requestAnimationFrame(drawIntro);
+
+        if(introActive) requestAnimationFrame(drawIntro);
     }
-    initIntro();
 
     function startApp() {
         explosionPhase = true;
-        introScaleTarget = 2.5; 
+        introPoints.forEach(p => {
+            p.vx = (Math.random() - 0.5) * 40;
+            p.vy = (Math.random() - 0.5) * 40;
+            p.vz = (Math.random() - 0.5) * 40;
+        });
+        document.querySelector('.intro-content').style.opacity = '0';
         setTimeout(() => {
             document.getElementById('intro-screen').style.opacity = '0';
-            document.getElementById('intro-screen').style.visibility = 'hidden';
-            document.getElementById('app-container').style.opacity = '1';
-            setTimeout(() => { introActive = false; }, 1500);
+            setTimeout(() => {
+                document.getElementById('intro-screen').style.visibility = 'hidden';
+                introActive = false;
+                document.getElementById('app-container').style.opacity = '1';
+                route('home');
+            }, 1500);
         }, 800);
     }
 
-    // ==========================================
-    // 第二层：进入体验系统的高级穿梭粒子动画
-    // ==========================================
-    let warpActive = false;
-    let warpParticles = [];
-
-    function startWarpTransition(callback) {
-        const warpDiv = document.getElementById('warp-transition');
-        const warpCanvas = document.getElementById('warp-canvas');
-        const warpCtx = warpCanvas.getContext('2d');
-        warpCanvas.width = window.innerWidth;
-        warpCanvas.height = window.innerHeight;
-        
-        warpDiv.style.display = 'flex';
-        setTimeout(() => warpDiv.style.opacity = '1', 10);
-
-        warpParticles = [];
-        for(let i=0; i<400; i++) {
-            warpParticles.push({
-                x: (Math.random() - 0.5) * window.innerWidth * 2,
-                y: (Math.random() - 0.5) * window.innerHeight * 2,
-                z: Math.random() * 1000 + 100,
-                speed: Math.random() * 5 + 2
-            });
-        }
-
-        warpActive = true;
-        let warpText = document.getElementById('warp-text');
-        warpText.innerHTML = "SYSTEM LINKING...";
-
-        let frameCount = 0;
-        function renderWarp() {
-            if (!warpActive) return;
-            warpCtx.fillStyle = 'rgba(2, 2, 4, 0.3)'; 
-            warpCtx.fillRect(0, 0, warpCanvas.width, warpCanvas.height);
-
-            const cx = warpCanvas.width / 2;
-            const cy = warpCanvas.height / 2;
-
-            warpCtx.fillStyle = '#00f0ff';
-            warpParticles.forEach(p => {
-                p.z -= p.speed;
-                p.speed += 0.2; 
-                if (p.z <= 1) {
-                    p.z = 1000;
-                    p.speed = Math.random() * 5 + 2;
-                    p.x = (Math.random() - 0.5) * window.innerWidth * 2;
-                    p.y = (Math.random() - 0.5) * window.innerHeight * 2;
-                }
-                let perspective = 800 / p.z;
-                let px = cx + p.x * perspective;
-                let py = cy + p.y * perspective;
-                let size = Math.max(0.5, 4 * perspective);
-
-                warpCtx.beginPath();
-                warpCtx.arc(px, py, size, 0, Math.PI * 2);
-                warpCtx.fill();
-                
-                let prevPerspective = 800 / (p.z + p.speed * 2);
-                let prevPx = cx + p.x * prevPerspective;
-                let prevPy = cy + p.y * prevPerspective;
-                
-                warpCtx.strokeStyle = 'rgba(0, 240, 255, 0.6)';
-                warpCtx.lineWidth = size * 0.5;
-                warpCtx.beginPath();
-                warpCtx.moveTo(px, py);
-                warpCtx.lineTo(prevPx, prevPy);
-                warpCtx.stroke();
-            });
-
-            frameCount++;
-            if (frameCount === 60) warpText.innerHTML = "CALIBRATING KINETICS...";
-            if (frameCount === 120) warpText.innerHTML = "NEURAL LINK ESTABLISHED";
-            
-            if(warpActive) requestAnimationFrame(renderWarp);
-        }
-        renderWarp();
-
-        setTimeout(() => {
-            warpDiv.style.opacity = '0';
-            setTimeout(() => {
-                warpActive = false;
-                warpDiv.style.display = 'none';
-                if (callback) callback();
-            }, 500); 
-        }, 2500);
-    }
-
-    // ==========================================
-    // Sentinel 模型渲染 (首页网格骨架 - 完全使用原版代码)
-    // ==========================================
+    // --- Sentinel Animation ---
     const sentCanvas = document.getElementById('sentinel-canvas');
     const sentCtx = sentCanvas.getContext('2d');
     let sentinelAngle = 0;
     
-    const rawPoseModel = [
-        {id:'nose', x:0, y:-0.6, z:0.2},
-        {id:'lShoulder', x:-0.4, y:-0.3, z:0}, {id:'rShoulder', x:0.4, y:-0.3, z:0},
-        {id:'lElbow', x:-0.5, y:0, z:0.1}, {id:'rElbow', x:0.5, y:0, z:0.1},
-        {id:'lWrist', x:-0.4, y:0.3, z:0.3}, {id:'rWrist', x:0.4, y:0.3, z:0.3},
-        {id:'lHip', x:-0.2, y:0.3, z:0}, {id:'rHip', x:0.2, y:0.3, z:0},
-        {id:'lKnee', x:-0.2, y:0.7, z:0}, {id:'rKnee', x:0.2, y:0.7, z:0},
-        {id:'lAnkle', x:-0.2, y:1, z:0}, {id:'rAnkle', x:0.2, y:1, z:0}
+    const wireframeBase = [
+        {id: 'nose', x: 0, y: -0.6, z: 0.2},
+        {id: 'lShoulder', x: -0.4, y: -0.2, z: 0},
+        {id: 'rShoulder', x: 0.4, y: -0.2, z: 0},
+        {id: 'lElbow', x: -0.5, y: 0.2, z: -0.1},
+        {id: 'rElbow', x: 0.5, y: 0.2, z: -0.1},
+        {id: 'lWrist', x: -0.4, y: 0.6, z: -0.2},
+        {id: 'rWrist', x: 0.4, y: 0.6, z: -0.2},
+        {id: 'lHip', x: -0.3, y: 0.5, z: 0},
+        {id: 'rHip', x: 0.3, y: 0.5, z: 0},
+        {id: 'lKnee', x: -0.3, y: 1.1, z: 0},
+        {id: 'rKnee', x: 0.3, y: 1.1, z: 0},
+        {id: 'lAnkle', x: -0.3, y: 1.7, z: 0},
+        {id: 'rAnkle', x: 0.3, y: 1.7, z: 0}
     ];
-    
+
     const connections = [
         ['lShoulder', 'rShoulder'], ['lShoulder', 'lElbow'], ['lElbow', 'lWrist'],
         ['rShoulder', 'rElbow'], ['rElbow', 'rWrist'], ['lShoulder', 'lHip'],
-        ['rShoulder', 'rHip'], ['lHip', 'rHip'], ['lHip', 'lKnee'], ['lKnee', 'lAnkle'],
-        ['rHip', 'rKnee'], ['rKnee', 'rAnkle'], ['nose', 'lShoulder'], ['nose', 'rShoulder']
+        ['rShoulder', 'rHip'], ['lHip', 'rHip'], ['lHip', 'lKnee'],
+        ['lKnee', 'lAnkle'], ['rHip', 'rKnee'], ['rKnee', 'rAnkle'],
+        ['nose', 'lShoulder'], ['nose', 'rShoulder']
     ];
 
     function project(point, angle, width, height) {
@@ -761,238 +795,206 @@
 
     function animateSentinel() {
         if(document.getElementById('home').style.display === 'none') {
-            requestAnimationFrame(animateSentinel); return;
+            requestAnimationFrame(animateSentinel);
+            return;
         }
         sentCtx.clearRect(0, 0, sentCanvas.width, sentCanvas.height);
         sentinelAngle += 0.005;
         
-        const currentTheme = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
-        
-        let projectedPoints = {};
-        rawPoseModel.forEach(p => { projectedPoints[p.id] = project(p, sentinelAngle, sentCanvas.width, sentCanvas.height); });
-        
+        const color = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+        sentCtx.strokeStyle = color;
+        sentCtx.fillStyle = color;
         sentCtx.lineWidth = 2;
-        connections.forEach(([p1_id, p2_id]) => {
-            const p1 = projectedPoints[p1_id];
-            const p2 = projectedPoints[p2_id];
-            let opacity = 1 - (((p1.z + p2.z) / 2 + 1) / 2);
-            sentCtx.strokeStyle = currentTheme.replace('rgb','rgba').replace(')', `, ${opacity * 0.5 + 0.1})`);
-            sentCtx.beginPath(); sentCtx.moveTo(p1.x, p1.y); sentCtx.lineTo(p2.x, p2.y); sentCtx.stroke();
+
+        const projected = {};
+        wireframeBase.forEach(p => {
+            let offset = Math.sin(sentinelAngle * 2 + p.y) * 0.05;
+            let tempP = {x: p.x, y: p.y + offset, z: p.z};
+            projected[p.id] = project(tempP, sentinelAngle, sentCanvas.width, sentCanvas.height);
         });
-        
-        rawPoseModel.forEach(p_raw => {
-            const p = projectedPoints[p_raw.id];
-            let opacity = 1 - ((p.z + 1) / 2);
-            sentCtx.fillStyle = currentTheme.replace('rgb','rgba').replace(')', `, ${opacity * 0.8 + 0.2})`);
-            sentCtx.beginPath(); sentCtx.arc(p.x, p.y, 4 * (opacity * 0.5 + 0.5), 0, Math.PI * 2); sentCtx.fill();
+
+        connections.forEach(conn => {
+            const p1 = projected[conn[0]];
+            const p2 = projected[conn[1]];
+            if(p1 && p2) {
+                sentCtx.beginPath();
+                sentCtx.moveTo(p1.x, p1.y);
+                sentCtx.lineTo(p2.x, p2.y);
+                sentCtx.globalAlpha = 0.5;
+                sentCtx.stroke();
+            }
         });
+
+        Object.values(projected).forEach(p => {
+            sentCtx.beginPath();
+            sentCtx.arc(p.x, p.y, 3, 0, Math.PI*2);
+            sentCtx.globalAlpha = 0.9;
+            sentCtx.fill();
+        });
+
         requestAnimationFrame(animateSentinel);
     }
-    setTimeout(() => { initSentinel(); animateSentinel(); }, 500);
 
-    // ==========================================
-    // 路由与鉴权控制
-    // ==========================================
-    let isAuthenticated = false;
-
-    function route(pageId) {
-        document.querySelectorAll('.page-content').forEach(el => { el.classList.remove('active'); el.style.display = 'none'; });
-        document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
-        
-        const target = document.getElementById(pageId);
-        if(target) { target.style.display = (pageId === 'home') ? 'flex' : 'flex'; setTimeout(() => target.classList.add('active'), 10); }
-        
-        const navItems = document.querySelectorAll('.nav-links li');
-        if(pageId === 'home') navItems[0].classList.add('active');
-        else if(pageId === 'about') navItems[1].classList.add('active');
-        else if(pageId === 'project') navItems[2].classList.add('active');
-        else if(pageId === 'guide') navItems[3].classList.add('active');
-        
-        if(pageId !== 'experience' && systemRunning) terminateSystem(false);
-    }
-
-    function openAuth(view) {
-        route('auth');
-        switchAuthView(view);
-    }
-
-    function switchAuthView(viewId) {
-        document.querySelectorAll('.auth-view').forEach(el => el.classList.remove('active'));
-        document.getElementById('auth-view-' + viewId).classList.add('active');
-    }
-
-    function handleAuth(e, type) {
-        e.preventDefault();
-        switchAuthView('verify');
-    }
-
-    function handleVerification(e) {
-        e.preventDefault();
-        const code = e.target.querySelector('input').value;
-        if(code === "000000" || code.length === 6) {
-            loginSuccess();
-        } else {
-            alert("[ERROR] Invalid access cypher. Please enter the correct 6-digit code.");
-        }
-    }
-
-    function initiateGoogleAuth() {
-        switchAuthView('google');
-        const textElem = document.getElementById('google-status-text');
-        textElem.innerHTML = `CONNECTING TO GOOGLE SECURE HANDSHAKE<span class="blink">...</span>`;
-        setTimeout(() => {
-            textElem.innerHTML = `AWAITING PERSONAL IDENTITY VERIFICATION<span class="blink">...</span>`;
-            document.documentElement.style.setProperty('--theme', '#4285F4');
-            document.documentElement.style.setProperty('--theme-glow', 'rgba(66, 133, 244, 0.4)');
-            setTimeout(() => {
-                textElem.innerHTML = `VERIFICATION SUCCESS. ESTABLISHING LINK<span class="blink">...</span>`;
-                document.documentElement.style.setProperty('--theme', '#34A853');
-                setTimeout(() => {
-                    document.documentElement.style.setProperty('--theme', '#00f0ff');
-                    document.documentElement.style.setProperty('--theme-glow', 'rgba(0, 240, 255, 0.4)');
-                    loginSuccess();
-                }, 1000);
-            }, 2000);
-        }, 1500);
-    }
-
-    function attemptStart() {
-        if (!isAuthenticated) {
-            openAuth('login');
-        } else {
-            startWarpTransition(() => {
-                route('experience');
-                startSystem();
+    // --- Warp Speed Math ---
+    const wCanvas = document.getElementById('warp-canvas');
+    const wCtx = wCanvas.getContext('2d');
+    let warpStars = [];
+    
+    function initWarp() {
+        wCanvas.width = window.innerWidth;
+        wCanvas.height = window.innerHeight;
+        warpStars = [];
+        for(let i=0; i<300; i++) {
+            warpStars.push({
+                x: (Math.random() - 0.5) * wCanvas.width * 2,
+                y: (Math.random() - 0.5) * wCanvas.height * 2,
+                z: Math.random() * wCanvas.width
             });
         }
     }
-
-    function loginSuccess() {
-        isAuthenticated = true;
-        document.getElementById('auth-ui').innerHTML = `
-            <span style="color: var(--theme); font-size: 0.95rem; letter-spacing: 2px; font-weight:bold; font-family: 'Share Tech Mono', monospace;">[ OPERATOR_ACTIVE ]</span>
-            <button class="btn-cyber" style="border-color: rgba(255,255,255,0.2); color: #94a3b8; padding: 10px 20px; font-size: 0.8rem;" onclick="logout()">LOGOUT</button>
-        `;
-        startWarpTransition(() => {
-            route('experience');
-            startSystem();
-        });
-    }
-
-    function logout() {
-        isAuthenticated = false;
-        terminateSystem(false);
-        document.getElementById('auth-ui').innerHTML = `
-            <button class="btn-cyber" onclick="openAuth('login')" style="text-transform: none;">Log in</button>
-            <button class="btn-cyber btn-solid" onclick="openAuth('signup')" style="text-transform: none;">Sign up</button>
-        `;
-        route('home');
-    }
-
-    // ==========================================
-    // AI 核心：Teachable Machine 系统 (已替换真实URL)
-    // ==========================================
-    const URL = "https://teachablemachine.withgoogle.com/models/K0q2J1p0N/";
-    let model, webcam, webcamCtx, maxPredictions;
-    let systemRunning = false;
-    let loopFrame;
-    let currentState = "";
-
-    async function startSystem() {
-        if(systemRunning) return;
-        systemRunning = true;
-        document.getElementById('ai-console').innerHTML = "> INITIALIZING TENSOR CORES...<br><br>> LOADING KINETIC MODEL...<br><br><span class=\"blink\">_</span>";
+    
+    function animateWarp() {
+        wCtx.fillStyle = 'rgba(2, 2, 4, 0.2)';
+        wCtx.fillRect(0, 0, wCanvas.width, wCanvas.height);
         
+        const cx = wCanvas.width / 2;
+        const cy = wCanvas.height / 2;
+        
+        const color = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
+        wCtx.fillStyle = color;
+        
+        warpStars.forEach(s => {
+            s.z -= 20; 
+            if(s.z <= 0) {
+                s.x = (Math.random() - 0.5) * wCanvas.width * 2;
+                s.y = (Math.random() - 0.5) * wCanvas.height * 2;
+                s.z = wCanvas.width;
+            }
+            
+            let px = cx + (s.x / s.z) * wCanvas.width;
+            let py = cy + (s.y / s.z) * wCanvas.width;
+            let size = Math.max(0, (1 - s.z / wCanvas.width) * 3);
+            
+            wCtx.beginPath();
+            wCtx.arc(px, py, size, 0, Math.PI*2);
+            wCtx.fill();
+            
+            wCtx.strokeStyle = color;
+            wCtx.beginPath();
+            wCtx.moveTo(px, py);
+            wCtx.lineTo(px + (s.x / s.z)*5, py + (s.y / s.z)*5);
+            wCtx.stroke();
+        });
+        
+        warpAnimId = requestAnimationFrame(animateWarp);
+    }
+
+    // --- Core AI Recognition Logic ---
+    async function initExperience() {
+        route('experience');
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+
         try {
-            const modelURL = URL + "model.json";
-            const metadataURL = URL + "metadata.json";
+            document.getElementById('ai-console').innerHTML = "[SYSTEM] Initializing Neural Core...<br><span class='blink'>_</span>";
             model = await tmPose.load(modelURL, metadataURL);
             maxPredictions = model.getTotalClasses();
 
-            const size = 600;
-            const flip = true; 
-            webcam = new tmPose.Webcam(size, size, flip); 
-            await webcam.setup(); 
+            const size = 400; 
+            const flip = true;
+            webcam = new tmPose.Webcam(size, size, flip);
+            await webcam.setup();
             await webcam.play();
             
             const canvas = document.getElementById("webcam-canvas");
             canvas.width = size; canvas.height = size;
             webcamCtx = canvas.getContext("2d");
             
-            document.getElementById('ai-console').innerHTML = "> SYSTEM NOMINAL.<br><br>> AWAITING KINETIC INPUT...<br><br><span class=\"blink\">_</span>";
-            loopFrame = window.requestAnimationFrame(loop);
-        } catch (e) {
-            document.getElementById('ai-console').innerHTML = "> [ERROR] MODEL LOADING FAILED. CHECK URL AND NETWORK.<br><br><span class=\"blink\">_</span>";
+            systemRunning = true;
+            window.requestAnimationFrame(runLoop);
+            
+            document.getElementById('ai-console').innerHTML = "[SYSTEM] Sensor linked. Awaiting kinetic patterns...<br><span class='blink'>_</span>";
+        } catch(e) {
             console.error(e);
+            document.getElementById('ai-console').innerHTML = `<span style="color:#ef4444">[ERROR] Neural Core boot failure. Sensor unlinked or model missing.</span><br><br><span class="blink">_</span>`;
         }
     }
 
-    async function loop(timestamp) {
+    async function runLoop(timestamp) {
         if(!systemRunning) return;
-        webcam.update(); 
+        webcam.update();
         await predict();
-        loopFrame = window.requestAnimationFrame(loop);
+        loopFrame = window.requestAnimationFrame(runLoop);
     }
+
+    let currentState = "";
 
     async function predict() {
         const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
         const prediction = await model.predict(posenetOutput);
+        
+        // ========================================================
+        // 关键调用：在这里渲染摄像头画面和人体骨骼
+        // ========================================================
+        drawWebcamPose(pose);
 
         let topIndex = 0;
         for (let i = 0; i < maxPredictions; i++) {
-            if(i > 2) break; 
             const prob = prediction[i].probability;
-            document.getElementById(`val-${i}`).innerText = (prob * 100).toFixed(0) + "%"; 
-            document.getElementById(`fill-${i}`).style.width = (prob * 100).toFixed(0) + "%"; 
-            if (prob > prediction[topIndex].probability) topIndex = i; 
+            const labelEl = document.getElementById(`label-${i}`);
+            const fillEl = document.getElementById(`fill-${i}`);
+            
+            if(labelEl && fillEl) {
+                labelEl.innerText = (prob * 100).toFixed(0) + "%";
+                fillEl.style.width = (prob * 100).toFixed(0) + "%";
+            }
+            if (prob > prediction[topIndex].probability) topIndex = i;
         }
 
         const topProb = prediction[topIndex].probability;
-        const topLabel = prediction[topIndex].className.toLowerCase();
-        
-        if (topProb > 0.65) {
-            updateDynamicFX(topIndex, topLabel);
-        }
-        
-        drawWebcamPose(pose);
-    }
+        const topLabel = prediction[topIndex].className;
 
-    function updateDynamicFX(index, label) {
-        let themeColor, themeGlow, fxClass, logText;
-        
-        if (label.includes("anx") || label.includes("sad") || label.includes("stress") || index === 1) {
-            themeColor = "#ff0055"; 
-            themeGlow = "rgba(255, 0, 85, 0.4)";
-            fxClass = "fx-shake";
-            logText = "> WARNING: KINETIC OVERLOAD DETECTED\n> STRESS SIGNATURE MATCH\n> NEURAL LINK UNSTABLE...";
-        } else if (label.includes("happy") || label.includes("joy") || index === 2) {
-            themeColor = "#00ffcc"; 
-            themeGlow = "rgba(0, 255, 204, 0.4)";
-            fxClass = "fx-pulse";
-            logText = "> EUPHORIA PROTOCOL ACTIVE\n> SPATIAL EXPANSION DETECTED\n> NEURAL LINK HARMONIZED...";
-        } else {
-            themeColor = "#0088ff"; 
-            themeGlow = "rgba(0, 136, 255, 0.4)";
-            fxClass = "";
-            logText = "> BASELINE HOMEOSTASIS\n> POSTURE NEUTRAL\n> SYSTEM NOMINAL...";
-        }
+        if (topProb > 0.8 && topLabel !== currentState) {
+            currentState = topLabel;
+            let logText = "";
+            let fxClass = "";
+            let themeColor = "";
+            let themeGlow = "";
 
-        if (currentState !== label) {
-            currentState = label;
-            document.documentElement.style.setProperty('--theme', themeColor);
-            document.documentElement.style.setProperty('--theme-glow', themeGlow);
-            document.getElementById('app-container').className = fxClass; 
-            document.getElementById('ai-console').innerHTML = logText.replace(/\n/g, '<br><br>') + '<br><br><span class="blink">_</span>';
+            if (topLabel.toLowerCase().includes("calm") || topIndex === 0) {
+                logText = "[SYSTEM] Baseline homeostasis detected. State: CALM.\nNo anomalies.";
+                themeColor = "#0088ff";
+                themeGlow = "rgba(0, 136, 255, 0.4)";
+            } else if (topLabel.toLowerCase().includes("anxious") || topIndex === 1) {
+                logText = "[WARNING] Kinetic overload detected. State: ANXIOUS.\nStress levels elevated.";
+                fxClass = "fx-shake";
+                themeColor = "#ff0055";
+                themeGlow = "rgba(255, 0, 85, 0.4)";
+            } else if (topLabel.toLowerCase().includes("happy") || topIndex === 2) {
+                logText = "[SYSTEM] Euphoric expansion detected. State: HAPPY.\nEndorphin levels peaking.";
+                fxClass = "fx-pulse";
+                themeColor = "#00ffcc";
+                themeGlow = "rgba(0, 255, 204, 0.4)";
+            }
+
+            if(themeColor) {
+                document.documentElement.style.setProperty('--theme', themeColor);
+                document.documentElement.style.setProperty('--theme-glow', themeGlow);
+                document.getElementById('app-container').className = fxClass; 
+                document.getElementById('ai-console').innerHTML = logText.replace(/\n/g, '<br><br>') + '<br><br><span class="blink">_</span>';
+            }
         }
     }
 
     function drawWebcamPose(pose) {
-        if (webcam && webcam.canvas) {
+        if (webcam && webcam.canvas && webcamCtx) {
             webcamCtx.drawImage(webcam.canvas, 0, 0);
             if (pose) {
                 const min = 0.5;
                 const color = getComputedStyle(document.documentElement).getPropertyValue('--theme').trim();
-                webcamCtx.strokeStyle = color; webcamCtx.fillStyle = color; webcamCtx.lineWidth = 5; 
+                webcamCtx.strokeStyle = color; 
+                webcamCtx.fillStyle = color; 
+                webcamCtx.lineWidth = 5; 
                 tmPose.drawKeypoints(pose.keypoints, min, webcamCtx);
                 tmPose.drawSkeleton(pose.keypoints, min, webcamCtx);
             }
@@ -1011,6 +1013,17 @@
         
         if(goHome) route('home');
     }
+
+    // --- Initialization Execution ---
+    initIntro();
+    drawIntro();
+    initBg();
+    animateBg();
+    setTimeout(() => {
+        initSentinel();
+        animateSentinel();
+    }, 100);
+
 </script>
 </body>
 </html>
