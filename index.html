@@ -103,6 +103,7 @@
         .btn-cyber:hover { background: var(--theme); color: #000; box-shadow: 0 0 20px var(--theme-glow); font-weight: bold;}
         .btn-solid { background: var(--theme); color: #000; font-weight: bold; border: none; }
 
+        /* 专门为退出登录按钮加的样式 */
         .btn-logout {
             border-color: #ef4444 !important; 
             color: #ef4444 !important;
@@ -441,13 +442,15 @@
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
 
 <script>
-    const URL = "https://teachablemachine.withgoogle.com/models/sTBoNGgmv/";
+    // === 核心变量定义 ===
+    const URL = "https://teachablemachine.withgoogle.com/models/b274q64aJ/";
     let model, webcam, ctx, labelContainer, maxPredictions;
     let systemRunning = false;
     let webcamCtx;
     let loopFrame;
     let isAuthenticated = false;
 
+    // === 体验区过渡动画 (Warp Speed) ===
     const warpContainer = document.getElementById('warp-transition');
     const warpCanvas = document.getElementById('warp-canvas');
     let warpCtx = warpCanvas.getContext('2d');
@@ -522,6 +525,7 @@
         }, 2500);
     }
 
+    // === Intro 动画系统 ===
     const iCanvas = document.getElementById('intro-canvas');
     const iCtx = iCanvas.getContext('2d');
     let introPoints = [];
@@ -614,6 +618,7 @@
         }, 800);
     }
 
+    // === 背景粒子系统 ===
     const bgCanvas = document.getElementById('bg-canvas');
     const bgCtx = bgCanvas.getContext('2d');
     let particles = [];
@@ -685,6 +690,7 @@
         if(warpContainer.style.display === 'block') initWarp();
     });
 
+    // === UI 路由 & 交互系统 ===
     function route(pageId) {
         document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
@@ -719,21 +725,13 @@
         loginSuccess();
     }
 
-    // === 新增：随机验证码生成与严格比对逻辑 ===
+    // 验证码弹框恢复
     function handleSignup(e) {
         e.preventDefault();
+        alert("[SYSTEM MSG] A 6-digit verification cypher has been sent to your email.");
+        let code = prompt("Please enter the 6-digit verification code (e.g. 000000):", "");
         
-        // 生成 6 位随机验证码
-        const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
-        
-        // 弹窗显示生成的验证码
-        alert(`[SYSTEM MSG] A verification cypher has been sent to your email.\n\n[SIMULATED EMAIL]\nYour 6-digit verification code is: ${generatedCode}`);
-        
-        // 要求用户输入该验证码
-        let code = prompt("Please enter the exact 6-digit verification code you received:", "");
-        
-        // 严格比对
-        if (code === generatedCode) {
+        if (code === "000000" || (code && code.trim().length === 6)) {
             alert("Verification complete. Registration successful.");
             loginSuccess();
         } else if (code !== null) {
@@ -766,6 +764,7 @@
 
     function loginSuccess() {
         isAuthenticated = true;
+        // 恢复退出登录按钮
         document.getElementById('auth-ui').innerHTML = `
             <span style="color: var(--theme); font-size: 0.95rem; letter-spacing: 2px; font-weight:bold; font-family: 'Share Tech Mono', monospace; margin-right: 10px;">LINK_ACTIVE</span>
             <button class="btn-cyber btn-logout" onclick="handleLogout()" style="padding: 8px 15px; font-size: 0.8rem;">LOGOUT</button>
@@ -776,6 +775,7 @@
         }
     }
 
+    // 退出登录功能恢复
     function handleLogout() {
         isAuthenticated = false;
         document.getElementById('auth-ui').innerHTML = `
@@ -787,6 +787,7 @@
         route('home');
     }
 
+    // === Sentinel 3D 线框原型动画 ===
     const sentCanvas = document.getElementById('sentinel-canvas');
     const sentCtx = sentCanvas.getContext('2d');
     let sentinelAngle = 0;
@@ -871,6 +872,7 @@
         requestAnimationFrame(animateSentinel);
     }
 
+    // === Teachable Machine 核心系统逻辑 ===
     async function initExperience() {
         route('experience');
         if(systemRunning) return;
@@ -990,6 +992,7 @@
         if(goHome) route('home');
     }
 
+    // === 初始化执行 ===
     initIntro();
     drawIntro();
     initBg();
